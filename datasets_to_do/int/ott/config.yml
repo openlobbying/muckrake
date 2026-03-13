@@ -1,0 +1,18 @@
+dataset:
+  name: ott
+  prefix: ott
+  title: On Think Tanks
+  summary: Open Think Tank Directory
+  description: A directory of think tanks worldwide, focusing here on the UK.
+  tags:
+    - think_tanks
+  index_url: https://onthinktanks.org/open-think-tank-directory/
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: On Think Tanks
+  url: https://onthinktanks.org/
+  country: gb
+  country_label: United Kingdom

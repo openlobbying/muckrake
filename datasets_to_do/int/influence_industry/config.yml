@@ -1,0 +1,19 @@
+dataset:
+  name: influence_industry
+  prefix: ii
+  title: Influence Industry
+  summary: Tactical Tech's Influence Industry Explorer
+  description: A directory of companies that provide data-driven services to political campaigns.
+  tags:
+    - influence
+    - companies
+  index_url: https://influenceindustry.org/en/explorer/companies/
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: Tactical Tech
+  url: https://tacticaltech.org/
+  country: de
+  country_label: Germany

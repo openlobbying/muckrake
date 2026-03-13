@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+.env
+
+# Virtual environments
+.venv
+
+# Data
+data/*
+
+.quarto
+
+do_not_edit/*
+/.quarto/
+**/*.quarto_ipynb

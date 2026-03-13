@@ -1,0 +1,1 @@
+Adjacent project: create a database of trade associations and their members. Scrape the associations from [British Trade Associations](https://www.tradeassociationdirectory.co.uk/#) and/or [Trade Association Forum](https://www.taforum.org/membership/member-directory/). It can be similar to On Think Tanks.

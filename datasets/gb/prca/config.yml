@@ -1,0 +1,19 @@
+dataset:
+  name: gb_prca
+  prefix: gb-prca
+  title: PRCA Professional Lobbying Register
+  summary: The Professional Lobbying Register is held by the PRCA to promote and maintain transparency in the Professional Lobbying activities of Members and, where appropriate, their employees or contractors. The Register lists all Members engaged in Professional Lobbying, their clients and other specified information. It is updated on a quarterly basis and is publicly available.
+  tags:
+    - lobbying
+  index_url: https://www.prca.global/professional-lobbying-register
+coverage:
+  countries:
+    - gb
+  frequency: quarterly
+publisher:
+  name: Public Relations and Communications Association (PRCA)
+  description: The Public Relations and Communications Association (PRCA) is the world's leading professional body for professionals in public relations, communications, and public affairs. Through our global community we work towards an industry that is known worldwide for its innovation, excellence and ethical standards.
+  url: https://www.prca.global/
+  country: gb
+  country_label: United Kingdom
+  official: false

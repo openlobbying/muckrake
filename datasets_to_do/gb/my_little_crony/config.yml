@@ -1,0 +1,18 @@
+dataset:
+  name: gb_my_little_crony
+  prefix: gb-crony
+  title: My Little Crony
+  summary: An interactive visualization of the links between Tory politicians and firms winning government contracts during the pandemic
+  tags:
+    - donation
+    - loan
+coverage:
+  countries:
+    - gb
+publisher:
+  name: Sophie E. Hill
+  description: Sophie is PhD student in political science. She studies lobbying and the role of experts in democracies. She is also a freelance investigative journalist.
+  url: https://www.sophie-e-hill.com/
+  country: gb
+  country_label: United Kingdom
+  official: false

@@ -1,0 +1,25 @@
+dataset:
+  name: gb_firs
+  prefix: gb-firs
+  title: UK Foreign Influence Registration Scheme
+  summary: The Foreign Influence Registration Scheme (FIRS) is a two-tier scheme which enables transparency of foreign influence in UK politics and provides greater assurance around the activities of the foreign powers that pose the greatest risk to the UK.
+  description:
+    1. The Foreign Influence Registration Scheme (FIRS) is a two-tier scheme which enables transparency of foreign influence in UK politics and provides greater assurance around the activities of the foreign powers that pose the greatest risk to the UK. It is contained within Part 4 of the National Security Act 2023.
+    
+    2. The scheme is made up of a political influence tier and an enhanced tier. The scheme requires individuals and organisations to register their arrangements with foreign powers and certain foreign power-controlled entities where they are directed to carry out certain activities in the UK. Further detail on the requirements of each tier of the scheme is provided below.
+    
+    3. Registration can be completed on the FIRS online registration service.
+  tags:
+    - lobbying
+  index_url: https://foreign-influence-registration-scheme.service.gov.uk/public-register
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: UK Government
+  description: The Foreign Influence Registration Scheme is managed by the UK Government to ensure transparency of foreign influence in UK politics.
+  url: https://foreign-influence-registration-scheme.service.gov.uk/
+  country: gb
+  country_label: United Kingdom
+  official: true

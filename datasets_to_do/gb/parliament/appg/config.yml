@@ -1,0 +1,19 @@
+dataset:
+  name: gb_appg
+  prefix: gb-parl
+  title: UK APPGs
+  summary: APPGs of the UK Parliament, including details about their members and roles.
+  tags:
+    - legislative
+  index_url: https://www.parliament.uk/mps-lords-and-offices/standards-and-financial-interests/parliamentary-commissioner-for-standards/registers-of-interests/register-of-all-party-party-parliamentary-groups/
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: UK Parliament
+  description: The UK Parliament is the supreme legislative body in the United Kingdom, consisting of the House of Commons, the House of Lords, and the Sovereign. It is responsible for making and passing laws, and its activities include holding oral evidence sessions that are often broadcast live and archived for public access.
+  url: https://www.parliament.uk/
+  country: gb
+  country_label: United Kingdom
+  official: true

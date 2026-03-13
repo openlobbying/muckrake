@@ -1,0 +1,19 @@
+dataset:
+  name: gb_register_interests
+  prefix: gb-parl
+  title: UK Register of Members' Financial Interests
+  summary: The Register of Members' Financial Interests contains information about any financial interest an MP has, or any benefit they receive, which someone else might reasonably consider to influence what they say or do as an MP.
+  tags:
+    - donations
+  index_url: https://interests-api.parliament.uk/index.html
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: UK Parliament
+  description: The UK Parliament is the supreme legislative body in the United Kingdom, consisting of the House of Commons, the House of Lords, and the Sovereign. It is responsible for making and passing laws, and its activities include holding oral evidence sessions that are often broadcast live and archived for public access.
+  url: https://www.parliament.uk/
+  country: gb
+  country_label: United Kingdom
+  official: true

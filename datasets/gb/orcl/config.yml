@@ -1,0 +1,21 @@
+dataset:
+  name: orcl
+  prefix: gb-orcl
+  title: UK Registrar of Consultant Lobbyists
+  summary: The UK Registrar of Consultant Lobbyists is a scheme which enables transparency of lobbying activities in the UK and provides greater assurance around the activities of consultant lobbyists.
+  description:
+    The Office of the Registrar of Consultant Lobbyists is a United Kingdom independent statutory body set up under the provisions of the Transparency of Lobbying, Non-party Campaigning and Trade Union Administration Act 2014. It maintains a register of consultant lobbyists who may operate in the United Kingdom.
+  tags:
+    - lobbying
+  index_url: https://orcl.my.site.com/CLR_Search
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: Office of the Registrar of Consultant Lobbyists
+  description: The Office of the Registrar of Consultant Lobbyists was set up by the Transparency of Lobbying, Non-Party Campaigning and Trade Union Administration Act 2014 to ensure transparency in the work of consultant lobbyists and their engagement with Ministers and Permanent Secretaries on behalf of clients.
+  url: https://registrarofconsultantlobbyists.org.uk/
+  country: gb
+  country_label: United Kingdom
+  official: true

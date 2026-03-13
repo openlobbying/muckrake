@@ -1,0 +1,19 @@
+dataset:
+  name: open_access
+  prefix: gb-meet
+  title: Open Access UK
+  summary: Meetings between UK government ministers and external organisations, collected by Transparency International UK.
+  data:
+    url: https://openaccess.transparency.org.uk/data/iw_uk.csv
+  tags:
+    - lobbying
+    - transparency
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: Transparency International UK
+  url: https://openaccess.transparency.org.uk/
+  country: gb
+  official: false

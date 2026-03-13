@@ -1,0 +1,19 @@
+dataset:
+  name: gb_committees
+  prefix: gb-parl
+  title: UK Parliament Committees
+  summary: Committees of the UK Parliament, including details about their members and roles.
+  tags:
+    - legislative
+  index_url: https://committees-api.parliament.uk/index.html
+coverage:
+  countries:
+    - gb
+  frequency: monthly
+publisher:
+  name: UK Parliament
+  description: The UK Parliament is the supreme legislative body in the United Kingdom, consisting of the House of Commons, the House of Lords, and the Sovereign. It is responsible for making and passing laws, and its activities include holding oral evidence sessions that are often broadcast live and archived for public access.
+  url: https://www.parliament.uk/
+  country: gb
+  country_label: United Kingdom
+  official: true
