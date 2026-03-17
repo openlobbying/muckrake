@@ -1,6 +1,7 @@
 import logging
 import inspect
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Awaitable, Callable, Optional
 
 from followthemoney import model
@@ -44,6 +45,12 @@ class HookedDedupeApp(DedupeApp):
     This is implemented in muckrake (not nomenklatura) to keep schema-specific
     behavior out of nomenklatura while still allowing side-effect actions.
     """
+
+    # Ensure we keep using nomenklatura's bundled stylesheet even though this
+    # subclass lives in muckrake.
+    import nomenklatura.tui.app as _nk_tui_app
+
+    CSS_PATH = str(Path(_nk_tui_app.__file__).with_name("app.tcss"))
 
     def __init__(self, actions: list[ExternalAction]):
         super().__init__()
