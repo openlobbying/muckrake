@@ -14,6 +14,15 @@
 		</p>
 	</header>
 
+	<div class="embed-container mb-8">
+		<iframe
+			src="https://www.youtube.com/embed/rU983OXuVUU"
+			frameborder="0"
+			allowfullscreen
+			title="OpenLobbying video"
+		></iframe>
+	</div>
+
 	<Card class="mb-8 border-amber-200 bg-amber-50">
 		<CardHeader>
 			<CardTitle class="text-amber-900">Development Notice</CardTitle>
@@ -81,3 +90,23 @@
 	</Card>
 
 </div>
+
+<style>
+	.embed-container {
+		position: relative;
+		padding-bottom: 56.25%;
+		height: 0;
+		overflow: hidden;
+		max-width: 100%;
+	}
+
+	.embed-container iframe,
+	.embed-container object,
+	.embed-container embed {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+</style>
