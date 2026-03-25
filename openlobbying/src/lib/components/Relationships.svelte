@@ -14,6 +14,11 @@
 		return relationshipIcons[type] || relationshipIcons.others;
 	}
 
+	function getLabel(type: string) {
+		if (type === "other links") return "Other links";
+		return type;
+	}
+
 	function toggleGroup(type: string) {
 		expandedGroups[type] = !expandedGroups[type];
 	}
@@ -37,7 +42,7 @@
 						<h3
 							class="text-sm font-semibold text-gray-700 capitalize"
 						>
-							{group.type}
+							{getLabel(group.type)}
 						</h3>
 						<Badge variant="secondary">{group.items.length}</Badge>
 					</div>

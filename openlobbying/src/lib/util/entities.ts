@@ -1,4 +1,4 @@
-import { Building2, Users, Landmark, User, UserCircle, Briefcase } from '@lucide/svelte';
+import { Building2, Users, Landmark, User, UserCircle, Briefcase, Link2 } from '@lucide/svelte';
 import { mount, unmount } from 'svelte';
 
 export const schemaColors: Record<string, string> = {
@@ -24,6 +24,7 @@ export const relationshipIcons: Record<string, any> = {
     employees: Users,
     organizations: Briefcase,
     members: UserCircle,
+	"other links": Link2,
     others: Users
 };
 
@@ -150,5 +151,4 @@ export async function getIconUrl(id: string, schema: string): Promise<string> {
     
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(decoratedSvg)}`;
 }
-
 

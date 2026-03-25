@@ -4,6 +4,7 @@ from typing import Optional
 from muckrake.dataset import find_datasets, load_config, get_dataset_path
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.store import get_sql_store
+from muckrake.dedupe.unknown_links import materialize_unknown_links
 
 log = logging.getLogger(__name__)
 
@@ -42,3 +43,6 @@ def run_load(dataset_name: Optional[str] = None):
     with store.writer() as writer:
         for ds_name in dataset_names:
             load_dataset_statements(ds_name, writer)
+
+    # Materialize external links (e.g. UnknownLink) into statement table
+    materialize_unknown_links(store)
