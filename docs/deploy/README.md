@@ -26,6 +26,20 @@ This will:
 2. Install deps, build frontend, restart services.
 3. Publish local curated SQLite DB into production Postgres.
 
+If you need to restore the curated production SQLite artifact from the VPS, use:
+
+```bash
+./scripts/pull_data_from_vps.sh {ip_address}
+```
+
+The script pulls `data/muckrake.db` from `/home/deploy/releases/muckrake.db` on the VPS.
+
+Optional custom SSH key path:
+
+```bash
+./scripts/pull_data_from_vps.sh {ip_address} ~/.ssh/muckrake_deploy
+```
+
 ## What this setup uses
 
 - One VPS (tested on Hetzner `CPX22`, Ubuntu 24.04).
@@ -37,10 +51,13 @@ This will:
 ## Files in this directory
 
 - `cloud-init-hetzner.yaml`: first-boot hardening and base packages.
+- `SSH.md`: step-by-step SSH connection setup for the VPS.
 - `hetzner-firewall-rules.json`: inbound `22/80/443` firewall policy.
 - `Caddyfile`: `openlobbying.org` reverse proxy config.
 - `muckrake-api.service`: backend unit.
 - `openlobbying-web.service`: frontend unit.
+
+If SSH access is failing or you need to recover console access, start with `docs/deploy/SSH.md`.
 
 ## 1) Create the server
 
@@ -52,6 +69,27 @@ Recommended options:
 - Networking: IPv4 + IPv6 enabled.
 - SSH key: add your key.
 - Cloud config: paste `cloud-init-hetzner.yaml` after replacing the placeholder key.
+
+To set up SSH for the deploy scripts:
+
+1. Generate a key if you do not already have one:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/muckrake_deploy -C "deploy@muckrake"
+```
+
+2. Copy the public key into Hetzner Cloud, or append it to `/home/deploy/.ssh/authorized_keys` on the server:
+
+```bash
+cat ~/.ssh/muckrake_deploy.pub
+```
+
+3. Use the private key with the scripts:
+
+```bash
+./scripts/deploy_to_vps.sh {ip_address} ~/.ssh/muckrake_deploy
+./scripts/pull_data_from_vps.sh {ip_address} ~/.ssh/muckrake_deploy
+```
 
 Optional CLI firewall setup:
 

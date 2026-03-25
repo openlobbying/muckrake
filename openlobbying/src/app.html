@@ -3,47 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<script>
-			// TEMPORARY PASSWORD WALL: remove this entire <script> block to disable.
-			(() => {
-				const cookieName = "openlobbying_access";
-				const expectedPassword = "5$;L#{]!7g";
-				const cookieValue = "granted";
-				const maxAgeSeconds = 7 * 24 * 60 * 60;
-				const contactMessage = "Please contact mail@openlobbying.org for access";
-
-				const renderAccessMessage = () => {
-					const html = `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Access required</title></head><body><p>${contactMessage}</p></body></html>`;
-					window.location.replace(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-				};
-
-				const hasAccess = document.cookie
-					.split(";")
-					.map((part) => part.trim())
-					.includes(`${cookieName}=${cookieValue}`);
-
-				if (hasAccess) return;
-
-				document.documentElement.style.display = "none";
-
-				const input = window.prompt("Enter password to access OpenLobbying:");
-
-				if (input === expectedPassword) {
-					document.cookie = `${cookieName}=${cookieValue}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax`;
-					document.documentElement.style.display = "";
-					return;
-				}
-
-				if (input !== null) {
-					window.alert(`Incorrect password. ${contactMessage}`);
-				}
-
-				renderAccessMessage();
-			})();
-		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
+		<!-- 100% privacy-first analytics -->
+	<script async src="https://analytics.samizdata.co/proxy.js"></script>
 	</body>
 </html>

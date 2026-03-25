@@ -7,7 +7,7 @@ if [ $# -lt 1 ]; then
 fi
 
 SERVER="$1"
-KEY_PATH="${2:-$HOME/.ssh/muckrake_deploy}"
+KEY_PATH="${2:-$HOME/.ssh/id_ed25519}"
 
 echo "[1/4] Sync code to VPS"
 rsync -az --delete \

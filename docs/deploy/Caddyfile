@@ -11,3 +11,27 @@ openlobbying.org {
 
     reverse_proxy 127.0.0.1:3000
 }
+
+# Analytics
+
+analytics.samizdata.co {
+  handle /simple/* {
+    uri strip_prefix /simple
+    reverse_proxy https://queue.simpleanalyticscdn.com {
+      header_up X-Caddy-Proxy "true"
+      header_up -X-Forwarded-For
+    }
+  }
+  handle /proxy.js {
+    rewrite * /proxy.js?{query}&hostname=analytics.samizdata.co&path=/simple
+    reverse_proxy https://simpleanalyticsexternal.com {
+      header_up -X-Forwarded-For
+    }
+  }
+  handle /auto-events.js {
+    rewrite * /auto-events.js
+    reverse_proxy https://scripts.simpleanalyticscdn.com {
+      header_up -X-Forwarded-For
+    }
+  }
+}

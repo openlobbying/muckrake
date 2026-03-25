@@ -1,12 +1,43 @@
 import csv
+from urllib.parse import urlencode
 from muckrake.util import parse_amount, parse_date
 from .common import make_donor, create_recipient_entity
 
 
+def build_url(base, params):
+    parts = []
+    for key, value in params.items():
+        if isinstance(value, list):
+            for item in value:
+                parts.append((key, item))
+        else:
+            parts.append((key, value))
+    return f"{base}?{urlencode(parts)}"
+
+
 def crawl_loans(dataset):
     """Crawl political loans from the Electoral Commission."""
-    url = "https://search.electoralcommission.org.uk/api/csv/Loans?query=&sort=StartDate&order=desc&et=pp&et=ppm&et=tp&et=perpar&et=rd&date=Start&from=&to=&rptPd=&prePoll=false&postPoll=false&register=gb&register=ni&register=none&loanStatus=outstanding&loanStatus=ended&isIrishSourceYes=true&isIrishSourceNo=true&includeOutsideSection75=true"
+    BASE_URL = "https://search.electoralcommission.org.uk/api/csv/Loans"
+    PARAMS = {
+        "query": "",
+        "sort": "StartDate",
+        "order": "desc",
+        "et": ["pp", "ppm", "tp", "perpar", "rd"],
+        "date": "Start",
+        "from": "",
+        "to": "",
+        "rptPd": "",
+        "prePoll": "false",
+        "postPoll": "false",
+        "register": ["gb", "ni", "none"],
+        "loanStatus": ["outstanding", "ended"],
+        "isIrishSourceYes": "true",
+        "isIrishSourceNo": "true",
+        "includeOutsideSection75": "true",
+    }
 
+    dataset.log.info(f"Crawling loans with params: {PARAMS}")
+    url = build_url(BASE_URL, PARAMS)
     path = dataset.fetch_resource("loans.csv", url)
 
     with open(path, "r", encoding="utf-8-sig") as fh:
