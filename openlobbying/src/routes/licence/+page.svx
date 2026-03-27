@@ -1,0 +1,42 @@
+---
+title: Use our data
+description: How you can access and use OpenLobbying data.
+---
+
+## What we offer
+
+We provide structured, standardised data on lobbying activities in the UK. It includes [meetings, financial contributions, lobbying representation, and more](/datasets).
+
+We can offer these data in various formats, both as full data dumps or as custom extracts and summaries. 
+
+Each data source is also subject to their original licences, which may have additional terms and conditions.
+
+## Non-commercial and public interest use
+
+Our data is licensed under the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/) licence.
+
+This means you are free to:
+- **make copies** and redistribute the data in any medium or format;
+- **build upon our data**, for example, by combining it with other data sources, creating visualisations, or using it in research and analysis.
+
+As long as you:
+- **attribute the source** by prominently linking back to OpenLobbying;
+- **share any derivative works** under the same license described here.
+
+These permissions are granted for non-commercial purposes. This includes academic research, campaigning, transparency activism, and personal use.
+
+Additionally, we extend the same permissions to journalists working for commercial media organisations, as long as the data is used for public interest investigations.
+
+We do not currently publish a raw data dump while we are still improving data quality and coverage. However, you can contact us to see if we can assist your work.
+
+## Commercial use
+
+For commercial use, you must obtain a separate commercial licence from us. Please contact [mail@openlobbying.org](mailto:mail@openlobbying.org) for more information.
+
+Note that using our data for commercial purposes without a licence, including public information on this website, constitutes copyright infringement.
+
+## Open source code
+
+The code powering OpenLobbying is open source and available on [GitHub](https://github.com/openlobbying).
+
+It is licensed under the [AGPL-3.0 License](https://www.gnu.org/licenses/agpl-3.0.en.html), which allows you to use, modify, and distribute the code as long as you also share any modifications under the same license.

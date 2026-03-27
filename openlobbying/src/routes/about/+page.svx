@@ -1,0 +1,35 @@
+---
+title: About OpenLobbying
+description: OpenLobbying is an initiative to collect, standardise and match lobbying data in the UK. It is developed by Nicu Calcea and Dr. Emily Clough.
+---
+
+<script>
+	import ResponsiveEmbed from '$lib/components/ResponsiveEmbed.svelte';
+</script>
+
+<ResponsiveEmbed src="https://www.youtube.com/embed/rU983OXuVUU" title="OpenLobbying video" />
+
+## Development notice
+
+This project is in active development. Data coverage, matching quality and site features are still improving and may change without notice.
+
+## Corrections and challenges
+
+If you believe a profile or linked record is inaccurate, you can ask us to review it.
+
+Send correction requests to [mail@openlobbying.org](mailto:mail@openlobbying.org) with the subject line `Correction request`.
+
+Please include:
+
+- the profile URL or statement URL in question;
+- what is wrong and what should be changed;
+- source links or other evidence supporting the correction.
+
+We aim to acknowledge requests within 5 working days and in all cases within 30 days. Straightforward corrections should be resolved as quickly as possible.
+
+## Contact
+
+If you have questions, feedback, or want to work together, get in touch.
+
+- Email: [mail@openlobbying.org](mailto:mail@openlobbying.org)
+- LinkedIn: [linkedin.com/in/nicucalcea](https://www.linkedin.com/in/nicucalcea/)

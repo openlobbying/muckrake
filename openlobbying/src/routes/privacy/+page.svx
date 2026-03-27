@@ -1,0 +1,79 @@
+---
+title: Privacy Policy
+description: How OpenLobbying processes source-derived personal data, correction requests, and limited operational analytics.
+updated: 26 March 2026
+---
+
+## Who we are
+
+OpenLobbying is an independent public-interest data journalism project. For the purposes of UK data protection law, the data controller is [Nicu Calcea](https://nicu.md/).
+
+Contact: [mail@openlobbying.org](mailto:mail@openlobbying.org)
+
+## What this site does
+
+OpenLobbying collects and republishes information about lobbying and political finance in the UK from public sources. We standardise and link records so users can explore relationships between people, organisations, public bodies, meetings, declarations, submissions, and political finance.
+
+## What personal data we process
+
+We process information that appears in official or publicly available records, including names, roles, affiliations, meeting participation, declared interests, evidence submissions, donations, loans, and related metadata.
+
+We do not currently offer user accounts, and we do not intentionally collect analytics, marketing, or tracking data through this site beyond the limited privacy-friendly analytics described below.
+
+## Sources of data
+
+Our data comes from publicly available sources, including official UK public bodies and public registers, as well as civic transparency projects. This includes sources such as UK Parliament data and publications, UK Electoral Commission political finance records, the UK Register of Consultant Lobbyists, and other public lobbying transparency datasets. You can view the current source list on the [Datasets page](/datasets).
+
+Where source URLs are available in the underlying data, we display them on records so users can click through to the original publication.
+
+## How and why we process data
+
+We process data to:
+
+- support public-interest and journalistic research into lobbying and political influence;
+- improve transparency by making fragmented public records easier to search and understand;
+- link related records from different sources to provide context.
+
+Our lawful basis under UK GDPR is generally Article 6(1)(f), legitimate interests, namely public-interest journalism and transparency research.
+
+Where relevant, we also process data within UK legal frameworks for journalistic activities, research in the public interest, and archiving in the public interest.
+
+- Data Protection Act 2018 Schedule 2 Part 5, including journalism-related special purposes exemptions.
+- UK GDPR Article 89, covering safeguards for archiving and research in the public interest.
+- Section 67 of the Data (Use and Access) Act 2025 on the meaning of scientific and historical research purposes.
+
+## Linking process and automated decision-making
+
+We use rule-based and technical matching methods to generate candidate links between records. All final links are manually reviewed and approved by a human before they are published.
+
+This means we do not use solely automated decision-making to determine published entity links. Records can still be incomplete or incorrectly linked, and we welcome correction requests.
+
+If you believe a profile is inaccurate, contact [mail@openlobbying.org](mailto:mail@openlobbying.org) with details and source evidence where possible.
+
+## Sharing and international transfers
+
+Data displayed on this site is publicly accessible to all visitors. We do not sell personal data. Technical service providers may process limited operational data, such as hosting and infrastructure logs, to run and secure the service.
+
+## Retention
+
+We retain source-derived records for as long as they remain relevant to the project's public-interest and journalistic purpose, subject to periodic review, correction, and legal requirements.
+
+## Your rights
+
+Under UK GDPR, you may have rights including access, rectification, erasure, restriction, objection, and complaint to the Information Commissioner's Office.
+
+Some rights may be limited where UK data protection law provides exemptions, including for journalistic and public-interest publication activities.
+
+To make a request, contact [mail@openlobbying.org](mailto:mail@openlobbying.org).
+
+We aim to acknowledge data-related complaints and correction requests within 30 days, and often sooner.
+
+## Complaints
+
+If you have concerns about how we handle personal data, contact us first so we can try to resolve the issue. You also have the right to lodge a complaint with the [Information Commissioner's Office](https://ico.org.uk/make-a-complaint/).
+
+## Cookies and tracking
+
+We use [Simple Analytics](https://docs.simpleanalytics.com/what-we-collect) to collect basic usage information on `openlobbying.org`. Simple Analytics does not use cookies, does not store IP addresses, and does not store other personally identifiable data for visitors.
+
+We respect your browser's Do Not Track settings, if enabled, Simple Analytics will not collect data from your visit.
