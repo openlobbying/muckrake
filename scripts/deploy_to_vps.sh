@@ -29,8 +29,5 @@ ssh -i "$KEY_PATH" "deploy@$SERVER" '
   sudo systemctl restart muckrake-api openlobbying-web caddy
 '
 
-echo "[3/4] Publish local curated SQLite state to Postgres"
-"$(dirname "$0")/publish_sqlite_to_vps.sh" "$SERVER" "$KEY_PATH"
-
-echo "[4/4] Done"
+echo "[3/3] Done"
 echo "Open: https://openlobbying.org"

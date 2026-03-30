@@ -20,7 +20,7 @@ from muckrake.api.serialization import (
     get_all_datasets_metadata,
 )
 from muckrake.api.graph_logic import get_entity_graph_data
-from muckrake.settings import ACTOR_SCHEMATA, SQL_PATH, SQL_URI
+from muckrake.settings import ACTOR_SCHEMATA, SQL_URI
 
 log = logging.getLogger(__name__)
 
@@ -39,10 +39,6 @@ app.add_middleware(
 def get_view():
     """Get a SQL view of the data for serving."""
     dataset_names = _list_all_dataset_names()
-
-    if SQL_URI.startswith("sqlite") and not SQL_PATH.exists():
-        log.warning("SQL database not found at %s. API will be empty.", SQL_PATH)
-        return None
 
     # Load from SQL store
     store = get_sql_store(dataset_names)
@@ -132,10 +128,6 @@ POSTGRES_SEARCH_COUNT_SQL = text(
         AND es.schema = ANY(:schemas)
     """
 )
-
-
-def _is_postgres() -> bool:
-    return SQL_URI.startswith("postgresql")
 
 
 STATS_CACHE_TTL_SECONDS = 600
@@ -264,9 +256,6 @@ def _get_top_actor_rankings(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
 @lru_cache(maxsize=1)
 def postgres_search_ready() -> bool:
     """Check if production search materialized view is available."""
-    if not _is_postgres():
-        return False
-
     try:
         engine = get_engine(SQL_URI)
         with engine.connect() as conn:
@@ -462,7 +451,7 @@ def search_entities(
             "applied_schema": schema_filter,
         }
 
-    if _is_postgres() and postgres_search_ready():
+    if postgres_search_ready():
         try:
             engine = get_engine(SQL_URI)
             with engine.connect() as conn:
@@ -563,7 +552,7 @@ def get_stats() -> Dict[str, Any]:
 
     schema_counts: Dict[str, int] = {schema: 0 for schema in ACTOR_SCHEMATA}
 
-    if _is_postgres() and postgres_search_ready():
+    if postgres_search_ready():
         try:
             engine = get_engine(SQL_URI)
             with engine.connect() as conn:

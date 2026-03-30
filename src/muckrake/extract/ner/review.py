@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import sqlite3
 import sys
 import textwrap
 from dataclasses import dataclass
@@ -12,6 +11,7 @@ import click
 from rich.console import Group, RenderableType
 from rich.table import Table
 from rich.text import Text
+from sqlalchemy.engine import Connection, RowMapping
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Footer, Static
@@ -157,7 +157,7 @@ def _split_refs(values: list[str]) -> tuple[list[str], list[str]]:
     return refs, plain
 
 
-def _parse_entities(row: sqlite3.Row) -> list[dict[str, Any]]:
+def _parse_entities(row: RowMapping) -> list[dict[str, Any]]:
     entities = json.loads(row["extraction_json"])
     if not isinstance(entities, list):
         raise ValueError(f"Candidate {row['id']} has invalid extraction payload")
@@ -205,7 +205,7 @@ def _edit_entities_in_editor(entities: list[Any]) -> list[dict[str, Any]] | None
     return payload
 
 
-def _render_candidate(row: sqlite3.Row, index: int, total: int) -> RenderableType:
+def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType:
     entities = _parse_entities(row)
     terms: list[str] = []
     for entity in entities:
@@ -293,7 +293,7 @@ def _render_candidate(row: sqlite3.Row, index: int, total: int) -> RenderableTyp
 
 
 class NERReviewState:
-    def __init__(self, conn: sqlite3.Connection, rows: list[sqlite3.Row]):
+    def __init__(self, conn: Connection, rows: list[RowMapping]):
         self.conn = conn
         self.rows = rows
         self.index = 0
@@ -307,7 +307,7 @@ class NERReviewState:
         return len(self.rows)
 
     @property
-    def current(self) -> Optional[sqlite3.Row]:
+    def current(self) -> Optional[RowMapping]:
         if self.index >= self.total:
             return None
         return self.rows[self.index]
@@ -576,7 +576,7 @@ def _print_entity(entity: dict[str, Any], index: int) -> None:
             click.echo(f"    {_style_label(prop_name)} {_join_values(plain)}")
 
 
-def _print_candidate(row: sqlite3.Row, index: int, total: int) -> None:
+def _print_candidate(row: RowMapping, index: int, total: int) -> None:
     entities = _parse_entities(row)
     terms: list[str] = []
     for entity in entities:
@@ -611,9 +611,7 @@ def _print_candidate(row: sqlite3.Row, index: int, total: int) -> None:
             click.echo(f"  {entity_idx}. {entity}")
 
 
-def _run_prompt_review(
-    conn: sqlite3.Connection, rows: list[sqlite3.Row]
-) -> dict[str, int]:
+def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
     approved = 0
     rejected = 0
     skipped = 0
@@ -670,9 +668,7 @@ def _run_prompt_review(
     }
 
 
-def _run_tui_review(
-    conn: sqlite3.Connection, rows: list[sqlite3.Row]
-) -> dict[str, int]:
+def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
     state = NERReviewState(conn, rows)
     app = NERReviewApp(state)
     result = app.run()

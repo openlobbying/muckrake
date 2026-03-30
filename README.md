@@ -47,7 +47,7 @@ uv run muckrake dedupe-edges
 
 ### Loading
 
-Statements are loaded into a working store (SQLite for local development, Postgres in production) with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
+Statements are loaded into Postgres with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
 
 
 ## OpenLobbying
@@ -71,8 +71,8 @@ In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8
 
 ## Database configuration
 
-- Local default: SQLite at `data/muckrake.db`.
-- Production: set `MUCKRAKE_DATABASE_URL` to a SQLAlchemy-compatible Postgres URL, for example:
+- Set `MUCKRAKE_DATABASE_URL`. `.env` is loaded automatically from the repo root.
+- Example:
 
 ```bash
 export MUCKRAKE_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5432/muckrake"
@@ -81,5 +81,4 @@ export MUCKRAKE_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5
 ## Deployment docs
 
 - VPS guide and templates: `docs/deploy/README.md`
-- MVP deploy model: promote one curated DB artifact (includes dedupe + NER state), not dataset files alone.
 - One-command deploy (code + data): `./scripts/deploy_to_vps.sh {ip_address}`

@@ -201,7 +201,7 @@ uv run muckrake load open_access
 6. Check row count:
 
 ```bash
-uv run python -c "import sqlite3; c=sqlite3.connect('data/muckrake.db'); print(c.execute('select count(*) from ner_candidates').fetchone()[0])"
+uv run python -c "from sqlalchemy import create_engine, text; from muckrake.settings import SQL_URI; e=create_engine(SQL_URI); print(e.connect().execute(text('select count(*) from ner_candidates')).scalar())"
 ```
 
 ## Next planned pieces

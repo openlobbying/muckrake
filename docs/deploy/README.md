@@ -2,16 +2,6 @@
 
 This is the complete guide to deploy Muckrake + OpenLobbying on one Hetzner VPS.
 
-## Release model (MVP)
-
-Use a single database artifact per release.
-
-- Do not publish only `statements.pack.csv` files.
-- Publish one curated SQLite DB artifact (`data/muckrake.db`) that already includes `statement`, `resolver`, `ner_candidates`, and other review state.
-- Import that artifact into production Postgres in one step.
-
-This avoids local/production drift in dedupe and NER decisions.
-
 ## Day-to-day updates (recommended)
 
 From local repo root, run one command:
@@ -24,21 +14,6 @@ This will:
 
 1. Sync latest code to VPS.
 2. Install deps, build frontend, restart services.
-3. Publish local curated SQLite DB into production Postgres.
-
-If you need to restore the curated production SQLite artifact from the VPS, use:
-
-```bash
-./scripts/pull_data_from_vps.sh {ip_address}
-```
-
-The script pulls `data/muckrake.db` from `/home/deploy/releases/muckrake.db` on the VPS.
-
-Optional custom SSH key path:
-
-```bash
-./scripts/pull_data_from_vps.sh {ip_address} ~/.ssh/muckrake_deploy
-```
 
 ## What this setup uses
 
@@ -88,7 +63,6 @@ cat ~/.ssh/muckrake_deploy.pub
 
 ```bash
 ./scripts/deploy_to_vps.sh {ip_address} ~/.ssh/muckrake_deploy
-./scripts/pull_data_from_vps.sh {ip_address} ~/.ssh/muckrake_deploy
 ```
 
 Optional CLI firewall setup:
@@ -187,38 +161,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now muckrake-api openlobbying-web caddy
 ```
 
-## 7) Publish data only (SQLite artifact -> Postgres)
-
-This project keeps crawl/NER/dedupe local. For production publishing, import your local curated SQLite DB into VPS Postgres.
-
-Use this when code did not change and you only want to refresh data.
-
-### One-command data publish
-
-Run from local repo root:
-
-```bash
-./scripts/publish_sqlite_to_vps.sh {ip_address}
-```
-
-Optional custom SSH key path:
-
-```bash
-./scripts/publish_sqlite_to_vps.sh {ip_address} ~/.ssh/muckrake_deploy
-```
-
-What this does:
-
-1. Uploads local `data/muckrake.db` to the VPS.
-2. Ensures `pgloader` is installed.
-3. Stops API briefly.
-4. Recreates production `muckrake` Postgres DB.
-5. Imports all SQLite tables into Postgres (`statement`, `resolver`, `ner_candidates`, ...).
-6. Creates and refreshes the Postgres `entity_search` materialized view and indexes (`unaccent` + `pg_trgm`) used by `/api/search`.
-7. Starts API, verifies frontend service health, and self-heals frontend build if needed.
-8. Prints row counts and checks the public site.
-
-### Quick verification
+## 7) Quick verification
 
 ```bash
 curl https://openlobbying.org/api/datasets
@@ -235,8 +178,7 @@ curl https://openlobbying.org/api/datasets
 
 ## Operations notes
 
-- Local default DB is SQLite; production uses `MUCKRAKE_DATABASE_URL` (Postgres).
-- For deployment parity, release from a curated full DB artifact, not raw dataset files.
+- The app requires `MUCKRAKE_DATABASE_URL`.
 - Frontend calls backend via relative `/api/*` routes.
 - Secrets stay on server (`/etc/muckrake/*.env`), never in git.
 - After bootstrap, restrict SSH firewall rule to your IP.

@@ -1,17 +1,17 @@
 import json
 import logging
-import sqlite3
 from pathlib import Path
 from typing import Iterator
 
 from followthemoney import model
 from followthemoney.statement import Statement
 from followthemoney.statement.serialize import read_pack_statements
+from sqlalchemy import text
 
 from muckrake.id import make_hashed_id
-from muckrake.settings import SQL_PATH
 
 from .pipeline import text_fingerprint
+from .storage import get_connection
 
 log = logging.getLogger(__name__)
 
@@ -55,14 +55,11 @@ def _clone_statement(stmt: Statement, value: str) -> Statement:
 
 
 def load_approved_candidates() -> dict[tuple[str, str], dict]:
-    if not SQL_PATH.exists():
-        return {}
-
-    conn = sqlite3.connect(SQL_PATH)
-    conn.row_factory = sqlite3.Row
     try:
+        conn = get_connection()
         rows = conn.execute(
-            """
+            text(
+                """
             SELECT
                 property_name,
                 fingerprint,
@@ -70,24 +67,25 @@ def load_approved_candidates() -> dict[tuple[str, str], dict]:
             FROM ner_candidates
             WHERE status = 'approved'
             ORDER BY updated_at DESC, id DESC
-            """,
+            """
+            )
         )
-    except sqlite3.OperationalError:
-        conn.close()
+    except Exception:
         return {}
 
     out: dict[tuple[str, str], dict] = {}
     for row in rows:
-        key = (row["property_name"], row["fingerprint"])
+        mapping = row._mapping
+        key = (mapping["property_name"], mapping["fingerprint"])
         if key in out:
             continue
         try:
-            out[key] = json.loads(row["extraction_json"])
+            out[key] = json.loads(mapping["extraction_json"])
         except json.JSONDecodeError:
             log.warning(
                 "Invalid extraction JSON for %s:%s",
-                row["property_name"],
-                row["fingerprint"],
+                mapping["property_name"],
+                mapping["fingerprint"],
             )
             continue
     conn.close()

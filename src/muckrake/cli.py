@@ -258,7 +258,6 @@ def load(dataset_name):
         log.exception(e)
         sys.exit(1)
 
-
 @cli.command("ner-extract")
 @click.argument("dataset_name", required=False)
 @click.option("--limit", "limit", type=int, default=None, help="Max candidate rows")
