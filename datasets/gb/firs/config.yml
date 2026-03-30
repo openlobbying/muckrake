@@ -12,6 +12,9 @@ dataset:
   tags:
     - lobbying
   index_url: https://foreign-influence-registration-scheme.service.gov.uk/public-register
+  licence:
+    name: Open Government Licence v3.0
+    url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
 coverage:
   countries:
     - gb

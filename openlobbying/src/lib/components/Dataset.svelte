@@ -51,5 +51,22 @@
 			</p>
 		{/if}
 
+		{#if dataset.licence?.name}
+			<CardDescription class="mt-auto">
+				Licence:
+				{#if dataset.licence.url}
+					<a
+						href={dataset.licence.url}
+						class="text-blue-600 hover:underline"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{dataset.licence.name}
+					</a>
+				{:else}
+					{dataset.licence.name}
+				{/if}
+			</CardDescription>
+		{/if}
 	</CardContent>
 </Card>

@@ -6,6 +6,9 @@ dataset:
   tags:
     - donations
   index_url: https://interests-api.parliament.uk/index.html
+  licence:
+    name: Open Parliament Licence v3.0
+    url: https://www.parliament.uk/site-information/copyright-parliament/open-parliament-licence/
 coverage:
   countries:
     - gb

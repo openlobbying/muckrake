@@ -6,6 +6,9 @@ dataset:
   tags:
     - legislative
   index_url: https://members-api.parliament.uk/index.html
+  licence:
+    name: Open Parliament Licence v3.0
+    url: https://www.parliament.uk/site-information/copyright-parliament/open-parliament-licence/
 coverage:
   countries:
     - gb

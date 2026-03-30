@@ -8,6 +8,9 @@ dataset:
   tags:
     - lobbying
   index_url: https://orcl.my.site.com/CLR_Search
+  licence:
+    name: Open Government Licence v3.0
+    url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
 coverage:
   countries:
     - gb

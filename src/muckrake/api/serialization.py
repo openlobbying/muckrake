@@ -29,6 +29,9 @@ def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
             if isinstance(raw.get("publisher", {}), dict)
             else {}
         )
+        licence = (
+            cfg.get("licence", {}) if isinstance(cfg.get("licence", {}), dict) else {}
+        )
         coverage = (
             raw.get("coverage", {}) if isinstance(raw.get("coverage", {}), dict) else {}
         )
@@ -48,6 +51,10 @@ def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
                 "country": publisher.get("country"),
                 "country_label": publisher.get("country_label"),
                 "official": publisher.get("official"),
+            },
+            "licence": {
+                "name": licence.get("name"),
+                "url": licence.get("url"),
             },
             "coverage": {
                 "countries": coverage.get("countries", []),

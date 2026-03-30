@@ -27,6 +27,10 @@ export interface DatasetMetadata {
     };
     url?: string;
 	index_url?: string;
+	licence?: {
+		name?: string;
+		url?: string;
+	};
 	coverage?: {
 		countries?: string[];
 		frequency?: string;

@@ -7,9 +7,9 @@ description: How you can access and use OpenLobbying data.
 
 We provide structured, standardised data on lobbying activities in the UK. It includes [meetings, financial contributions, lobbying representation, and more](/datasets).
 
-We can offer these data in various formats, both as full data dumps or as custom extracts and summaries. 
+We do not currently publish a raw data dump while we are still improving data quality and coverage. However, you can contact us to see if we can assist your work.
 
-Each data source is also subject to their original licences, which may have additional terms and conditions.
+Each data source is also subject to their original licences, which may have additional terms and conditions. You can find the licence information fore each dataset on the [Datasets](/datasets) page.
 
 ## Non-commercial and public interest use
 
@@ -26,8 +26,6 @@ As long as you:
 These permissions are granted for non-commercial purposes. This includes academic research, campaigning, transparency activism, and personal use.
 
 Additionally, we extend the same permissions to journalists working for commercial media organisations, as long as the data is used for public interest investigations.
-
-We do not currently publish a raw data dump while we are still improving data quality and coverage. However, you can contact us to see if we can assist your work.
 
 ## Commercial use
 

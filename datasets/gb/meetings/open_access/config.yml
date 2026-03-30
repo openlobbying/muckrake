@@ -7,7 +7,10 @@ dataset:
     url: https://openaccess.transparency.org.uk/data/iw_uk.csv
   tags:
     - lobbying
-    - transparency
+    - meetings
+  licence:
+    name: Open Data Commons Open Database License (ODbL)
+    url: https://opendatacommons.org/licenses/odbl/
 coverage:
   countries:
     - gb
@@ -16,4 +19,5 @@ publisher:
   name: Transparency International UK
   url: https://openaccess.transparency.org.uk/
   country: gb
+  country_label: United Kingdom
   official: false
