@@ -15,6 +15,8 @@ You can find crawlers for [various datasets](https://openlobbying.org/datasets) 
 
 To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muckrake list` to see available datasets.
 
+Each crawl now creates a `dataset_runs` record in Postgres and stores immutable artifacts under `MUCKRAKE_ARTIFACT_PATH` (defaults to `data/artifacts`). The latest successful run remains mirrored into `data/datasets/{name}/statements.pack.csv` for local compatibility.
+
 ### AI-based NER
 
 Many data sources have [composite fields that contain multiple entities](https://openaccess.transparency.org.uk/?meeting=10088). We use LLMs to extract unique entities and relationships from these fields, and store them as candidates in the database for review and approval. See [NER docs](/src/muckrake/extract/ner/README.md) for details.
@@ -49,6 +51,12 @@ uv run muckrake dedupe-edges
 
 Statements are loaded into Postgres with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
 
+To load from a specific immutable crawl snapshot instead of the local workspace copy:
+
+```bash
+uv run muckrake load gb_political_finance --run-id 123
+```
+
 
 ## OpenLobbying
 
@@ -72,10 +80,12 @@ In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8
 ## Database configuration
 
 - Set `MUCKRAKE_DATABASE_URL`. `.env` is loaded automatically from the repo root.
+- Optional: set `MUCKRAKE_ARTIFACT_PATH` to control where immutable run artifacts are stored locally.
 - Example:
 
 ```bash
 export MUCKRAKE_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5432/muckrake"
+export MUCKRAKE_ARTIFACT_PATH="data/artifacts"
 ```
 
 ## Deployment docs

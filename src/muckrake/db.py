@@ -37,18 +37,69 @@ def get_ner_candidates_table(metadata: MetaData | None = None) -> Table:
     )
 
 
+def get_dataset_runs_table(metadata: MetaData | None = None) -> Table:
+    metadata = metadata or get_metadata()
+    return Table(
+        "dataset_runs",
+        metadata,
+        Column("id", Integer(), primary_key=True, autoincrement=True),
+        Column("dataset_name", String(), nullable=False),
+        Column("run_type", String(), nullable=False),
+        Column("status", String(), nullable=False),
+        Column("triggered_by", String(), nullable=True),
+        Column("code_version", String(), nullable=True),
+        Column("config_version", String(), nullable=True),
+        Column("run_key", String(), nullable=True),
+        Column("error_message", Text(), nullable=True),
+        Column("stats_json", Text(), nullable=True),
+        Column("started_at", String(), nullable=False),
+        Column("finished_at", String(), nullable=True),
+        extend_existing=True,
+    )
+
+
+def get_dataset_run_artifacts_table(metadata: MetaData | None = None) -> Table:
+    metadata = metadata or get_metadata()
+    return Table(
+        "dataset_run_artifacts",
+        metadata,
+        Column("id", Integer(), primary_key=True, autoincrement=True),
+        Column("dataset_run_id", Integer(), nullable=False),
+        Column("artifact_type", String(), nullable=False),
+        Column("storage_backend", String(), nullable=False),
+        Column("storage_key", String(), nullable=False),
+        Column("content_type", String(), nullable=True),
+        Column("sha256", String(), nullable=False),
+        Column("size_bytes", Integer(), nullable=False),
+        Column("metadata_json", Text(), nullable=True),
+        Column("created_at", String(), nullable=False),
+        extend_existing=True,
+    )
+
+
 def init_database(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = get_metadata()
-    statement_table = make_statement_table(metadata)
+    statement_table = metadata.tables.get("statement")
+    if statement_table is None:
+        statement_table = make_statement_table(metadata)
     resolver = Resolver(engine, metadata, create=True)
     ner_candidates = get_ner_candidates_table(metadata)
+    dataset_runs = get_dataset_runs_table(metadata)
+    dataset_run_artifacts = get_dataset_run_artifacts_table(metadata)
     metadata.create_all(
         bind=engine,
-        tables=[statement_table, resolver._table, ner_candidates],
+        tables=[
+            statement_table,
+            resolver._table,
+            ner_candidates,
+            dataset_runs,
+            dataset_run_artifacts,
+        ],
         checkfirst=True,
     )
     _ensure_ner_candidates_constraints(engine)
+    _ensure_dataset_run_constraints(engine)
     return engine
 
 
@@ -127,6 +178,26 @@ def _ensure_ner_candidates_constraints(engine: Engine) -> None:
                 """
                 CREATE INDEX IF NOT EXISTS ner_candidates_lookup
                 ON ner_candidates(dataset, status, updated_at)
+                """
+            )
+        )
+
+
+def _ensure_dataset_run_constraints(engine: Engine) -> None:
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS dataset_runs_lookup
+                ON dataset_runs(dataset_name, status, started_at)
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS dataset_run_artifacts_unique_key
+                ON dataset_run_artifacts(dataset_run_id, artifact_type, storage_key)
                 """
             )
         )

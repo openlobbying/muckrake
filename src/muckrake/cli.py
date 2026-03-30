@@ -246,14 +246,15 @@ def dedupe_edges(dataset_name, max_gap_days, dry_run):
 
 @cli.command()
 @click.argument("dataset_name", required=False)
-def load(dataset_name):
+@click.option("--run-id", type=int, help="Load statements from a specific dataset run")
+def load(dataset_name, run_id):
     """Load statements into the database.
 
     DATASET_NAME should be the dataset name from config.yml (e.g., gb_political_finance).
     If not provided, loads all datasets.
     """
     try:
-        run_load(dataset_name)
+        run_load(dataset_name, run_id=run_id)
     except Exception as e:
         log.exception(e)
         sys.exit(1)

@@ -142,6 +142,7 @@ Create env files:
 ```env
 MUCKRAKE_DATABASE_URL=postgresql+psycopg://muckrake:<password>@127.0.0.1:5432/muckrake
 MUCKRAKE_DATA_PATH=/var/lib/muckrake/data
+MUCKRAKE_ARTIFACT_PATH=/var/lib/muckrake/data/artifacts
 ENVIRONMENT=production
 ```
 

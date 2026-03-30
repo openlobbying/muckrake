@@ -34,6 +34,7 @@ def _normalize_database_url(url: str | None) -> str | None:
 _load_dotenv(BASE_PATH / ".env")
 
 DATA_PATH = Path(os.getenv("MUCKRAKE_DATA_PATH", "data"))
+ARTIFACT_PATH = Path(os.getenv("MUCKRAKE_ARTIFACT_PATH", DATA_PATH / "artifacts"))
 SQL_URI = _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL"))
 if SQL_URI is None:
     raise RuntimeError("MUCKRAKE_DATABASE_URL must be set")
