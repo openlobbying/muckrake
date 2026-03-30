@@ -20,7 +20,7 @@ from muckrake.api.serialization import (
     get_all_datasets_metadata,
 )
 from muckrake.api.graph_logic import get_entity_graph_data
-from muckrake.settings import ACTOR_SCHEMATA, SQL_URI
+from muckrake.settings import ACTOR_SCHEMATA, PUBLISHED_SQL_URI
 
 log = logging.getLogger(__name__)
 
@@ -41,13 +41,18 @@ def get_view():
     dataset_names = _list_all_dataset_names()
 
     # Load from SQL store
-    store = get_sql_store(dataset_names)
+    store = get_sql_store(dataset_names, uri=PUBLISHED_SQL_URI)
     return store.default_view(external=True)
+
+
+@lru_cache(maxsize=1)
+def get_published_engine():
+    return get_engine(PUBLISHED_SQL_URI)
 
 
 def _list_db_dataset_names() -> List[str]:
     """Read dataset names currently present in the statement table."""
-    engine = get_engine(SQL_URI)
+    engine = get_published_engine()
     with engine.connect() as conn:
         result = conn.execute(
             text(
@@ -212,7 +217,7 @@ def _expand_actor_schema_filter(
 
 def _get_top_actor_rankings(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
     try:
-        engine = get_engine(SQL_URI)
+        engine = get_published_engine()
         with engine.connect() as conn:
             rows = conn.execute(TOP_ACTOR_SQL).fetchall()
 
@@ -257,7 +262,7 @@ def _get_top_actor_rankings(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
 def postgres_search_ready() -> bool:
     """Check if production search materialized view is available."""
     try:
-        engine = get_engine(SQL_URI)
+        engine = get_published_engine()
         with engine.connect() as conn:
             relation = conn.execute(
                 text("SELECT to_regclass('public.entity_search')")
@@ -453,7 +458,7 @@ def search_entities(
 
     if postgres_search_ready():
         try:
-            engine = get_engine(SQL_URI)
+            engine = get_published_engine()
             with engine.connect() as conn:
                 total = conn.execute(
                     POSTGRES_SEARCH_COUNT_SQL,
@@ -554,7 +559,7 @@ def get_stats() -> Dict[str, Any]:
 
     if postgres_search_ready():
         try:
-            engine = get_engine(SQL_URI)
+            engine = get_published_engine()
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(

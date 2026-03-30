@@ -122,6 +122,7 @@ Create role and DB:
 ```bash
 sudo -u postgres psql -c "CREATE ROLE muckrake LOGIN PASSWORD '<strong-password>';"
 sudo -u postgres psql -c "CREATE DATABASE muckrake OWNER muckrake;"
+sudo -u postgres psql -c "CREATE DATABASE muckrake_published OWNER muckrake;"
 ```
 
 ## 6) Install service and proxy configs
@@ -141,6 +142,7 @@ Create env files:
 
 ```env
 MUCKRAKE_DATABASE_URL=postgresql+psycopg://muckrake:<password>@127.0.0.1:5432/muckrake
+MUCKRAKE_PUBLISHED_DATABASE_URL=postgresql+psycopg://muckrake:<password>@127.0.0.1:5432/muckrake_published
 MUCKRAKE_DATA_PATH=/var/lib/muckrake/data
 MUCKRAKE_ARTIFACT_PATH=/var/lib/muckrake/data/artifacts
 ENVIRONMENT=production

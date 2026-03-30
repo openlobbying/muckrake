@@ -18,6 +18,7 @@ from muckrake.dedupe import (
 from muckrake.extract.ner import run_ner_extract, run_ner_review
 from muckrake.extract.ner.engines import list_extractors
 from muckrake.load import run_load
+from muckrake.release import list_releases, run_release_build, run_release_publish
 
 log = logging.getLogger("muckrake")
 
@@ -38,6 +39,7 @@ class MuckrakeGroup(click.Group):
                 "dedupe-edges",
             ],
         ),
+        ("Build releases", ["release-build", "release-list", "release-publish"]),
         ("Load to database", ["load", "export"]),
         ("Start server", ["server"]),
     ]
@@ -306,6 +308,48 @@ def server(port, host, reload):
     import uvicorn
 
     uvicorn.run("muckrake.api.server:app", host=host, port=port, reload=reload)
+
+
+@cli.command("release-build")
+@click.argument("dataset_name", nargs=-1, required=False)
+@click.option("--notes", help="Optional release notes")
+def release_build(dataset_name, notes):
+    """Build an immutable release artifact from dataset runs."""
+    try:
+        release_id = run_release_build(dataset_name or None, notes=notes)
+        click.echo(f"Built release {release_id}")
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
+
+
+@cli.command("release-publish")
+@click.argument("release_id", type=int)
+def release_publish(release_id):
+    """Publish a built release into the read-only serving database."""
+    try:
+        run_release_publish(release_id)
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
+
+
+@cli.command("release-list")
+@click.option("--limit", type=int, default=20, show_default=True, help="Max releases")
+def release_list(limit):
+    """List recent releases and their statuses."""
+    try:
+        releases = list_releases(limit=limit)
+        if not releases:
+            click.echo("No releases found")
+            return
+        for release in releases:
+            click.echo(
+                f"{release.id}\t{release.status}\tcreated={release.created_at}\tpublished={release.published_at or '-'}"
+            )
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

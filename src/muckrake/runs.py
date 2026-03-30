@@ -207,6 +207,21 @@ def get_latest_successful_artifact(
     return DatasetRunArtifact(**row)
 
 
+def get_latest_successful_run(dataset_name: str) -> DatasetRun | None:
+    engine = init_database()
+    table = get_dataset_runs_table()
+    with engine.begin() as conn:
+        row = conn.execute(
+            select(table)
+            .where(table.c.dataset_name == dataset_name)
+            .where(table.c.status == "succeeded")
+            .order_by(desc(table.c.started_at), desc(table.c.id))
+        ).mappings().first()
+    if row is None:
+        return None
+    return DatasetRun(**row)
+
+
 def _sha256_bytes(data: bytes) -> str:
     import hashlib
 

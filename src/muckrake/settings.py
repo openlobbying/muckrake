@@ -38,6 +38,9 @@ ARTIFACT_PATH = Path(os.getenv("MUCKRAKE_ARTIFACT_PATH", DATA_PATH / "artifacts"
 SQL_URI = _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL"))
 if SQL_URI is None:
     raise RuntimeError("MUCKRAKE_DATABASE_URL must be set")
+PUBLISHED_SQL_URI = _normalize_database_url(
+    os.getenv("MUCKRAKE_PUBLISHED_DATABASE_URL")
+) or SQL_URI
 
 LEVEL_PATH = DATA_PATH / "leveldb"
 ACTOR_SCHEMATA = {"LegalEntity", "Person", "Organization", "Company", "PublicBody"}

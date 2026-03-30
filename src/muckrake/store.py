@@ -4,12 +4,16 @@ from typing import Iterable, Set, List, Optional
 
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
+from nomenklatura import settings as nk_settings
 from nomenklatura.resolver import Resolver, Identifier
+from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
 from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
 from nomenklatura.db import get_engine, get_metadata
 from sqlalchemy import select
+from sqlalchemy.engine import create_engine
 
+from muckrake.db import get_statement_table
 from muckrake.settings import SQL_URI, LEVEL_PATH
 from muckrake.id import is_org_id
 
@@ -54,9 +58,9 @@ class CombinedDataset(Dataset):
         return self._leaf_names
 
 
-def get_resolver(begin: bool = False) -> Resolver:
+def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
     """Get the resolver backed by the main database."""
-    engine = get_engine(SQL_URI)
+    engine = get_engine(uri)
     resolver = Resolver(engine, get_metadata(), create=True)
     if begin:
         resolver.begin()
@@ -107,6 +111,15 @@ class MergedSQLView(SQLView[DS, SE]):
 class MergedSQLStore(SQLStore[DS, SE]):
     """Custom SQL store that uses MergedSQLView."""
 
+    def __init__(self, dataset: DS, linker, uri: str = SQL_URI, **engine_kwargs):
+        Store.__init__(self, dataset, linker)
+        if "pool_size" not in engine_kwargs:
+            engine_kwargs["pool_size"] = nk_settings.DB_POOL_SIZE
+        metadata = get_metadata()
+        self.engine = create_engine(uri, **engine_kwargs)
+        self.table = get_statement_table(metadata)
+        metadata.create_all(self.engine, tables=[self.table], checkfirst=True)
+
     def view(self, scope: DS, external: bool = False) -> SQLView[DS, SE]:
         return MergedSQLView(self, scope, external=external)
 
@@ -114,4 +127,4 @@ class MergedSQLStore(SQLStore[DS, SE]):
 def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:
     """Get a SQL store for serving with proper entity merging."""
     dataset = CombinedDataset("all", dataset_names)
-    return MergedSQLStore(dataset, get_resolver(begin=True), uri=uri)
+    return MergedSQLStore(dataset, get_resolver(uri=uri, begin=True), uri=uri)

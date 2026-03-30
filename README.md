@@ -57,6 +57,13 @@ To load from a specific immutable crawl snapshot instead of the local workspace 
 uv run muckrake load gb_political_finance --run-id 123
 ```
 
+For the published site, prefer the release workflow instead of loading directly into the serving database:
+
+```bash
+uv run muckrake release-build
+uv run muckrake release-publish 1
+```
+
 
 ## OpenLobbying
 
@@ -81,10 +88,12 @@ In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8
 
 - Set `MUCKRAKE_DATABASE_URL`. `.env` is loaded automatically from the repo root.
 - Optional: set `MUCKRAKE_ARTIFACT_PATH` to control where immutable run artifacts are stored locally.
+- Set `MUCKRAKE_PUBLISHED_DATABASE_URL` to a separate published Postgres database used by the API.
 - Example:
 
 ```bash
 export MUCKRAKE_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5432/muckrake"
+export MUCKRAKE_PUBLISHED_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5432/muckrake_published"
 export MUCKRAKE_ARTIFACT_PATH="data/artifacts"
 ```
 
