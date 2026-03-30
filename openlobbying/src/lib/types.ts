@@ -110,6 +110,13 @@ export interface SearchResponse {
 	applied_schema?: string[];
 }
 
+export interface DedupeCandidate {
+    left: Entity;
+    right: Entity;
+    score?: number | null;
+    route?: string;
+}
+
 export interface HomeStats {
 	organizations: number;
 	individuals: number;

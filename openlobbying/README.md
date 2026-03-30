@@ -11,6 +11,18 @@ npm run dev -- --open
 
 Frontend calls use relative `/api/*` routes. In local development, Vite proxies `/api` to `http://127.0.0.1:8000`.
 
+## Authentication
+
+This app uses Better Auth for email/password login.
+
+- Auth tables are created automatically in the database pointed to by `MUCKRAKE_DATABASE_URL`.
+- Set `AUTH_SECRET` in production. In development only, the app falls back to a fixed local secret.
+- Better Auth runs on `/auth/*` so it does not clash with the existing `/api/*` FastAPI proxy in development.
+- Better Auth's admin plugin is enabled, and the admin panel lives at `/admin`.
+- The user ID `o2uOrNOs9d8OLvpxWWOIynfNpYRiChoc` is hard-wired as an admin via `adminUserIds`.
+- The login page is at `/login`.
+- The protected example page is at `/account`.
+
 ## Building
 
 To create a production version of your app:

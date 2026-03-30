@@ -4,10 +4,11 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from followthemoney import model
 from functools import lru_cache
+from pydantic import BaseModel
 from sqlalchemy import text
 from nomenklatura.db import get_engine
 
@@ -20,6 +21,11 @@ from muckrake.api.serialization import (
     get_all_datasets_metadata,
 )
 from muckrake.api.graph_logic import get_entity_graph_data
+from muckrake.api.admin_dedupe import (
+    get_admin_api_secret,
+    get_next_dedupe_candidate,
+    record_dedupe_judgement,
+)
 from muckrake.settings import ACTOR_SCHEMATA, PUBLISHED_SQL_URI
 
 log = logging.getLogger(__name__)
@@ -296,6 +302,17 @@ def _redirect_payload(ent, route: str) -> Dict[str, Any]:
     }
 
 
+class DedupeJudgementBody(BaseModel):
+    left_id: str
+    right_id: str
+    judgement: str
+
+
+def require_admin_secret(x_admin_secret: Optional[str] = Header(default=None)) -> None:
+    if x_admin_secret != get_admin_api_secret():
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 @app.get("/")
 def root() -> Dict[str, object]:
     return {
@@ -313,6 +330,30 @@ def list_datasets() -> List[Dict[str, Any]]:
     for name in _list_all_dataset_names():
         output.append(all_meta.get(name, {"name": name, "title": name}))
     return output
+
+
+@app.get("/admin/dedupe/next")
+def get_admin_dedupe_candidate(x_admin_secret: Optional[str] = Header(default=None)):
+    require_admin_secret(x_admin_secret)
+    return {"candidate": get_next_dedupe_candidate()}
+
+
+@app.post("/admin/dedupe/judge")
+def judge_admin_dedupe_candidate(
+    body: DedupeJudgementBody,
+    x_admin_secret: Optional[str] = Header(default=None),
+):
+    require_admin_secret(x_admin_secret)
+    try:
+        canonical_id = record_dedupe_judgement(
+            body.left_id,
+            body.right_id,
+            body.judgement,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"ok": True, "canonical_id": canonical_id}
 
 
 @app.get("/entities")

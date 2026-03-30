@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import Footer from '$lib/components/Footer.svelte';
 	import favicon from "$lib/assets/favicon.svg";
+	import type { LayoutProps } from './$types';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import * as NavigationMenu from '$lib/components/ui/navigation-menu';
@@ -10,17 +11,21 @@
 	import { Github, Menu, Search } from '@lucide/svelte';
 	import "../app.css";
 
-	let { children } = $props();
+	let { data, children }: LayoutProps = $props();
 	let mobileMenuOpen = $state(false);
 	let currentSearchQuery = $derived(page.url.searchParams.get('q') ?? '');
-	const githubUrl = 'https://github.com/openlobbying';
-	const searchPlaceholder = 'Search organisations, politicians...';
-
-	const navItems = [
+	let currentUser = $derived(data.user);
+	let navItems = $derived([
 		{ href: '/datasets', label: 'Datasets' },
 		{ href: '/licence', label: 'Use our data' },
-		{ href: '/about', label: 'About' }
-	] as const;
+		{ href: '/about', label: 'About' },
+		...(currentUser ? [{ href: '/account', label: 'Account' }] : [])
+	]);
+	let isAdminUser = $derived(currentUser?.id === 'o2uOrNOs9d8OLvpxWWOIynfNpYRiChoc');
+	let accountHref = $derived(isAdminUser ? '/admin' : currentUser ? '/account' : '/login');
+	let accountLabel = $derived(isAdminUser ? 'Admin' : currentUser ? currentUser.name : 'Login');
+	const githubUrl = 'https://github.com/openlobbying';
+	const searchPlaceholder = 'Search organisations, politicians...';
 
 	function closeMobileMenu(): void {
 		mobileMenuOpen = false;
@@ -93,6 +98,18 @@
 								<NavigationMenu.Link>
 									{#snippet child()}
 										<a
+											href={accountHref}
+											class={navigationMenuTriggerStyle({ class: 'inline-flex items-center' })}
+										>
+											{accountLabel}
+										</a>
+									{/snippet}
+								</NavigationMenu.Link>
+							</NavigationMenu.Item>
+							<NavigationMenu.Item>
+								<NavigationMenu.Link>
+									{#snippet child()}
+										<a
 											href={githubUrl}
 											target="_blank"
 											rel="noopener noreferrer"
@@ -153,6 +170,15 @@
 										{item.label}
 									</a>
 								{/each}
+								<a
+									href={accountHref}
+									class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+									onclick={() => {
+										closeMobileMenu();
+									}}
+								>
+									<span>{accountLabel}</span>
+								</a>
 								<a
 									href={githubUrl}
 									target="_blank"
