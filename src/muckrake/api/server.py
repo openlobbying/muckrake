@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any, Dict, List, Optional
 
@@ -8,29 +9,33 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from followthemoney import model
 from functools import lru_cache
+from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import text
-from nomenklatura.db import get_engine
 
 from muckrake.logging import configure_logging
-from muckrake.dataset import list_dataset_names
-from muckrake.store import get_sql_store
+from muckrake.api.view import (
+    get_published_engine,
+    get_view,
+    list_all_dataset_names,
+    serialize_view_entity,
+)
+from muckrake.dedupe import (
+    DedupeLockError,
+    get_lock_engine,
+    get_next_dedupe_candidate,
+    record_dedupe_judgement,
+)
 from muckrake.api.serialization import (
-    serialize_entity,
     is_actor,
     get_all_datasets_metadata,
 )
 from muckrake.api.graph_logic import get_entity_graph_data
-from muckrake.api.admin_dedupe import (
-    DedupeLockError,
-    get_lock_engine,
-    get_admin_api_secret,
-    get_next_dedupe_candidate,
-    record_dedupe_judgement,
-)
-from muckrake.settings import ACTOR_SCHEMATA, PUBLISHED_SQL_URI
+from muckrake.settings import ACTOR_SCHEMATA, BASE_PATH
 
 log = logging.getLogger(__name__)
+
+DEV_ADMIN_SECRET = "openlobbying-dev-auth-secret-change-me"
 
 app = FastAPI(title="Muckrake API", version="0.1.0")
 configure_logging(app=app)
@@ -44,50 +49,47 @@ app.add_middleware(
 )
 
 
+def _read_env_file(path: Path) -> Dict[str, str]:
+    if not path.exists():
+        return {}
+
+    values: Dict[str, str] = {}
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[7:].strip()
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"'")
+        if key:
+            values[key] = value
+
+    return values
+
+
+@lru_cache(maxsize=1)
+def _frontend_env() -> Dict[str, str]:
+    return _read_env_file(BASE_PATH / "openlobbying" / ".env")
+
+
+def get_admin_api_secret() -> str:
+    return (
+        os.getenv("AUTH_SECRET")
+        or os.getenv("BETTER_AUTH_SECRET")
+        or _frontend_env().get("AUTH_SECRET")
+        or _frontend_env().get("BETTER_AUTH_SECRET")
+        or DEV_ADMIN_SECRET
+    )
+
+
 @app.on_event("startup")
 def ensure_admin_dedupe_schema() -> None:
     get_lock_engine()
 
 
-def get_view():
-    """Get a SQL view of the data for serving."""
-    dataset_names = _list_all_dataset_names()
-
-    # Load from SQL store
-    store = get_sql_store(dataset_names, uri=PUBLISHED_SQL_URI)
-    return store.default_view(external=True)
-
-
-@lru_cache(maxsize=1)
-def get_published_engine():
-    return get_engine(PUBLISHED_SQL_URI)
-
-
-def _list_db_dataset_names() -> List[str]:
-    """Read dataset names currently present in the statement table."""
-    engine = get_published_engine()
-    with engine.connect() as conn:
-        result = conn.execute(
-            text(
-                "SELECT DISTINCT dataset FROM statement "
-                "WHERE dataset IS NOT NULL AND dataset != '' ORDER BY dataset"
-            )
-        )
-        return [row[0] for row in result]
-
-
-@lru_cache(maxsize=1)
-def _list_all_dataset_names() -> List[str]:
-    """Union dataset names from configs and loaded DB statements."""
-    names = set(list_dataset_names())
-    try:
-        names.update(_list_db_dataset_names())
-    except Exception as exc:
-        log.warning("Could not read dataset names from database: %s", exc)
-    return sorted(names)
-
-
-# Initialize view
 view = get_view()
 
 POSTGRES_SEARCH_SQL = text(
@@ -286,19 +288,8 @@ def postgres_search_ready() -> bool:
         return False
 
 
-@lru_cache(maxsize=2000)
-def _get_entity_details(entity_id: str) -> Dict[str, str]:
-    """Get caption and schema for an entity ID, with caching."""
-    if not view:
-        return {"caption": entity_id, "schema": "Entity"}
-    ent = view.get_entity(entity_id)
-    if ent:
-        return {"caption": ent.caption, "schema": ent.schema.name}
-    return {"caption": entity_id, "schema": "Entity"}
-
-
 def _serialize(ent) -> Dict[str, Any]:
-    return serialize_entity(ent, get_all_datasets_metadata(), _get_entity_details)
+    return serialize_view_entity(ent)
 
 
 def _redirect_payload(ent, route: str) -> Dict[str, Any]:
@@ -336,7 +327,7 @@ def list_datasets() -> List[Dict[str, Any]]:
     """List all available datasets with metadata."""
     all_meta = get_all_datasets_metadata()
     output = []
-    for name in _list_all_dataset_names():
+    for name in list_all_dataset_names():
         output.append(all_meta.get(name, {"name": name, "title": name}))
     return output
 
@@ -661,7 +652,7 @@ def get_stats() -> Dict[str, Any]:
         "organizations": organizations,
         "individuals": individuals,
         "public_bodies": public_bodies,
-        "datasets": len(_list_all_dataset_names()),
+        "datasets": len(list_all_dataset_names()),
         "total_actors": organizations + individuals + public_bodies,
         "by_schema": schema_counts,
         **_get_top_actor_rankings(),

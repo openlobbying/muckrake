@@ -7,6 +7,12 @@ from .dedupe import (
     run_xref,
 )
 from .dedupe_edges import run_dedupe_edges
+from .review import (
+    DedupeLockError,
+    get_lock_engine,
+    get_next_dedupe_candidate,
+    record_dedupe_judgement,
+)
 
 __all__ = [
     "load_statements",
@@ -16,4 +22,8 @@ __all__ = [
     "run_merge",
     "run_prune",
     "run_dedupe_edges",
+    "DedupeLockError",
+    "get_lock_engine",
+    "get_next_dedupe_candidate",
+    "record_dedupe_judgement",
 ]

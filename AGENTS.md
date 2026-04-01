@@ -20,6 +20,6 @@ Always use `uv` to run Python commands, never `python`, `python3` or `pip` direc
 
 Keep code simple and tidy. We don't need excessive abstractions and over-engineering. We don't need backwards compatibility. We don't need to account for edge cases before they arise.
 
-Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes.
+Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes. Leave comments in the code for future developers to understand your thought process.
 
 You have access to the `gh` CLI tool, use it to interact with GitHub. However, don't commit, push or create pull requests directly unless directed to do so.

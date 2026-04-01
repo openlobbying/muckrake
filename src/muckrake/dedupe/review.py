@@ -1,24 +1,18 @@
 from __future__ import annotations
 
-import os
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict
 
 from followthemoney import model
-from nomenklatura.db import get_engine
 from nomenklatura.judgement import Judgement
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from muckrake.api.serialization import get_all_datasets_metadata, serialize_entity
-from muckrake.dataset import list_dataset_names
+from muckrake.api.view import get_view, serialize_view_entity
 from muckrake.db import ensure_resolver_lock_schema
-from muckrake.settings import BASE_PATH, PUBLISHED_SQL_URI
-from muckrake.store import get_resolver, get_sql_store
+from muckrake.store import get_resolver
 
-DEV_ADMIN_SECRET = "openlobbying-dev-auth-secret-change-me"
 LOCK_TTL = timedelta(minutes=30)
 
 
@@ -34,89 +28,6 @@ class ResolverLock(TypedDict):
     user_name: Optional[str]
     locked_at: str
     expires_at: str
-
-
-def _read_env_file(path: Path) -> Dict[str, str]:
-    if not path.exists():
-        return {}
-
-    values: Dict[str, str] = {}
-    for raw_line in path.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        if line.startswith("export "):
-            line = line[7:].strip()
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip("\"'")
-        if key:
-            values[key] = value
-
-    return values
-
-
-@lru_cache(maxsize=1)
-def _frontend_env() -> Dict[str, str]:
-    return _read_env_file(BASE_PATH / "openlobbying" / ".env")
-
-
-def get_admin_api_secret() -> str:
-    return (
-        os.getenv("AUTH_SECRET")
-        or os.getenv("BETTER_AUTH_SECRET")
-        or _frontend_env().get("AUTH_SECRET")
-        or _frontend_env().get("BETTER_AUTH_SECRET")
-        or DEV_ADMIN_SECRET
-    )
-
-
-@lru_cache(maxsize=1)
-def get_published_engine():
-    return get_engine(PUBLISHED_SQL_URI)
-
-
-def _list_db_dataset_names() -> List[str]:
-    engine = get_published_engine()
-    with engine.connect() as conn:
-        result = conn.execute(
-            text(
-                "SELECT DISTINCT dataset FROM statement "
-                "WHERE dataset IS NOT NULL AND dataset != '' ORDER BY dataset"
-            )
-        )
-        return [row[0] for row in result]
-
-
-@lru_cache(maxsize=1)
-def _list_all_dataset_names() -> List[str]:
-    names = set(list_dataset_names())
-    try:
-        names.update(_list_db_dataset_names())
-    except Exception:
-        pass
-    return sorted(names)
-
-
-@lru_cache(maxsize=1)
-def get_view():
-    dataset_names = _list_all_dataset_names()
-    store = get_sql_store(dataset_names, uri=PUBLISHED_SQL_URI)
-    return store.default_view(external=True)
-
-
-@lru_cache(maxsize=2000)
-def _get_entity_details(entity_id: str) -> Dict[str, str]:
-    view = get_view()
-    ent = view.get_entity(entity_id)
-    if ent is None:
-        return {"caption": entity_id, "schema": "Entity"}
-    return {"caption": ent.caption, "schema": ent.schema.name}
-
-
-def _serialize(ent) -> Dict[str, Any]:
-    return serialize_entity(ent, get_all_datasets_metadata(), _get_entity_details)
 
 
 @lru_cache(maxsize=1)
@@ -274,8 +185,8 @@ def _load_candidate_payload(
     )
 
     payload: Dict[str, Any] = {
-        "left": _serialize(left),
-        "right": _serialize(right),
+        "left": serialize_view_entity(left),
+        "right": serialize_view_entity(right),
         "score": score,
         "route": route,
     }
@@ -319,7 +230,6 @@ def get_next_dedupe_candidate(
     candidates = _list_candidate_rows(limit)
 
     for left_id, right_id, score in candidates:
-        claimed = False
         with engine.begin() as conn:
             claimed = _upsert_lock(
                 conn,
