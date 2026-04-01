@@ -7,8 +7,48 @@ interface DedupeCandidateResponse {
 	candidate: DedupeCandidate | null;
 }
 
-async function loadCandidate(fetch: typeof globalThis.fetch): Promise<DedupeCandidate | null> {
-	const response = await fetch(`${getMuckrakeApiBaseUrl()}/admin/dedupe/next`, {
+interface DedupeUser {
+	id: string;
+	name?: string | null;
+}
+
+function requireDedupeUser(locals: App.Locals): DedupeUser {
+	const user = locals.user;
+	if (!user) {
+		throw new Error('Authenticated admin user missing from request context.');
+	}
+
+	return {
+		id: user.id,
+		name: user.name
+	};
+}
+
+async function getErrorMessage(response: Response, fallback: string): Promise<string> {
+	const text = (await response.text()).trim();
+	if (!text) {
+		return fallback;
+	}
+
+	try {
+		const payload = JSON.parse(text) as { detail?: string };
+		return payload.detail || fallback;
+	} catch {
+		return text;
+	}
+}
+
+async function loadCandidate(
+	fetch: typeof globalThis.fetch,
+	user: DedupeUser
+): Promise<DedupeCandidate | null> {
+	const endpoint = new URL(`${getMuckrakeApiBaseUrl()}/admin/dedupe/next`);
+	endpoint.searchParams.set('user_id', user.id);
+	if (user.name) {
+		endpoint.searchParams.set('user_name', user.name);
+	}
+
+	const response = await fetch(endpoint.toString(), {
 		headers: getAdminApiHeaders()
 	});
 
@@ -22,15 +62,17 @@ async function loadCandidate(fetch: typeof globalThis.fetch): Promise<DedupeCand
 
 export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 	requireAdmin(locals, url);
+	const user = requireDedupeUser(locals);
 
 	return {
-		candidate: await loadCandidate(fetch)
+		candidate: await loadCandidate(fetch, user)
 	};
 };
 
 export const actions: Actions = {
 	judge: async ({ locals, url, request, fetch }) => {
 		requireAdmin(locals, url);
+		const user = requireDedupeUser(locals);
 
 		const formData = await request.formData();
 		const leftId = String(formData.get('leftId') ?? '').trim();
@@ -52,13 +94,15 @@ export const actions: Actions = {
 			body: JSON.stringify({
 				left_id: leftId,
 				right_id: rightId,
-				judgement
+				judgement,
+				user_id: user.id,
+				user_name: user.name
 			})
 		});
 
 		if (!response.ok) {
 			return fail(response.status, {
-				error: (await response.text()) || 'Failed to save dedupe judgement.'
+				error: await getErrorMessage(response, 'Failed to save dedupe judgement.')
 			});
 		}
 

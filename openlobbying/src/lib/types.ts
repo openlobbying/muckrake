@@ -115,6 +115,7 @@ export interface DedupeCandidate {
     right: Entity;
     score?: number | null;
     route?: string;
+    lock_expires_at?: string;
 }
 
 export interface HomeStats {

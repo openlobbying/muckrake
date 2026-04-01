@@ -22,6 +22,8 @@ from muckrake.api.serialization import (
 )
 from muckrake.api.graph_logic import get_entity_graph_data
 from muckrake.api.admin_dedupe import (
+    DedupeLockError,
+    get_lock_engine,
     get_admin_api_secret,
     get_next_dedupe_candidate,
     record_dedupe_judgement,
@@ -40,6 +42,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def ensure_admin_dedupe_schema() -> None:
+    get_lock_engine()
 
 
 def get_view():
@@ -306,6 +313,8 @@ class DedupeJudgementBody(BaseModel):
     left_id: str
     right_id: str
     judgement: str
+    user_id: str
+    user_name: Optional[str] = None
 
 
 def require_admin_secret(x_admin_secret: Optional[str] = Header(default=None)) -> None:
@@ -333,9 +342,13 @@ def list_datasets() -> List[Dict[str, Any]]:
 
 
 @app.get("/admin/dedupe/next")
-def get_admin_dedupe_candidate(x_admin_secret: Optional[str] = Header(default=None)):
+def get_admin_dedupe_candidate(
+    user_id: str,
+    user_name: Optional[str] = None,
+    x_admin_secret: Optional[str] = Header(default=None),
+):
     require_admin_secret(x_admin_secret)
-    return {"candidate": get_next_dedupe_candidate()}
+    return {"candidate": get_next_dedupe_candidate(user_id, user_name=user_name)}
 
 
 @app.post("/admin/dedupe/judge")
@@ -349,7 +362,11 @@ def judge_admin_dedupe_candidate(
             body.left_id,
             body.right_id,
             body.judgement,
+            body.user_id,
+            user_name=body.user_name,
         )
+    except DedupeLockError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

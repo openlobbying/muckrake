@@ -24,6 +24,7 @@
 
 	let { data, form }: { data: DedupePageData; form: DedupeActionData | null } = $props();
 	let candidate = $derived(data.candidate);
+	let lockExpiresAt = $derived(formatLockExpiry(candidate?.lock_expires_at));
 
 	function getName(entity: Entity): string {
 		return String(entity.properties.name?.[0] ?? entity.caption ?? entity.id);
@@ -39,6 +40,19 @@
 		}
 
 		return resolve('/statement/[id]', { id: entity.id });
+	}
+
+	function formatLockExpiry(expiresAt?: string): string | null {
+		if (!expiresAt) {
+			return null;
+		}
+
+		const parsed = new Date(expiresAt);
+		if (Number.isNaN(parsed.getTime())) {
+			return null;
+		}
+
+		return parsed.toLocaleString('en-GB');
 	}
 </script>
 
@@ -87,6 +101,9 @@
 				<Badge variant="secondary">Pending pair</Badge>
 				{#if candidate.score !== null && candidate.score !== undefined}
 					<span>Similarity score: {candidate.score.toFixed(3)}</span>
+				{/if}
+				{#if lockExpiresAt}
+					<span>Locked to you until {lockExpiresAt}</span>
 				{/if}
 			</div>
 
