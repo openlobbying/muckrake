@@ -43,23 +43,20 @@
 		<div class="space-y-3">
 			<p class="text-sm font-semibold uppercase tracking-[0.24em] text-amber-700">Account</p>
 			<h1 class="text-4xl font-semibold tracking-tight text-slate-900">
-				Authenticated users only
+				User account
 			</h1>
-			<p class="max-w-2xl text-base leading-7 text-slate-600">
-				This page is protected in <code>+page.server.ts</code>. Anonymous visitors are redirected to
-				<code>/login</code> before the page renders.
-			</p>
 		</div>
 
 		<div class="grid gap-6 md:grid-cols-2">
 			<Card class="rounded-3xl">
 				<CardHeader>
 					<CardTitle>User</CardTitle>
-					<CardDescription>Loaded from Better Auth via <code>event.locals</code>.</CardDescription>
+					<CardDescription>User account information.</CardDescription>
 				</CardHeader>
 				<CardContent class="space-y-3 text-sm text-slate-600">
 					<p><span class="font-medium text-slate-900">Name:</span> {data.user?.name}</p>
 					<p><span class="font-medium text-slate-900">Email:</span> {data.user?.email}</p>
+					<p><span class="font-medium text-slate-900">Role:</span> {data.user?.role ?? 'user'}</p>
 					<p><span class="font-medium text-slate-900">User ID:</span> {data.user?.id}</p>
 				</CardContent>
 			</Card>

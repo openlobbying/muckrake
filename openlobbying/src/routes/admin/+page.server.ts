@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import { ADMIN_USER_ID, auth } from '$lib/server/auth';
+import { ADMIN_ROLE, isAdminRole } from '$lib/auth-roles';
+import { auth } from '$lib/server/auth';
 import { requireAdmin } from '$lib/server/admin';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -28,10 +29,23 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
 
 	return {
 		users: result.users,
-		total: result.total,
-		adminUserId: ADMIN_USER_ID
+		total: result.total
 	};
 };
+
+async function getAdminCount(request: Request): Promise<number> {
+	const result = await auth.api.listUsers({
+		query: {
+			limit: 1,
+			filterField: 'role',
+			filterOperator: 'contains',
+			filterValue: ADMIN_ROLE
+		},
+		headers: request.headers
+	});
+
+	return result.total;
+}
 
 export const actions: Actions = {
 	setRole: async ({ locals, request, url }) => {
@@ -48,6 +62,28 @@ export const actions: Actions = {
 		}
 
 		try {
+			const user = await auth.api.getUser({
+				query: {
+					id: userId
+				},
+				headers: request.headers
+			});
+
+			if (!user) {
+				return fail(404, {
+					error: 'User not found.'
+				});
+			}
+
+			if (isAdminRole(user.role) && role !== ADMIN_ROLE) {
+				const adminCount = await getAdminCount(request);
+				if (adminCount <= 1) {
+					return fail(400, {
+						error: 'You cannot remove the last remaining admin.'
+					});
+				}
+			}
+
 			await auth.api.setRole({
 				body: {
 					userId,

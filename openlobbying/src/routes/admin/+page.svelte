@@ -23,7 +23,6 @@
 	interface AdminPageData {
 		users: AdminUser[];
 		total: number;
-		adminUserId: string;
 	}
 
 	interface AdminActionData {
@@ -48,8 +47,7 @@
 			<p class="text-sm font-semibold uppercase tracking-[0.24em] text-amber-700">Admin</p>
 			<h1 class="text-4xl font-semibold tracking-tight text-slate-900">User management</h1>
 			<p class="max-w-3xl text-base leading-7 text-slate-600">
-				This panel is powered by Better Auth&apos;s admin plugin. Your account is treated as an
-				admin because its Better Auth user ID matches <code>{data.adminUserId}</code>.
+				Edit user roles and manage account statuses.
 			</p>
 		</div>
 
@@ -116,17 +114,20 @@
 										<td class="px-3 py-3 text-slate-600">
 											{new Date(user.createdAt).toLocaleString('en-GB')}
 										</td>
-										<td class="px-3 py-3">
-											<form method="POST" action="?/setRole" use:enhance class="flex items-center gap-2">
-												<input type="hidden" name="userId" value={user.id} />
-												<Input
-													name="role"
-													value={user.role ?? 'user'}
-													class="h-9 w-28"
-												/>
-												<Button type="submit" size="sm">Save</Button>
-											</form>
-										</td>
+									<td class="px-3 py-3">
+										<form method="POST" action="?/setRole" use:enhance class="flex items-center gap-2">
+											<input type="hidden" name="userId" value={user.id} />
+											<select
+												name="role"
+												value={user.role ?? 'user'}
+												class="border-input bg-background ring-offset-background focus-visible:ring-ring/50 h-9 w-28 rounded-md border px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
+											>
+												<option value="user">user</option>
+												<option value="admin">admin</option>
+											</select>
+											<Button type="submit" size="sm">Save</Button>
+										</form>
+									</td>
 									</tr>
 								{/each}
 							</tbody>
@@ -161,7 +162,13 @@
 
 						<label class="block space-y-2">
 							<span class="text-sm font-medium text-slate-700">Role</span>
-							<Input name="role" value="user" />
+							<select
+								name="role"
+								class="border-input bg-background ring-offset-background focus-visible:ring-ring/50 h-10 w-full rounded-md border px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
+							>
+								<option value="user">user</option>
+								<option value="admin">admin</option>
+							</select>
 						</label>
 
 						<Button type="submit" class="w-full">Create user</Button>

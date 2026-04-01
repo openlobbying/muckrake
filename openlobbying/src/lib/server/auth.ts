@@ -1,6 +1,7 @@
 import { dev } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { env } from '$env/dynamic/private';
+import { ADMIN_ROLE } from '$lib/auth-roles';
 import { betterAuth } from 'better-auth';
 import { getMigrations } from 'better-auth/db/migration';
 import { admin } from 'better-auth/plugins';
@@ -8,8 +9,6 @@ import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
-
-export const ADMIN_USER_ID = 'o2uOrNOs9d8OLvpxWWOIynfNpYRiChoc';
 
 function readEnvFile(fileUrl: URL): Record<string, string> {
 	try {
@@ -90,7 +89,8 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		admin({
-			adminUserIds: [ADMIN_USER_ID]
+			defaultRole: 'user',
+			adminRoles: [ADMIN_ROLE]
 		}),
 		sveltekitCookies(getRequestEvent)
 	]

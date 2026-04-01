@@ -19,7 +19,8 @@ This app uses Better Auth for email/password login.
 - Set `AUTH_SECRET` in production. In development only, the app falls back to a fixed local secret.
 - Better Auth runs on `/auth/*` so it does not clash with the existing `/api/*` FastAPI proxy in development.
 - Better Auth's admin plugin is enabled, and the admin panel lives at `/admin`.
-- The user ID `o2uOrNOs9d8OLvpxWWOIynfNpYRiChoc` is hard-wired as an admin via `adminUserIds`.
+- Admin access is role-based using Better Auth's built-in `user` and `admin` roles.
+- Admins can be promoted or demoted from `/admin`.
 - The login page is at `/login`.
 - The protected example page is at `/account`.
 
