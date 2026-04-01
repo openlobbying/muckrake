@@ -14,12 +14,6 @@ Crawlers must crash loudly on uncertain data, never emit ambiguous information.
 
 ## Python conventions
 
-- `MUCKRAKE_DATABASE_URL` must point to Postgres in all environments.
-- Production publishing uses one curated DB artifact (must include resolver + ner_candidates state).
-- Frontend calls backend through relative `/api/*` routes (no hardcoded localhost URLs).
-- For local frontend dev, Vite proxies `/api` to `http://127.0.0.1:8000`.
-- Deployment templates and VPS runbook live in `docs/deploy/`.
-- Do not commit secrets or server-specific private values into repo files.
 Always use `uv` to run Python commands, never `python`, `python3` or `pip` directly.
 
 ## Good practices
