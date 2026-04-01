@@ -1,26 +1,30 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { isAdminUser } from '$lib/auth-roles';
 	import Footer from '$lib/components/Footer.svelte';
-	import favicon from "$lib/assets/favicon.svg";
+	import favicon from '$lib/assets/favicon.svg';
+	import type { LayoutProps } from './$types';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import * as NavigationMenu from '$lib/components/ui/navigation-menu';
 	import { navigationMenuTriggerStyle } from '$lib/components/ui/navigation-menu/navigation-menu-trigger.svelte';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import { Github, Menu, Search } from '@lucide/svelte';
-	import "../app.css";
+	import '../app.css';
 
-	let { children } = $props();
+	let { data, children }: LayoutProps = $props();
 	let mobileMenuOpen = $state(false);
 	let currentSearchQuery = $derived(page.url.searchParams.get('q') ?? '');
-	const githubUrl = 'https://github.com/openlobbying';
-	const searchPlaceholder = 'Search organisations, politicians...';
-
-	const navItems = [
+	let currentUser = $derived(data.user);
+	let navItems = $derived([
 		{ href: '/datasets', label: 'Datasets' },
 		{ href: '/licence', label: 'Use our data' },
 		{ href: '/about', label: 'About' }
-	] as const;
+	]);
+	let adminUser = $derived(isAdminUser(currentUser));
+	let accountLabel = $derived(currentUser ? currentUser.name : null);
+	const githubUrl = 'https://github.com/openlobbying';
+	const searchPlaceholder = 'Search organisations, politicians...';
 
 	function closeMobileMenu(): void {
 		mobileMenuOpen = false;
@@ -43,6 +47,15 @@
 			isActiveRoute(href)
 				? 'bg-accent text-accent-foreground'
 				: 'text-foreground hover:bg-accent hover:text-accent-foreground'
+		].join(' ');
+	}
+
+	function getAccountMenuClass(href: string): string {
+		return [
+			'block rounded-md px-3 py-2 text-sm transition-colors',
+			isActiveRoute(href)
+				? 'bg-accent text-accent-foreground'
+				: 'text-foreground/80 hover:bg-accent hover:text-accent-foreground'
 		].join(' ');
 	}
 </script>
@@ -89,6 +102,20 @@
 									</NavigationMenu.Link>
 								</NavigationMenu.Item>
 							{/each}
+							{#if currentUser}
+								<NavigationMenu.Item>
+									<NavigationMenu.Trigger>Account</NavigationMenu.Trigger>
+									<NavigationMenu.Content class="min-w-52">
+										<div class="space-y-1 p-1">
+											<div class="px-3 py-2 text-sm text-slate-500">{accountLabel}</div>
+											<a href="/account" class={getAccountMenuClass('/account')}>Account</a>
+											{#if adminUser}
+												<a href="/admin" class={getAccountMenuClass('/admin')}>Admin</a>
+											{/if}
+										</div>
+									</NavigationMenu.Content>
+								</NavigationMenu.Item>
+							{/if}
 							<NavigationMenu.Item>
 								<NavigationMenu.Link>
 									{#snippet child()}
@@ -152,9 +179,35 @@
 									>
 										{item.label}
 									</a>
-								{/each}
+							{/each}
+							{#if currentUser}
+								<div class="px-3 pt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+									Account
+								</div>
+								<div class="px-3 text-sm text-slate-500">{accountLabel}</div>
 								<a
-									href={githubUrl}
+									href="/account"
+									class={getMobileNavLinkClass('/account')}
+									onclick={() => {
+										closeMobileMenu();
+									}}
+								>
+									Account
+								</a>
+								{#if adminUser}
+									<a
+										href="/admin"
+										class={getMobileNavLinkClass('/admin')}
+										onclick={() => {
+											closeMobileMenu();
+										}}
+									>
+										Admin
+									</a>
+								{/if}
+							{/if}
+							<a
+								href={githubUrl}
 									target="_blank"
 									rel="noopener noreferrer"
 									class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"

@@ -17,8 +17,7 @@ from muckrake.db import get_statement_table
 from muckrake.settings import SQL_URI, LEVEL_PATH
 from muckrake.id import is_org_id
 
-# Reduce batch size to avoid SQLite parameter limit (999 or 32766)
-# With ~13 columns per statement, 500 statements = ~6500 parameters (safe)
+# Keep statement batches moderate to avoid oversized INSERT statements.
 SQLWriter.BATCH_STATEMENTS = 500
 
 # Monkey patch Nomenklatura's Identifier to prioritize org-id.guide IDs
