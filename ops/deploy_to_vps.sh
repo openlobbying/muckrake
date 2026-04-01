@@ -9,7 +9,7 @@ fi
 SERVER="$1"
 KEY_PATH="${2:-$HOME/.ssh/id_ed25519}"
 
-echo "[1/4] Sync code to VPS"
+echo "[1/3] Sync code to VPS"
 rsync -az --delete \
   --exclude ".git" \
   --exclude ".venv" \
@@ -18,7 +18,7 @@ rsync -az --delete \
   -e "ssh -i $KEY_PATH" \
   ./ "deploy@$SERVER:/home/deploy/muckrake/"
 
-echo "[2/4] Install deps, build frontend, restart services"
+echo "[2/3] Install deps, build frontend, restart services"
 ssh -i "$KEY_PATH" "deploy@$SERVER" '
   set -e
   cd /home/deploy/muckrake

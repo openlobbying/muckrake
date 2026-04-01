@@ -99,5 +99,6 @@ export MUCKRAKE_ARTIFACT_PATH="data/artifacts"
 
 ## Deployment docs
 
-- VPS guide and templates: `docs/deploy/README.md`
-- One-command deploy (code + data): `./scripts/deploy_to_vps.sh {ip_address}`
+- Deployment runbook: `ops/README.md`
+- App deployment assets: `ops/`
+- One-command app deploy: `./ops/deploy_to_vps.sh {ip_address}`

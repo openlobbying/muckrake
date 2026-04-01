@@ -40,4 +40,4 @@ You can preview the production build with `npm run preview`.
 - Production runtime command is `node build`.
 - In production we expect a reverse proxy (Caddy/Nginx) in front of the Node process.
 
-See `../docs/deploy/` for service templates and proxy config used by this project.
+See `../ops/README.md` for the deployment runbook and `../ops/` for service templates and proxy config used by this project.

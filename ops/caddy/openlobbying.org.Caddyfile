@@ -1,0 +1,13 @@
+www.openlobbying.org {
+    redir https://openlobbying.org{uri} permanent
+}
+
+openlobbying.org {
+    encode zstd gzip
+
+    handle_path /api/* {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    reverse_proxy 127.0.0.1:3000
+}
