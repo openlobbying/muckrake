@@ -5,7 +5,7 @@ A framework for creating and storing [FollowTheMoney](https://followthemoney.tec
 
 ## Muckrake
 
-Muckrake is the data pipeline. It is partially inspired by [`zavod`](https://zavod.opensanctions.org/) and [other FollowTheMoney tools](https://followthemoney.tech/community/stack/).
+Muckrake is the data pipeline. It is partially inspired by [`zavod`](https://zavod.opensanctions.org/) and [other tools in the FollowTheMoney ecosystems](https://followthemoney.tech/community/stack/).
 
 Run `uv run muckrake --help` for a full list of available commands.
 

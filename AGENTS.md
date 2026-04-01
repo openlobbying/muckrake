@@ -1,20 +1,18 @@
-## Good practices
+# Instructions for AI agents
 
-Always use `uv` to run Python commands, never `python`, `python3` or `pip` directly.
+Muckrake crawls various [datasets](/datasets/), creates [FollowTheMoney](https://followthemoney.tech/) entities and relationships, servese them via a [FastAPI backend](/src/muckrake/api/server.py) and a [SvelteKit frontend](/openlobbying/). It is used for OpenLobbying.org, a public website for exploring UK lobbying data (donations, meetings, lobbying representation, etc.).
 
-Chances are a lot of the code you'll want to write is redundant and is already provided by [`followthemoney`](https://followthemoney.tech/docs/) and [`nomenklatura`](https://github.com/opensanctions/nomenklatura). Check the documentation and codebase to see if you can use existing functions before writing new ones.
+## FollowTheMoney
+
+Always prefer using existing FollowTheMoney functions and schemata throughout the codebase. We also heavily rely on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library for entity resolution, as well as data storage. Check the documentation and codebase to see if you can use existing functions before writing new ones, chances are they exist.
 
 Key Resources:
 - FtM entity schemata: https://followthemoney.tech/explorer/schemata/
 - FtM property types: https://followthemoney.tech/explorer/types/
 
-Keep code simple and tidy. We don't need excessive abstractions and over-engineering. We don't need backwards compatibility. We don't need to account for edge cases before they arise.
-
-Keep documentation up to date and accurate when you add new features or make changes.
-
 Crawlers must crash loudly on uncertain data, never emit ambiguous information.
 
-## Deployment conventions
+## Python conventions
 
 - `MUCKRAKE_DATABASE_URL` must point to Postgres in all environments.
 - Production publishing uses one curated DB artifact (must include resolver + ner_candidates state).
@@ -22,9 +20,12 @@ Crawlers must crash loudly on uncertain data, never emit ambiguous information.
 - For local frontend dev, Vite proxies `/api` to `http://127.0.0.1:8000`.
 - Deployment templates and VPS runbook live in `docs/deploy/`.
 - Do not commit secrets or server-specific private values into repo files.
+Always use `uv` to run Python commands, never `python`, `python3` or `pip` directly.
 
-## Project Overview
+## Good practices
 
-Read [[muckrake/README]] for an overview of the project and common commands.
+Keep code simple and tidy. We don't need excessive abstractions and over-engineering. We don't need backwards compatibility. We don't need to account for edge cases before they arise.
 
-**Muckrake** is an ETL framework for tracking lobbying and political finance data using the FollowTheMoney (FtM) entity model. It crawls structured/semi-structured government data, performs entity deduplication, stores entities in LevelDB, and serves them via a FastAPI backend with a SvelteKit frontend.
+Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes.
+
+You have access to the `gh` CLI tool, use it to interact with GitHub. However, don't commit, push or create pull requests directly unless directed to do so.

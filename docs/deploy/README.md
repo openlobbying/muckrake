@@ -1,3 +1,12 @@
+## Deployment conventions
+
+- Production DB is configured via `MUCKRAKE_DATABASE_URL` (Postgres), local defaults to SQLite.
+- Production publishing uses one curated DB artifact (must include resolver + ner_candidates state).
+- Frontend calls backend through relative `/api/*` routes (no hardcoded localhost URLs).
+- For local frontend dev, Vite proxies `/api` to `http://127.0.0.1:8000`.
+- Deployment templates and VPS runbook live in `docs/deploy/`.
+- Do not commit secrets or server-specific private values into repo files.
+
 # VPS deployment guide
 
 This is the complete guide to deploy Muckrake + OpenLobbying on one Hetzner VPS.
