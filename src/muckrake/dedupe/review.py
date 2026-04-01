@@ -10,8 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from muckrake.api.view import get_view, serialize_view_entity
-from muckrake.db import ensure_resolver_lock_schema
-from muckrake.store import get_resolver
+from muckrake.db import ensure_resolver_lock_schema, get_resolver
 
 LOCK_TTL = timedelta(minutes=30)
 

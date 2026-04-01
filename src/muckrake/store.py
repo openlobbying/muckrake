@@ -5,40 +5,22 @@ from typing import Iterable, Set, List, Optional
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
-from nomenklatura.resolver import Resolver, Identifier
 from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
 from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
-from nomenklatura.db import get_engine, get_metadata
+from nomenklatura.db import get_metadata
 from sqlalchemy import select
 from sqlalchemy.engine import create_engine
 
-from muckrake.db import get_statement_table
+from muckrake.db import get_resolver, get_statement_table
 from muckrake.settings import SQL_URI, LEVEL_PATH
-from org_id import is_org_id
-
-# Keep statement batches moderate to avoid oversized INSERT statements.
-SQLWriter.BATCH_STATEMENTS = 500
-
-# Monkey patch Nomenklatura's Identifier to prioritize org-id.guide IDs
-# This ensures GB-COH- style IDs win over NK- or Q- IDs during merges.
-original_init = Identifier.__init__
-
-
-def patched_init(self, id: str):
-    original_init(self, id)
-    if is_org_id(id):
-        # Weight 1: Hashed/Dataset IDs
-        # Weight 2: NK- (Nomenklatura random)
-        # Weight 3: Q (Wikidata)
-        # Weight 4: Org-IDs (Companies House, etc)
-        self.weight = 4
-        self.canonical = True
-
-
-Identifier.__init__ = patched_init
 
 log = logging.getLogger(__name__)
+
+
+class MuckrakeSQLWriter(SQLWriter[DS, SE]):
+    # Keep statement batches moderate to avoid oversized INSERT statements.
+    BATCH_STATEMENTS = 500
 
 
 class CombinedDataset(Dataset):
@@ -55,15 +37,6 @@ class CombinedDataset(Dataset):
     @property
     def leaf_names(self) -> Set[str]:
         return self._leaf_names
-
-
-def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
-    """Get the resolver backed by the main database."""
-    engine = get_engine(uri)
-    resolver = Resolver(engine, get_metadata(), create=True)
-    if begin:
-        resolver.begin()
-    return resolver
 
 
 def get_level_store(dataset_names: Iterable[str], fresh: bool = False) -> LevelDBStore:
@@ -121,6 +94,9 @@ class MergedSQLStore(SQLStore[DS, SE]):
 
     def view(self, scope: DS, external: bool = False) -> SQLView[DS, SE]:
         return MergedSQLView(self, scope, external=external)
+
+    def writer(self):
+        return MuckrakeSQLWriter(self)
 
 
 def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:

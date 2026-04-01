@@ -1,20 +1,45 @@
 from __future__ import annotations
 
 import logging
+from typing import cast
 
-from nomenklatura.db import get_engine, get_metadata
-from nomenklatura.resolver import Resolver
-from nomenklatura.store.sql import make_statement_table
+from nomenklatura.db import get_engine, get_metadata, make_statement_table
+from nomenklatura.resolver import Identifier, Resolver
 from sqlalchemy import Column, Integer, MetaData, String, Table, Text, text
 from sqlalchemy.engine import Engine
 
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
+from org_id import is_org_id
 
 log = logging.getLogger(__name__)
 
+# Monkey patch Nomenklatura's Identifier to prioritize org-id.guide IDs.
+# This ensures GB-COH- style IDs win over NK- or Q- IDs during merges.
+_original_identifier_init = Identifier.__init__
+
+
+def _patched_identifier_init(self, id: str) -> None:
+    _original_identifier_init(self, id)
+    if is_org_id(id):
+        # Weight 1: Hashed/Dataset IDs
+        # Weight 2: NK- (Nomenklatura random)
+        # Weight 3: Q (Wikidata)
+        # Weight 4: Org-IDs (Companies House, etc)
+        self.weight = 4
+        self.canonical = True
+
+
+Identifier.__init__ = _patched_identifier_init
+
+
+def _resolved_metadata(metadata: MetaData | None = None) -> MetaData:
+    if metadata is None:
+        return cast(MetaData, get_metadata())
+    return metadata
+
 
 def get_ner_candidates_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "ner_candidates",
         metadata,
@@ -38,7 +63,7 @@ def get_ner_candidates_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_dataset_runs_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "dataset_runs",
         metadata,
@@ -59,7 +84,7 @@ def get_dataset_runs_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_dataset_run_artifacts_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "dataset_run_artifacts",
         metadata,
@@ -78,7 +103,7 @@ def get_dataset_run_artifacts_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_releases_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "releases",
         metadata,
@@ -96,7 +121,7 @@ def get_releases_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_resolver_lock_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "resolver_lock",
         metadata,
@@ -113,7 +138,7 @@ def get_resolver_lock_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_release_inputs_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "release_inputs",
         metadata,
@@ -126,7 +151,7 @@ def get_release_inputs_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
+    metadata = _resolved_metadata(metadata)
     return Table(
         "release_artifacts",
         metadata,
@@ -145,11 +170,16 @@ def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
 
 
 def get_statement_table(metadata: MetaData | None = None) -> Table:
-    metadata = metadata or get_metadata()
-    table = metadata.tables.get("statement")
-    if table is None:
-        table = make_statement_table(metadata)
-    return table
+    metadata = _resolved_metadata(metadata)
+    return make_statement_table(metadata)
+
+
+def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
+    """Get the resolver backed by the main database."""
+    resolver = Resolver(get_engine(uri), _resolved_metadata(), create=True)
+    if begin:
+        resolver.begin()
+    return resolver
 
 
 def init_database(uri: str = SQL_URI) -> Engine:

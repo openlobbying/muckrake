@@ -6,10 +6,11 @@ from nomenklatura.judgement import Judgement
 from nomenklatura.matching import DefaultAlgorithm, get_algorithm
 from nomenklatura.xref import xref as nk_xref
 
+from muckrake.db import get_resolver
 from muckrake.dataset import find_datasets, get_dataset_path, load_config
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.settings import DATA_PATH
-from muckrake.store import get_level_store, get_resolver
+from muckrake.store import get_level_store
 
 log = logging.getLogger(__name__)
 

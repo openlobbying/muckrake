@@ -33,14 +33,20 @@ def _normalize_database_url(url: str | None) -> str | None:
 
 _load_dotenv(BASE_PATH / ".env")
 
+
+def _require_database_url(name: str) -> str:
+    value = _normalize_database_url(os.getenv(name))
+    if value is None:
+        raise RuntimeError(f"{name} must be set")
+    return value
+
+
 DATA_PATH = Path(os.getenv("MUCKRAKE_DATA_PATH", "data"))
 ARTIFACT_PATH = Path(os.getenv("MUCKRAKE_ARTIFACT_PATH", DATA_PATH / "artifacts"))
-SQL_URI = _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL"))
-if SQL_URI is None:
-    raise RuntimeError("MUCKRAKE_DATABASE_URL must be set")
-PUBLISHED_SQL_URI = _normalize_database_url(
-    os.getenv("MUCKRAKE_PUBLISHED_DATABASE_URL")
-) or SQL_URI
+SQL_URI: str = _require_database_url("MUCKRAKE_DATABASE_URL")
+PUBLISHED_SQL_URI: str = (
+    _normalize_database_url(os.getenv("MUCKRAKE_PUBLISHED_DATABASE_URL")) or SQL_URI
+)
 
 LEVEL_PATH = DATA_PATH / "leveldb"
 ACTOR_SCHEMATA = {"LegalEntity", "Person", "Organization", "Company", "PublicBody"}

@@ -7,9 +7,10 @@ from typing import Optional
 
 from nomenklatura.judgement import Judgement
 
+from muckrake.db import get_resolver
 from muckrake.dataset import find_datasets, load_config
 from muckrake.dedupe.dedupe import load_statements
-from muckrake.store import get_level_store, get_resolver
+from muckrake.store import get_level_store
 
 log = logging.getLogger(__name__)
 
