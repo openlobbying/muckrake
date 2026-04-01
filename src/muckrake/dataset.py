@@ -10,9 +10,10 @@ from followthemoney.statement.entity import StatementEntity
 from nomenklatura.cache import Cache
 from nomenklatura.db import get_engine, get_metadata
 
+from org_id import make_hashed_id, make_org_id
+
 from muckrake.extract.fetch import fetch_file, fetch_json, fetch_html, fetch_text
 from muckrake.settings import DATA_PATH, SQL_URI
-from muckrake.id import make_org_id, make_hashed_id
 
 
 def get_dataset_path(name: str) -> Path:

@@ -8,7 +8,7 @@ from followthemoney.statement import Statement
 from followthemoney.statement.serialize import read_pack_statements
 from sqlalchemy import text
 
-from muckrake.id import make_hashed_id
+from org_id import make_hashed_id
 
 from .pipeline import text_fingerprint
 from .storage import get_connection

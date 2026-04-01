@@ -9,6 +9,8 @@ Muckrake is the data pipeline. It is partially inspired by [`zavod`](https://zav
 
 Run `uv run muckrake --help` for a full list of available commands.
 
+Install Python dependencies with `uv sync`. This now includes the external `org-id` package used for structured organization identifiers.
+
 ### Crawlers
 
 You can find crawlers for [various datasets](https://openlobbying.org/datasets) in `datasets/`. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawl.py` script that outputs FollowTheMoney statements in CSV format.

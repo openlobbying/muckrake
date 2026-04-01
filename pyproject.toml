@@ -13,6 +13,7 @@ dependencies = [
     "datapatch>=1.2.4",
     "fastapi>=0.127.0",
     "followthemoney>=4.4.0",
+    "org-id>=0.1.0",
     "lxml>=6.0.2",
     "nomenklatura>=4.4.1",
     "openpyxl>=3.1.5",

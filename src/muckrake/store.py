@@ -15,7 +15,7 @@ from sqlalchemy.engine import create_engine
 
 from muckrake.db import get_statement_table
 from muckrake.settings import SQL_URI, LEVEL_PATH
-from muckrake.id import is_org_id
+from org_id import is_org_id
 
 # Keep statement batches moderate to avoid oversized INSERT statements.
 SQLWriter.BATCH_STATEMENTS = 500
