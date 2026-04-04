@@ -7,6 +7,11 @@ from .dedupe import (
     run_xref,
 )
 from .dedupe_edges import run_dedupe_edges
+from .cluster import (
+    get_next_dedupe_cluster,
+    record_dedupe_cluster_judgement,
+    skip_dedupe_cluster,
+)
 from .review import (
     DedupeLockError,
     get_lock_engine,
@@ -25,5 +30,8 @@ __all__ = [
     "DedupeLockError",
     "get_lock_engine",
     "get_next_dedupe_candidate",
+    "get_next_dedupe_cluster",
+    "record_dedupe_cluster_judgement",
     "record_dedupe_judgement",
+    "skip_dedupe_cluster",
 ]

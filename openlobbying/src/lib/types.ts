@@ -118,6 +118,23 @@ export interface DedupeCandidate {
     lock_expires_at?: string;
 }
 
+export interface DedupeLockedPair {
+	left_id: string;
+	right_id: string;
+	score?: number | null;
+}
+
+export interface DedupeClusterMember {
+	entity: Entity;
+	score?: number | null;
+}
+
+export interface DedupeClusterCandidate {
+	members: DedupeClusterMember[];
+	locked_pairs: DedupeLockedPair[];
+	lock_expires_at?: string;
+}
+
 export interface HomeStats {
 	organizations: number;
 	individuals: number;

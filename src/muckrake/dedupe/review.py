@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, Iterable, List, Optional, TypedDict
 
 from followthemoney import model
 from nomenklatura.judgement import Judgement
@@ -27,6 +27,7 @@ class ResolverLock(TypedDict):
     user_name: Optional[str]
     locked_at: str
     expires_at: str
+    updated_at: str
 
 
 @lru_cache(maxsize=1)
@@ -64,7 +65,7 @@ def _get_user_lock(
         conn.execute(
             text(
                 """
-            SELECT pair_key, left_id, right_id, user_id, user_name, locked_at, expires_at
+            SELECT pair_key, left_id, right_id, user_id, user_name, locked_at, expires_at, updated_at
             FROM resolver_lock
             WHERE user_id = :user_id
               AND expires_at > :now
@@ -82,11 +83,38 @@ def _get_user_lock(
     return ResolverLock(**dict(row))
 
 
+def _get_user_locks(
+    conn: Connection, user_id: str, now: datetime
+) -> List[ResolverLock]:
+    rows = (
+        conn.execute(
+            text(
+                """
+            SELECT pair_key, left_id, right_id, user_id, user_name, locked_at, expires_at, updated_at
+            FROM resolver_lock
+            WHERE user_id = :user_id
+              AND expires_at > :now
+            ORDER BY updated_at DESC, pair_key ASC
+            """
+            ),
+            {"user_id": user_id, "now": now.isoformat()},
+        )
+        .mappings()
+        .all()
+    )
+    return [ResolverLock(**dict(row)) for row in rows]
+
+
 def _release_lock(conn: Connection, pair_key: str) -> None:
     conn.execute(
         text("DELETE FROM resolver_lock WHERE pair_key = :pair_key"),
         {"pair_key": pair_key},
     )
+
+
+def _release_locks(conn: Connection, pair_keys: Iterable[str]) -> None:
+    for pair_key in pair_keys:
+        _release_lock(conn, pair_key)
 
 
 def _get_lock_owner(conn: Connection, pair_key: str, now: datetime) -> Optional[str]:

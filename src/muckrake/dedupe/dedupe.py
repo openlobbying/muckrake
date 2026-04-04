@@ -27,7 +27,7 @@ def load_statements(store, dataset_names):
 
 
 def run_xref(
-    limit: int = 5000,
+    limit: int = 50000,
     threshold: Optional[float] = None,
     algorithm: str = DefaultAlgorithm.NAME,
     schema: Optional[str] = None,

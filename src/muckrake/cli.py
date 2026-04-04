@@ -157,7 +157,7 @@ def export(output, dataset):
 
 
 @cli.command()
-@click.option("--limit", "-l", type=int, default=5000, help="Candidate limit")
+@click.option("--limit", "-l", type=int, default=50000, help="Candidate limit")
 @click.option("--threshold", "-t", type=float, help="Auto-merge threshold")
 @click.option("--algorithm", "-a", default=DefaultAlgorithm.NAME, help="Algorithm")
 @click.option("--schema", "-s", help="Filter by schema")
