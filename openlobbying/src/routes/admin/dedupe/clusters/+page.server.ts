@@ -8,6 +8,24 @@ interface DedupeClusterResponse {
 	candidate: DedupeClusterCandidate | null;
 }
 
+const CLUSTER_SUCCESS_MESSAGES: Record<string, (count: number) => string> = {
+	match: (count) => `Recorded match judgements for ${count} locked pair${count === 1 ? '' : 's'}.`,
+	no_match: (count) =>
+		`Recorded no-match judgements for ${count} locked pair${count === 1 ? '' : 's'}.`,
+	unsure: (count) => `Recorded unsure judgements for ${count} locked pair${count === 1 ? '' : 's'}.`,
+	skip: () => 'Skipped this cluster.'
+};
+
+function countSelectedLockedPairs(
+	selectedIds: string[],
+	lockedPairs: Array<{ left_id: string; right_id: string }>
+): number {
+	const selected = new Set(selectedIds);
+	return lockedPairs.filter(
+		(pair) => selected.has(pair.left_id) && selected.has(pair.right_id)
+	).length;
+}
+
 async function loadCandidate(
 	fetch: typeof globalThis.fetch,
 	user: { id: string; name?: string | null }
@@ -92,19 +110,14 @@ export const actions: Actions = {
 
 		if (!response.ok) {
 			return fail(response.status, {
-				error: await getAdminErrorMessage(response, 'Failed to save cluster merge.')
+				error: await getAdminErrorMessage(response, 'Failed to save cluster judgement.')
 			});
 		}
 
 		return {
-			success:
-				intent === 'skip'
-					? 'Skipped this cluster.'
-					: intent === 'match'
-						? `Recorded match judgements for ${selectedIds.length} selected records.`
-						: intent === 'no_match'
-							? `Recorded no-match judgements for ${selectedIds.length} selected records.`
-							: `Recorded unsure judgements for ${selectedIds.length} selected records.`
+			success: (CLUSTER_SUCCESS_MESSAGES[intent] ?? CLUSTER_SUCCESS_MESSAGES.match)(
+				countSelectedLockedPairs(selectedIds, lockedPairs)
+			)
 		};
 	}
 };

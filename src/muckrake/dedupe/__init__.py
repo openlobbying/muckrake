@@ -10,7 +10,6 @@ from .dedupe_edges import run_dedupe_edges
 from .cluster import (
     get_next_dedupe_cluster,
     record_dedupe_cluster_judgement,
-    record_dedupe_cluster_merge,
     skip_dedupe_cluster,
 )
 from .review import (
@@ -33,7 +32,6 @@ __all__ = [
     "get_next_dedupe_candidate",
     "get_next_dedupe_cluster",
     "record_dedupe_cluster_judgement",
-    "record_dedupe_cluster_merge",
     "record_dedupe_judgement",
     "skip_dedupe_cluster",
 ]

@@ -7,7 +7,7 @@ from heapq import heappop, heappush
 from typing import Any, Dict, Iterable, List, Optional, TypedDict
 
 from nomenklatura.judgement import Judgement
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.engine import Connection
 
 from muckrake.api.view import get_view, serialize_view_entity
@@ -26,6 +26,8 @@ from muckrake.dedupe.review import (
     _utc_now,
     get_lock_engine,
 )
+from muckrake.settings import SQL_URI
+from nomenklatura.db import get_engine
 
 SKIP_TTL = timedelta(hours=2)
 
@@ -44,7 +46,6 @@ class ClusterMember(TypedDict):
 @dataclass(frozen=True)
 class ClusterCandidate:
     member_ids: List[str]
-    locked_pairs: List[LockedPair]
 
 
 def _delete_expired_skips(conn: Connection, now: datetime) -> None:
@@ -183,15 +184,15 @@ def _build_cluster_candidate(
     *,
     max_members: int,
 ) -> Optional[ClusterCandidate]:
-    pair_scores: dict[str, Optional[float]] = {}
     adjacency: dict[str, list[tuple[str, Optional[float]]]] = defaultdict(list)
+    has_seed = False
     for left_id, right_id, score in candidates:
-        pair_key = _pair_key(left_id, right_id)
-        pair_scores[pair_key] = score
+        if _pair_key(left_id, right_id) == _pair_key(seed_left_id, seed_right_id):
+            has_seed = True
         adjacency[left_id].append((right_id, score))
         adjacency[right_id].append((left_id, score))
 
-    if _pair_key(seed_left_id, seed_right_id) not in pair_scores:
+    if not has_seed:
         return None
 
     member_ids = [seed_left_id]
@@ -214,14 +215,77 @@ def _build_cluster_candidate(
             if other_id not in seen:
                 heappush(heap, (-(score or 0.0), other_id))
 
-    locked_pairs = [
-        LockedPair(left_id=left_id, right_id=right_id, score=score)
-        for left_id, right_id, score in candidates
-        if left_id in seen and right_id in seen
-    ]
-    if not locked_pairs:
+    if len(member_ids) < 2:
         return None
-    return ClusterCandidate(member_ids=member_ids, locked_pairs=locked_pairs)
+    return ClusterCandidate(member_ids=member_ids)
+
+
+def _list_cluster_candidate_rows(
+    member_ids: List[str], skipped_pair_keys: set[str]
+) -> List[LockedPair]:
+    if len(member_ids) < 2:
+        return []
+
+    query = text(
+        """
+        SELECT source, target, score
+        FROM resolver
+        WHERE deleted_at IS NULL
+          AND judgement = :judgement
+          AND source IN :member_ids
+          AND target IN :member_ids
+        """
+    ).bindparams(bindparam("member_ids", expanding=True))
+
+    with get_engine(SQL_URI).connect() as conn:
+        rows = conn.execute(
+            query,
+            {
+                "judgement": Judgement.NO_JUDGEMENT.value,
+                "member_ids": member_ids,
+            },
+        ).fetchall()
+
+    pairs: dict[str, LockedPair] = {}
+    for row in rows:
+        left_id = str(row.source)
+        right_id = str(row.target)
+        pair_key = _pair_key(left_id, right_id)
+        if pair_key in skipped_pair_keys:
+            continue
+        left_id, right_id = sorted((left_id, right_id))
+        score = row.score
+        existing = pairs.get(pair_key)
+        if existing is None or (
+            score is not None
+            and (existing["score"] is None or score > existing["score"])
+        ):
+            pairs[pair_key] = LockedPair(
+                left_id=left_id,
+                right_id=right_id,
+                score=score,
+            )
+
+    return list(pairs.values())
+
+
+def _assert_cluster_locked_to_user(
+    conn: Connection,
+    locked_pairs: List[LockedPair],
+    user_id: str,
+    now: datetime,
+) -> None:
+    for pair in locked_pairs:
+        pair_key = _pair_key(pair["left_id"], pair["right_id"])
+        if _get_lock_owner(conn, pair_key, now) != user_id:
+            raise DedupeLockError("This cluster is not currently locked to you.")
+
+
+def _release_cluster_locks(conn: Connection, locked_pairs: List[LockedPair]) -> None:
+    _release_locks(
+        conn,
+        [_pair_key(pair["left_id"], pair["right_id"]) for pair in locked_pairs],
+    )
 
 
 def _claim_cluster_locks(
@@ -288,12 +352,19 @@ def get_next_dedupe_cluster(
         if cluster is None:
             continue
 
+        cluster_locked_pairs = _list_cluster_candidate_rows(
+            cluster.member_ids,
+            skipped_pair_keys,
+        )
+        if not cluster_locked_pairs:
+            continue
+
         with engine.begin() as conn:
             _delete_expired_locks(conn, now)
             _delete_expired_skips(conn, now)
             claimed = _claim_cluster_locks(
                 conn,
-                locked_pairs=cluster.locked_pairs,
+                locked_pairs=cluster_locked_pairs,
                 user_id=user_id,
                 user_name=user_name,
                 now=now,
@@ -303,39 +374,16 @@ def get_next_dedupe_cluster(
 
         payload = _build_cluster_payload(
             cluster.member_ids,
-            cluster.locked_pairs,
+            cluster_locked_pairs,
             (now + LOCK_TTL).isoformat(),
         )
         if payload is not None:
             return payload
 
         with engine.begin() as conn:
-            _release_locks(
-                conn,
-                [
-                    _pair_key(pair["left_id"], pair["right_id"])
-                    for pair in cluster.locked_pairs
-                ],
-            )
+            _release_cluster_locks(conn, cluster_locked_pairs)
 
     return None
-
-
-def record_dedupe_cluster_merge(
-    entity_ids: List[str],
-    selected_ids: List[str],
-    locked_pairs: List[LockedPair],
-    user_id: str,
-    user_name: Optional[str] = None,
-) -> Optional[str]:
-    return record_dedupe_cluster_judgement(
-        entity_ids,
-        selected_ids,
-        locked_pairs,
-        judgement_value="positive",
-        user_id=user_id,
-        user_name=user_name,
-    )
 
 
 def _selected_locked_pairs(
@@ -435,12 +483,7 @@ def record_dedupe_cluster_judgement(
         with engine.begin() as conn:
             _delete_expired_locks(conn, now)
             _delete_expired_skips(conn, now)
-            for pair in locked_pairs:
-                pair_key = _pair_key(pair["left_id"], pair["right_id"])
-                if _get_lock_owner(conn, pair_key, now) != user_id:
-                    raise DedupeLockError(
-                        "This cluster is not currently locked to you."
-                    )
+            _assert_cluster_locked_to_user(conn, locked_pairs, user_id, now)
 
         canonical_id: Optional[str] = None
         for pair in selected_pairs:
@@ -462,10 +505,7 @@ def record_dedupe_cluster_judgement(
         resolver.commit()
 
         with engine.begin() as conn:
-            _release_locks(
-                conn,
-                [_pair_key(pair["left_id"], pair["right_id"]) for pair in locked_pairs],
-            )
+            _release_cluster_locks(conn, locked_pairs)
 
         return canonical_id
     except Exception:
@@ -483,10 +523,7 @@ def skip_dedupe_cluster(locked_pairs: List[LockedPair], user_id: str) -> None:
     with engine.begin() as conn:
         _delete_expired_locks(conn, now)
         _delete_expired_skips(conn, now)
-        for pair in locked_pairs:
-            pair_key = _pair_key(pair["left_id"], pair["right_id"])
-            if _get_lock_owner(conn, pair_key, now) != user_id:
-                raise DedupeLockError("This cluster is not currently locked to you.")
+        _assert_cluster_locked_to_user(conn, locked_pairs, user_id, now)
 
         _store_skipped_pairs(
             conn,
@@ -494,7 +531,4 @@ def skip_dedupe_cluster(locked_pairs: List[LockedPair], user_id: str) -> None:
             user_id=user_id,
             now=now,
         )
-        _release_locks(
-            conn,
-            [_pair_key(pair["left_id"], pair["right_id"]) for pair in locked_pairs],
-        )
+        _release_cluster_locks(conn, locked_pairs)

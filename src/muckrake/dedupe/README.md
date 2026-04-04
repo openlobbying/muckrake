@@ -16,7 +16,7 @@ The current MVP does not implement a full clustering algorithm. Instead, it:
 2. looks at the current unresolved suggestion rows returned by `resolver.get_candidates(...)`
 3. builds a small local connected group around that seed pair
 4. limits the number of members in the displayed batch
-5. locks all unresolved pairs inside that displayed batch
+5. locks all unresolved resolver pairs whose endpoints are inside that displayed batch
 
 When the user submits the form:
 

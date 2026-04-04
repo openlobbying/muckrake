@@ -26,7 +26,6 @@ from muckrake.dedupe import (
     get_next_dedupe_candidate,
     get_next_dedupe_cluster,
     record_dedupe_cluster_judgement,
-    record_dedupe_cluster_merge,
     record_dedupe_judgement,
     skip_dedupe_cluster,
 )

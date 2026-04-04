@@ -63,7 +63,7 @@
 						score={member.score}
 						selectable={true}
 						selected={true}
-						checkboxLabel="Merge this record"
+						checkboxLabel="Select this record"
 					/>
 				{/each}
 			</div>
