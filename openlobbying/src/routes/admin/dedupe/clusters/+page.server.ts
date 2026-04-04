@@ -40,12 +40,12 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 };
 
 export const actions: Actions = {
-	merge: async ({ locals, url, request, fetch }) => {
+	judge: async ({ locals, url, request, fetch }) => {
 		requireAdmin(locals, url);
 		const user = requireDedupeUser(locals);
 
 		const formData = await request.formData();
-		const intent = String(formData.get('intent') ?? 'merge').trim();
+		const intent = String(formData.get('intent') ?? 'match').trim();
 		const entityIds = formData
 			.getAll('entityId')
 			.map((value) => String(value).trim())
@@ -74,7 +74,7 @@ export const actions: Actions = {
 			});
 		}
 
-		const response = await fetch(`${getMuckrakeApiBaseUrl()}/admin/dedupe-clusters/merge`, {
+		const response = await fetch(`${getMuckrakeApiBaseUrl()}/admin/dedupe-clusters/judge`, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
@@ -84,6 +84,7 @@ export const actions: Actions = {
 				entity_ids: entityIds,
 				selected_ids: selectedIds,
 				locked_pairs: lockedPairs,
+				intent,
 				user_id: user.id,
 				user_name: user.name
 			})
@@ -99,9 +100,11 @@ export const actions: Actions = {
 			success:
 				intent === 'skip'
 					? 'Skipped this cluster.'
-					: selectedIds.length >= 2
-						? `Merged ${selectedIds.length} selected records and marked ${entityIds.length - selectedIds.length} unchecked records as no match.`
-						: 'Released the cluster without merging records.'
+					: intent === 'match'
+						? `Recorded match judgements for ${selectedIds.length} selected records.`
+						: intent === 'no_match'
+							? `Recorded no-match judgements for ${selectedIds.length} selected records.`
+							: `Recorded unsure judgements for ${selectedIds.length} selected records.`
 		};
 	}
 };

@@ -20,13 +20,15 @@ The current MVP does not implement a full clustering algorithm. Instead, it:
 
 When the user submits the form:
 
-- checked records are merged by repeatedly calling `resolver.decide(..., Judgement.POSITIVE, ...)`
-- unchecked records are ignored
-- if fewer than two records are selected, no merge happens
+- `Match` records positive judgements on locked resolver pairs where both endpoints are selected
+- `No match` records negative judgements on locked resolver pairs where both endpoints are selected
+- `Unsure` records unsure judgements on locked resolver pairs where both endpoints are selected
+- unchecked records remain unresolved
+- `Skip` hides the cluster for that reviewer for a short TTL
 
-Unlike the pairwise review, only positive merge decisions are made.
+Unlike the pairwise review, cluster actions only write judgements for locked suggestion edges that are inside the selected subset.
 
-Users can also skip clusters. There is a small locking mechanism that hides skipped clusters for a TTL period, but there is no way to explicitly reject a cluster for now. The skip list is per-user, not global. `resolver_lock` is still used for concurrency control.
+Users can also skip clusters. There is a small locking mechanism that hides skipped clusters for a TTL period. The skip list is per-user, not global. `resolver_lock` is still used for concurrency control.
 
 ### Dedupe-style review
 
@@ -47,4 +49,4 @@ Good next options:
 - canonical-seed grouping instead of plain graph expansion
 - limiting low-confidence bridge edges
 
-We also want to add explicit pair rejection inside clustered review. We need to think of a good way to do this, for example, we could have all unchecked records be automatically rejected against the cluster.
+The main remaining improvement is better cluster construction, so a single selection is more likely to cover exactly the records a reviewer wants to judge together.

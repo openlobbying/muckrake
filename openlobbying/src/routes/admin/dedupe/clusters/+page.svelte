@@ -48,7 +48,7 @@
 			{/if}
 		</div>
 
-		<form method="POST" action="?/merge" use:enhance class="space-y-6">
+		<form method="POST" action="?/judge" use:enhance class="space-y-6">
 			{#each candidate.members as member (member.entity.id)}
 				<input type="hidden" name="entityId" value={member.entity.id} />
 			{/each}
@@ -70,14 +70,18 @@
 
 			<Card class="border-slate-200">
 				<CardHeader>
-					<CardTitle>Merge selected records</CardTitle>
+					<CardTitle>Record judgement</CardTitle>
 					<CardDescription>
-						Unchecked records are saved as no-match decisions against the merged group. Submitting
-						fewer than two selected records releases the cluster.
+						Judgements only apply to locked resolver suggestions where both endpoints are selected.
+						Unchecked records stay unresolved.
 					</CardDescription>
 				</CardHeader>
 				<CardContent class="flex flex-wrap gap-3">
-					<Button type="submit" name="intent" value="merge">Merge selected</Button>
+					<Button type="submit" name="intent" value="match">Match</Button>
+					<Button type="submit" name="intent" value="no_match" variant="secondary">
+						No match
+					</Button>
+					<Button type="submit" name="intent" value="unsure" variant="outline">Unsure</Button>
 					<Button type="submit" name="intent" value="skip" variant="secondary">Skip cluster</Button>
 				</CardContent>
 			</Card>

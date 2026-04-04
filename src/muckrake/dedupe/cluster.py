@@ -328,6 +328,81 @@ def record_dedupe_cluster_merge(
     user_id: str,
     user_name: Optional[str] = None,
 ) -> Optional[str]:
+    return record_dedupe_cluster_judgement(
+        entity_ids,
+        selected_ids,
+        locked_pairs,
+        judgement_value="positive",
+        user_id=user_id,
+        user_name=user_name,
+    )
+
+
+def _selected_locked_pairs(
+    selected_ids: List[str], locked_pairs: List[LockedPair]
+) -> List[LockedPair]:
+    selected_set = set(selected_ids)
+    return [
+        pair
+        for pair in locked_pairs
+        if pair["left_id"] in selected_set and pair["right_id"] in selected_set
+    ]
+
+
+def _validate_selected_graph(
+    selected_ids: List[str],
+    selected_pairs: List[LockedPair],
+    *,
+    require_connected: bool,
+) -> None:
+    if len(selected_ids) < 2:
+        raise ValueError("Select at least two records to record a judgement.")
+    if not selected_pairs:
+        raise ValueError(
+            "The selected records do not share any locked suggestions to judge."
+        )
+
+    adjacency: dict[str, set[str]] = defaultdict(set)
+    covered: set[str] = set()
+    for pair in selected_pairs:
+        adjacency[pair["left_id"]].add(pair["right_id"])
+        adjacency[pair["right_id"]].add(pair["left_id"])
+        covered.add(pair["left_id"])
+        covered.add(pair["right_id"])
+
+    uncovered = [entity_id for entity_id in selected_ids if entity_id not in covered]
+    if uncovered:
+        raise ValueError(
+            "Every selected record must share a locked suggestion with another selected record."
+        )
+
+    if not require_connected:
+        return
+
+    queue = deque([selected_ids[0]])
+    seen = {selected_ids[0]}
+    while queue:
+        entity_id = queue.popleft()
+        for other_id in adjacency.get(entity_id, set()):
+            if other_id in seen:
+                continue
+            seen.add(other_id)
+            queue.append(other_id)
+
+    if len(seen) != len(selected_ids):
+        raise ValueError(
+            "Match can only be used when the selected records form a single connected group."
+        )
+
+
+def record_dedupe_cluster_judgement(
+    entity_ids: List[str],
+    selected_ids: List[str],
+    locked_pairs: List[LockedPair],
+    judgement_value: str,
+    user_id: str,
+    user_name: Optional[str] = None,
+) -> Optional[str]:
     entity_order = list(dict.fromkeys(entity_ids))
     entity_set = set(entity_order)
     selected_order = [
@@ -335,14 +410,22 @@ def record_dedupe_cluster_merge(
         for entity_id in dict.fromkeys(selected_ids)
         if entity_id in entity_set
     ]
-    selected_set = set(selected_order)
-    unselected_order = [
-        entity_id for entity_id in entity_order if entity_id not in selected_set
-    ]
     if len(entity_order) < 2:
         raise ValueError("Need at least two entities in a cluster.")
     if not locked_pairs:
         raise ValueError("Missing locked pairs for this cluster.")
+
+    try:
+        judgement = Judgement(judgement_value)
+    except ValueError as exc:
+        raise ValueError(f"Invalid judgement: {judgement_value}") from exc
+
+    selected_pairs = _selected_locked_pairs(selected_order, locked_pairs)
+    _validate_selected_graph(
+        selected_order,
+        selected_pairs,
+        require_connected=judgement == Judgement.POSITIVE,
+    )
 
     engine = get_lock_engine()
     now = _utc_now()
@@ -360,41 +443,25 @@ def record_dedupe_cluster_merge(
                     )
 
         canonical_id: Optional[str] = None
-        if len(selected_order) >= 2:
-            canonical_id = resolver.get_canonical(selected_order[0])
-            for other_id in selected_order[1:]:
-                if resolver.get_canonical(other_id) == canonical_id:
-                    continue
-                canonical_id = str(
-                    resolver.decide(
-                        canonical_id,
-                        other_id,
-                        Judgement.POSITIVE,
-                        user=_resolve_user_label(user_id, user_name),
-                    )
-                )
+        for pair in selected_pairs:
+            left_canonical = resolver.get_canonical(pair["left_id"])
+            right_canonical = resolver.get_canonical(pair["right_id"])
+            if left_canonical == right_canonical:
+                canonical_id = str(left_canonical)
+                continue
 
-            # Treat unchecked records as explicit non-matches against the merged group.
-            for other_id in unselected_order:
-                if resolver.get_canonical(other_id) == canonical_id:
-                    continue
-                resolver.decide(
-                    canonical_id,
-                    other_id,
-                    Judgement.NEGATIVE,
-                    user=_resolve_user_label(user_id, user_name),
-                )
+            result = resolver.decide(
+                pair["left_id"],
+                pair["right_id"],
+                judgement,
+                user=_resolve_user_label(user_id, user_name),
+            )
+            if judgement == Judgement.POSITIVE:
+                canonical_id = str(result)
 
         resolver.commit()
 
         with engine.begin() as conn:
-            if len(selected_order) < 2:
-                _store_skipped_pairs(
-                    conn,
-                    locked_pairs=locked_pairs,
-                    user_id=user_id,
-                    now=now,
-                )
             _release_locks(
                 conn,
                 [_pair_key(pair["left_id"], pair["right_id"]) for pair in locked_pairs],
@@ -404,3 +471,30 @@ def record_dedupe_cluster_merge(
     except Exception:
         resolver.rollback()
         raise
+
+
+def skip_dedupe_cluster(locked_pairs: List[LockedPair], user_id: str) -> None:
+    if not locked_pairs:
+        raise ValueError("Missing locked pairs for this cluster.")
+
+    engine = get_lock_engine()
+    now = _utc_now()
+
+    with engine.begin() as conn:
+        _delete_expired_locks(conn, now)
+        _delete_expired_skips(conn, now)
+        for pair in locked_pairs:
+            pair_key = _pair_key(pair["left_id"], pair["right_id"])
+            if _get_lock_owner(conn, pair_key, now) != user_id:
+                raise DedupeLockError("This cluster is not currently locked to you.")
+
+        _store_skipped_pairs(
+            conn,
+            locked_pairs=locked_pairs,
+            user_id=user_id,
+            now=now,
+        )
+        _release_locks(
+            conn,
+            [_pair_key(pair["left_id"], pair["right_id"]) for pair in locked_pairs],
+        )

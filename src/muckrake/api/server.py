@@ -25,8 +25,10 @@ from muckrake.dedupe import (
     get_lock_engine,
     get_next_dedupe_candidate,
     get_next_dedupe_cluster,
+    record_dedupe_cluster_judgement,
     record_dedupe_cluster_merge,
     record_dedupe_judgement,
+    skip_dedupe_cluster,
 )
 from muckrake.api.serialization import (
     is_actor,
@@ -315,10 +317,11 @@ class DedupeLockedPairBody(BaseModel):
     right_id: str
 
 
-class DedupeClusterMergeBody(BaseModel):
+class DedupeClusterJudgementBody(BaseModel):
     entity_ids: List[str]
     selected_ids: List[str]
     locked_pairs: List[DedupeLockedPairBody]
+    intent: str
     user_id: str
     user_name: Optional[str] = None
 
@@ -389,20 +392,34 @@ def get_admin_dedupe_cluster(
     return {"candidate": get_next_dedupe_cluster(user_id, user_name=user_name)}
 
 
-@app.post("/admin/dedupe-clusters/merge")
-def merge_admin_dedupe_cluster(
-    body: DedupeClusterMergeBody,
+@app.post("/admin/dedupe-clusters/judge")
+def judge_admin_dedupe_cluster(
+    body: DedupeClusterJudgementBody,
     x_admin_secret: Optional[str] = Header(default=None),
 ):
     require_admin_secret(x_admin_secret)
     try:
-        canonical_id = record_dedupe_cluster_merge(
-            body.entity_ids,
-            body.selected_ids,
-            [pair.model_dump() for pair in body.locked_pairs],
-            body.user_id,
-            user_name=body.user_name,
-        )
+        locked_pairs = [pair.model_dump() for pair in body.locked_pairs]
+        if body.intent == "skip":
+            skip_dedupe_cluster(locked_pairs, body.user_id)
+            canonical_id = None
+        else:
+            judgement = {
+                "match": "positive",
+                "no_match": "negative",
+                "unsure": "unsure",
+            }.get(body.intent)
+            if judgement is None:
+                raise ValueError(f"Invalid cluster intent: {body.intent}")
+
+            canonical_id = record_dedupe_cluster_judgement(
+                body.entity_ids,
+                body.selected_ids,
+                locked_pairs,
+                judgement,
+                body.user_id,
+                user_name=body.user_name,
+            )
     except DedupeLockError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
