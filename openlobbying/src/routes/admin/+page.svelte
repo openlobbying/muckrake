@@ -69,15 +69,23 @@
 					<div class="space-y-2">
 						<CardTitle>Dedupe review</CardTitle>
 						<CardDescription>
-							Review nomenklatura candidate pairs in the browser and record match decisions.
+							Compare the existing pair queue with a new checkbox-based cluster review MVP.
 						</CardDescription>
 					</div>
-					<a
-						href={resolve('/admin/dedupe')}
-						class="inline-flex h-10 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-					>
-						Open dedupe queue
-					</a>
+					<div class="flex flex-wrap gap-3">
+						<a
+							href={resolve('/admin/dedupe')}
+							class="inline-flex h-10 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+						>
+							Open pair queue
+						</a>
+						<a
+							href={resolve('/admin/dedupe-clusters')}
+							class="inline-flex h-10 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
+						>
+							Open cluster queue
+						</a>
+					</div>
 				</CardHeader>
 			</Card>
 

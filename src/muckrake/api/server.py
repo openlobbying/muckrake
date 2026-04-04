@@ -24,6 +24,8 @@ from muckrake.dedupe import (
     DedupeLockError,
     get_lock_engine,
     get_next_dedupe_candidate,
+    get_next_dedupe_cluster,
+    record_dedupe_cluster_merge,
     record_dedupe_judgement,
 )
 from muckrake.api.serialization import (
@@ -308,6 +310,19 @@ class DedupeJudgementBody(BaseModel):
     user_name: Optional[str] = None
 
 
+class DedupeLockedPairBody(BaseModel):
+    left_id: str
+    right_id: str
+
+
+class DedupeClusterMergeBody(BaseModel):
+    entity_ids: List[str]
+    selected_ids: List[str]
+    locked_pairs: List[DedupeLockedPairBody]
+    user_id: str
+    user_name: Optional[str] = None
+
+
 def require_admin_secret(x_admin_secret: Optional[str] = Header(default=None)) -> None:
     if x_admin_secret != get_admin_api_secret():
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -353,6 +368,38 @@ def judge_admin_dedupe_candidate(
             body.left_id,
             body.right_id,
             body.judgement,
+            body.user_id,
+            user_name=body.user_name,
+        )
+    except DedupeLockError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"ok": True, "canonical_id": canonical_id}
+
+
+@app.get("/admin/dedupe-clusters/next")
+def get_admin_dedupe_cluster(
+    user_id: str,
+    user_name: Optional[str] = None,
+    x_admin_secret: Optional[str] = Header(default=None),
+):
+    require_admin_secret(x_admin_secret)
+    return {"candidate": get_next_dedupe_cluster(user_id, user_name=user_name)}
+
+
+@app.post("/admin/dedupe-clusters/merge")
+def merge_admin_dedupe_cluster(
+    body: DedupeClusterMergeBody,
+    x_admin_secret: Optional[str] = Header(default=None),
+):
+    require_admin_secret(x_admin_secret)
+    try:
+        canonical_id = record_dedupe_cluster_merge(
+            body.entity_ids,
+            body.selected_ids,
+            [pair.model_dump() for pair in body.locked_pairs],
             body.user_id,
             user_name=body.user_name,
         )

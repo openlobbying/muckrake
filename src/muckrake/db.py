@@ -137,6 +137,21 @@ def get_resolver_lock_table(metadata: MetaData | None = None) -> Table:
     )
 
 
+def get_resolver_cluster_skip_table(metadata: MetaData | None = None) -> Table:
+    metadata = _resolved_metadata(metadata)
+    return Table(
+        "resolver_cluster_skip",
+        metadata,
+        Column("pair_key", String(), primary_key=True),
+        Column("left_id", String(), nullable=False),
+        Column("right_id", String(), nullable=False),
+        Column("user_id", String(), primary_key=True),
+        Column("created_at", String(), nullable=False),
+        Column("expires_at", String(), nullable=False),
+        extend_existing=True,
+    )
+
+
 def get_release_inputs_table(metadata: MetaData | None = None) -> Table:
     metadata = _resolved_metadata(metadata)
     return Table(
@@ -192,6 +207,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
     dataset_run_artifacts = get_dataset_run_artifacts_table(metadata)
     releases = get_releases_table(metadata)
     resolver_lock = get_resolver_lock_table(metadata)
+    resolver_cluster_skip = get_resolver_cluster_skip_table(metadata)
     release_inputs = get_release_inputs_table(metadata)
     release_artifacts = get_release_artifacts_table(metadata)
     metadata.create_all(
@@ -203,6 +219,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
             dataset_run_artifacts,
             releases,
             resolver_lock,
+            resolver_cluster_skip,
             release_inputs,
             release_artifacts,
         ],
@@ -212,6 +229,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
     _ensure_dataset_run_constraints(engine)
     _ensure_release_constraints(engine)
     _ensure_resolver_lock_constraints(engine)
+    _ensure_resolver_cluster_skip_constraints(engine)
     _sync_postgres_sequences(
         engine,
         [
@@ -232,8 +250,14 @@ def ensure_resolver_lock_schema(uri: str = SQL_URI) -> Engine:
     metadata = MetaData()
     _ = Resolver(engine, metadata, create=True)
     resolver_lock = get_resolver_lock_table(metadata)
-    metadata.create_all(bind=engine, tables=[resolver_lock], checkfirst=True)
+    resolver_cluster_skip = get_resolver_cluster_skip_table(metadata)
+    metadata.create_all(
+        bind=engine,
+        tables=[resolver_lock, resolver_cluster_skip],
+        checkfirst=True,
+    )
     _ensure_resolver_lock_constraints(engine)
+    _ensure_resolver_cluster_skip_constraints(engine)
     return engine
 
 
@@ -394,6 +418,26 @@ def _ensure_resolver_lock_constraints(engine: Engine) -> None:
                 """
                 CREATE INDEX IF NOT EXISTS resolver_lock_expires_at
                 ON resolver_lock(expires_at)
+                """
+            )
+        )
+
+
+def _ensure_resolver_cluster_skip_constraints(engine: Engine) -> None:
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS resolver_cluster_skip_user_expires_at
+                ON resolver_cluster_skip(user_id, expires_at)
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS resolver_cluster_skip_expires_at
+                ON resolver_cluster_skip(expires_at)
                 """
             )
         )
