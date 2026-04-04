@@ -128,7 +128,7 @@ export const actions: Actions = {
 				intent === 'skip'
 					? 'Skipped this cluster.'
 					: selectedIds.length >= 2
-					? `Merged ${selectedIds.length} selected records.`
+					? `Merged ${selectedIds.length} selected records and marked ${entityIds.length - selectedIds.length} unchecked records as no match.`
 					: 'Released the cluster without merging records.'
 		};
 	}

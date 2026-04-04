@@ -176,8 +176,9 @@
 					<CardHeader>
 						<CardTitle>Merge selected records</CardTitle>
 						<CardDescription class="text-slate-300">
-							Leave obvious outliers unchecked. Submitting with fewer than two selected records just
-							releases this cluster back to the queue.
+							Leave obvious outliers unchecked. When you merge a subset, unchecked records are stored
+							as no-match decisions against the merged group. Submitting with fewer than two selected
+							records just releases this cluster back to the queue.
 						</CardDescription>
 					</CardHeader>
 					<CardContent class="flex flex-wrap gap-3">

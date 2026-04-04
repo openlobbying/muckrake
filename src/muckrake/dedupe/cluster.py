@@ -335,6 +335,10 @@ def record_dedupe_cluster_merge(
         for entity_id in dict.fromkeys(selected_ids)
         if entity_id in entity_set
     ]
+    selected_set = set(selected_order)
+    unselected_order = [
+        entity_id for entity_id in entity_order if entity_id not in selected_set
+    ]
     if len(entity_order) < 2:
         raise ValueError("Need at least two entities in a cluster.")
     if not locked_pairs:
@@ -368,6 +372,17 @@ def record_dedupe_cluster_merge(
                         Judgement.POSITIVE,
                         user=_resolve_user_label(user_id, user_name),
                     )
+                )
+
+            # Treat unchecked records as explicit non-matches against the merged group.
+            for other_id in unselected_order:
+                if resolver.get_canonical(other_id) == canonical_id:
+                    continue
+                resolver.decide(
+                    canonical_id,
+                    other_id,
+                    Judgement.NEGATIVE,
+                    user=_resolve_user_label(user_id, user_name),
                 )
 
         resolver.commit()
