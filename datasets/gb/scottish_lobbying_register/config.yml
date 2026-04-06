@@ -1,0 +1,23 @@
+dataset:
+  name: scot_lobbying_register
+  prefix: scot-lobby
+  title: Scottish Lobbying Register
+  summary: Face-to-face meetings with MSPs, members of the Scottish Government, Special Advisers or Permanent Secretary which relate to Scottish Government or Parliamentary functions.
+  data:
+    url: https://www.lobbying.scot/SPS/Search/SearchResult
+  tags:
+    - lobbying
+    - meetings
+  licence:
+    name: Scottish Parliament Copyright Licence
+    url: https://www.parliament.scot/about/copyright
+coverage:
+  countries:
+    - gb-sct
+  frequency: monthly
+publisher:
+  name: Scottish Parliament
+  url: https://www.lobbying.scot/SPS/
+  country: gb-sct
+  country_label: Scotland
+  official: true

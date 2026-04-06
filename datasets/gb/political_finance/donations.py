@@ -24,7 +24,7 @@ def crawl_donations(dataset):
         "order": "desc",
         "et": ["pp", "ppm", "tp", "perpar", "rd"],
         "date": "Reported",
-        "from": "2025-01-01",
+        # "from": "2025-01-01",
         "to": "",
         "rptPd": "",
         "prePoll": "false",

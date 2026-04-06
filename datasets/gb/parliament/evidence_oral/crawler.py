@@ -10,7 +10,11 @@ from ..util import (
 def crawl(dataset):
     BASE_URL = "https://committees-api.parliament.uk/api/OralEvidence"
 
-    PARAMS = {"skip": 0, "take": 30, "StartDate": "2025-01-01"}
+    PARAMS = {
+        "skip": 0,
+        "take": 30,
+        # "StartDate": "2025-01-01"
+        }
 
     while True:
         dataset.log.info(f"Crawling oral evidence with params: {PARAMS}")

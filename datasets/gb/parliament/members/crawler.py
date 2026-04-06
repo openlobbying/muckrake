@@ -7,7 +7,7 @@ def crawl(dataset):
     PARAMS = {
         "skip": 0,
         "take": 20,
-        "MembershipInDateRange.WasMemberOnOrAfter": "2025-01-01"
+        # "MembershipInDateRange.WasMemberOnOrAfter": "2025-01-01"
         }
     
     while True:

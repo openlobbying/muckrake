@@ -1,4 +1,5 @@
 import json
+import time
 import requests
 from pathlib import Path
 from typing import Optional, Any, TYPE_CHECKING
@@ -69,6 +70,7 @@ def fetch_text(
     data: Optional[Any] = None,
     cache: Optional["Cache"] = None,
     cache_days: Optional[int] = None,
+    sleep: Optional[float] = None,
     verify: bool = True,
 ) -> Optional[str]:
     """Execute an HTTP request and return the response text."""
@@ -80,6 +82,8 @@ def fetch_text(
         if text is not None:
             log.debug("HTTP cache hit: %s", url)
             return text
+        if text is None and sleep is not None and sleep > 0:
+            time.sleep(sleep)
 
     log.debug("HTTP %s: %s", method, url)
     response = requests.request(
@@ -109,6 +113,7 @@ def fetch_json(
     data: Optional[Any] = None,
     cache: Optional["Cache"] = None,
     cache_days: Optional[int] = None,
+    sleep: Optional[float] = None,
     verify: bool = True,
 ) -> Any:
     """Execute an HTTP request and return a JSON-decoded object."""
@@ -121,6 +126,7 @@ def fetch_json(
         data=data,
         cache=cache,
         cache_days=cache_days,
+        sleep=sleep,
         verify=verify,
     )
     if text is not None and len(text.strip()):
@@ -138,6 +144,7 @@ def fetch_html(
     absolute_links: bool = False,
     cache: Optional["Cache"] = None,
     cache_days: Optional[int] = None,
+    sleep: Optional[float] = None,
     verify: bool = True,
 ) -> HtmlElement:
     """Execute an HTTP request and return an lxml HTML element."""
@@ -151,6 +158,7 @@ def fetch_html(
         data=data,
         cache=cache,
         cache_days=cache_days,
+        sleep=sleep,
         verify=verify,
     )
     if text is None or len(text.strip()) == 0:

@@ -115,13 +115,13 @@ def crawl(dataset: Dataset):
 
     with open(path, "r", encoding="utf-8-sig") as fh:
         for row in csv.DictReader(fh):
-            date_str = row.get("date")
-            if date_str:
-                try:
-                    dt = datetime.strptime(date_str, "%d/%m/%Y")
-                    # Filter for meetings from 2024 onwards
-                    if dt < datetime(2025, 1, 1):
-                        continue
-                except ValueError:
-                    pass
+            # # Filter for meetings from 2024 onwards
+            # date_str = row.get("date")
+            # if date_str:
+            #     try:
+            #         dt = datetime.strptime(date_str, "%d/%m/%Y")
+            #         if dt < datetime(2025, 1, 1):
+            #             continue
+            #     except ValueError:
+            #         pass
             crawl_row(dataset, row)
