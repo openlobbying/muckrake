@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+
 def request_hash(
     url: str,
     auth: Optional[Any] = None,
@@ -24,15 +25,18 @@ def request_hash(
     hsh = hash_data((auth, method, data))
     return f"{url}[{hsh}]"
 
+
 def fetch_file(
     url: str,
     name: str,
     data_path: Path,
+    session: Optional[requests.Session] = None,
     auth: Optional[Any] = None,
     headers: Optional[Any] = None,
     method: str = "GET",
     data: Optional[Any] = None,
     verify: bool = True,
+    timeout: float = 120,
 ) -> Path:
     """Fetch a file via HTTP to the data path, with local caching."""
     out_path = data_path.joinpath(name)
@@ -42,15 +46,16 @@ def fetch_file(
 
     log.info("Fetching file from %s", url)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with requests.request(
+    requester = session.request if session is not None else requests.request
+
+    with requester(
         method=method,
         url=url,
         auth=auth,
         headers=headers,
         stream=True,
         data=data,
-        timeout=120,
+        timeout=timeout,
         verify=verify,
     ) as res:
         res.raise_for_status()
@@ -65,6 +70,7 @@ def fetch_text(
     url: str,
     params: Optional[dict[str, Any]] = None,
     headers: Optional[dict[str, str]] = None,
+    session: Optional[requests.Session] = None,
     auth: Optional[Any] = None,
     method: str = "GET",
     data: Optional[Any] = None,
@@ -72,11 +78,12 @@ def fetch_text(
     cache_days: Optional[int] = None,
     sleep: Optional[float] = None,
     verify: bool = True,
+    timeout: float = 120,
 ) -> Optional[str]:
     """Execute an HTTP request and return the response text."""
     url = build_url(url, params)
     fingerprint = request_hash(url, auth=auth, method=method, data=data)
-    
+
     if cache is not None and cache_days is not None:
         text = cache.get(fingerprint, max_age=cache_days)
         if text is not None:
@@ -86,13 +93,14 @@ def fetch_text(
             time.sleep(sleep)
 
     log.debug("HTTP %s: %s", method, url)
-    response = requests.request(
+    requester = session.request if session is not None else requests.request
+    response = requester(
         method=method,
         url=url,
         headers=headers,
         auth=auth,
         data=data,
-        timeout=120,
+        timeout=timeout,
         verify=verify,
     )
     response.raise_for_status()
@@ -100,7 +108,7 @@ def fetch_text(
 
     if cache is not None and cache_days is not None and text is not None:
         cache.set(fingerprint, text)
-    
+
     return text
 
 
@@ -108,6 +116,7 @@ def fetch_json(
     url: str,
     params: Optional[dict[str, Any]] = None,
     headers: Optional[dict[str, str]] = None,
+    session: Optional[requests.Session] = None,
     auth: Optional[Any] = None,
     method: str = "GET",
     data: Optional[Any] = None,
@@ -115,12 +124,14 @@ def fetch_json(
     cache_days: Optional[int] = None,
     sleep: Optional[float] = None,
     verify: bool = True,
+    timeout: float = 120,
 ) -> Any:
     """Execute an HTTP request and return a JSON-decoded object."""
     text = fetch_text(
         url,
         params=params,
         headers=headers,
+        session=session,
         auth=auth,
         method=method,
         data=data,
@@ -128,6 +139,7 @@ def fetch_json(
         cache_days=cache_days,
         sleep=sleep,
         verify=verify,
+        timeout=timeout,
     )
     if text is not None and len(text.strip()):
         return json.loads(text)
@@ -138,6 +150,7 @@ def fetch_html(
     url: str,
     params: Optional[dict[str, Any]] = None,
     headers: Optional[dict[str, str]] = None,
+    session: Optional[requests.Session] = None,
     auth: Optional[Any] = None,
     method: str = "GET",
     data: Optional[Any] = None,
@@ -146,6 +159,7 @@ def fetch_html(
     cache_days: Optional[int] = None,
     sleep: Optional[float] = None,
     verify: bool = True,
+    timeout: float = 120,
 ) -> HtmlElement:
     """Execute an HTTP request and return an lxml HTML element."""
     full_url = build_url(url, params)
@@ -153,6 +167,7 @@ def fetch_html(
         url,
         params=params,
         headers=headers,
+        session=session,
         auth=auth,
         method=method,
         data=data,
@@ -160,6 +175,7 @@ def fetch_html(
         cache_days=cache_days,
         sleep=sleep,
         verify=verify,
+        timeout=timeout,
     )
     if text is None or len(text.strip()) == 0:
         raise ValueError(f"Invalid HTML document from {url}")
