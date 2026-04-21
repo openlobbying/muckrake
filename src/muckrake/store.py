@@ -7,20 +7,15 @@ from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
-from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
-from nomenklatura.db import get_metadata
+from nomenklatura.store.sql import SQLStore, SQLView
+from nomenklatura.db import get_metadata, make_statement_table
 from sqlalchemy import select
 from sqlalchemy.engine import create_engine
 
-from muckrake.db import get_resolver, get_statement_table
+from muckrake.db import get_resolver
 from muckrake.settings import SQL_URI, LEVEL_PATH
 
 log = logging.getLogger(__name__)
-
-
-class MuckrakeSQLWriter(SQLWriter[DS, SE]):
-    # Keep statement batches moderate to avoid oversized INSERT statements.
-    BATCH_STATEMENTS = 500
 
 
 class CombinedDataset(Dataset):
@@ -46,7 +41,12 @@ def get_level_store(dataset_names: Iterable[str], fresh: bool = False) -> LevelD
 
     LEVEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     dataset = CombinedDataset("all", dataset_names)
-    return LevelDBStore(dataset, get_resolver(begin=True), LEVEL_PATH)
+    resolver = get_resolver(begin=True)
+    try:
+        linker = resolver.get_linker()
+    finally:
+        resolver.rollback()
+    return LevelDBStore(dataset, linker, LEVEL_PATH)
 
 
 class MergedSQLView(SQLView[DS, SE]):
@@ -89,17 +89,19 @@ class MergedSQLStore(SQLStore[DS, SE]):
             engine_kwargs["pool_size"] = nk_settings.DB_POOL_SIZE
         metadata = get_metadata()
         self.engine = create_engine(uri, **engine_kwargs)
-        self.table = get_statement_table(metadata)
+        self.table = make_statement_table(metadata)
         metadata.create_all(self.engine, tables=[self.table], checkfirst=True)
 
     def view(self, scope: DS, external: bool = False) -> SQLView[DS, SE]:
         return MergedSQLView(self, scope, external=external)
 
-    def writer(self):
-        return MuckrakeSQLWriter(self)
-
 
 def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:
     """Get a SQL store for serving with proper entity merging."""
     dataset = CombinedDataset("all", dataset_names)
-    return MergedSQLStore(dataset, get_resolver(uri=uri, begin=True), uri=uri)
+    resolver = get_resolver(uri=uri, begin=True)
+    try:
+        linker = resolver.get_linker()
+    finally:
+        resolver.rollback()
+    return MergedSQLStore(dataset, linker, uri=uri)

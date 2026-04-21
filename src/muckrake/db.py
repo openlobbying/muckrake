@@ -184,11 +184,6 @@ def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
     )
 
 
-def get_statement_table(metadata: MetaData | None = None) -> Table:
-    metadata = _resolved_metadata(metadata)
-    return make_statement_table(metadata)
-
-
 def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
     """Get the resolver backed by the main database."""
     resolver = Resolver(get_engine(uri), _resolved_metadata(), create=True)
@@ -200,7 +195,7 @@ def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
 def init_database(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
-    statement_table = get_statement_table(metadata)
+    statement_table = make_statement_table(metadata)
     resolver = Resolver(engine, metadata, create=True)
     ner_candidates = get_ner_candidates_table(metadata)
     dataset_runs = get_dataset_runs_table(metadata)
@@ -264,7 +259,7 @@ def ensure_resolver_lock_schema(uri: str = SQL_URI) -> Engine:
 def init_published_database(uri: str = PUBLISHED_SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
-    statement_table = get_statement_table(metadata)
+    statement_table = make_statement_table(metadata)
     resolver = Resolver(engine, metadata, create=True)
     metadata.create_all(
         bind=engine,

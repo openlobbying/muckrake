@@ -120,6 +120,24 @@ POSTGRES_SEARCH_COUNT_SQL = text(
     """
 )
 
+ACTOR_SITEMAP_IDS_SQL = text(
+    """
+    SELECT id
+    FROM entity_search
+    WHERE schema = ANY(:schemas)
+    ORDER BY id
+    LIMIT :limit OFFSET :offset
+    """
+)
+
+ACTOR_SITEMAP_COUNT_SQL = text(
+    """
+    SELECT COUNT(*) AS total
+    FROM entity_search
+    WHERE schema = ANY(:schemas)
+    """
+)
+
 
 STATS_CACHE_TTL_SECONDS = 600
 _stats_cache: Dict[str, Any] = {"expires_at": 0.0, "value": None}
@@ -489,6 +507,91 @@ def get_profile(id: str) -> Dict[str, Any]:
 
     data["adjacent"] = adjacent
     return data
+
+
+@app.get("/sitemaps/profiles")
+def list_profile_sitemap_entries(
+    limit: int = 50000,
+    offset: int = 0,
+) -> Dict[str, Any]:
+    """List actor profile paths for sitemap generation."""
+    limit = max(1, min(limit, 50000))
+    offset = max(0, offset)
+
+    if not view:
+        return {
+            "results": [],
+            "total": 0,
+            "offset": offset,
+            "limit": limit,
+            "has_next": False,
+        }
+
+    if postgres_search_ready():
+        try:
+            engine = get_published_engine()
+            with engine.connect() as conn:
+                total = conn.execute(
+                    ACTOR_SITEMAP_COUNT_SQL,
+                    {"schemas": sorted(ACTOR_SCHEMATA)},
+                ).scalar()
+                rows = conn.execute(
+                    ACTOR_SITEMAP_IDS_SQL,
+                    {
+                        "schemas": sorted(ACTOR_SCHEMATA),
+                        "limit": limit,
+                        "offset": offset,
+                    },
+                )
+                results = [
+                    {
+                        "id": str(row._mapping["id"]),
+                        "path": f"/profile/{row._mapping['id']}",
+                    }
+                    for row in rows
+                ]
+            total = int(total or 0)
+            return {
+                "results": results,
+                "total": total,
+                "offset": offset,
+                "limit": limit,
+                "has_next": (offset + len(results)) < total,
+            }
+        except Exception as exc:
+            log.exception(
+                "Profile sitemap query failed, falling back to Python scan: %s", exc
+            )
+
+    include_schema = []
+    for schema_name in sorted(ACTOR_SCHEMATA):
+        schema_obj = model.get(schema_name)
+        if schema_obj is not None:
+            include_schema.append(schema_obj)
+
+    results = []
+    seen_ids = set()
+    total = 0
+    for ent in view.entities(include_schemata=include_schema):
+        if ent.id in seen_ids:
+            continue
+
+        seen_ids.add(ent.id)
+        total += 1
+        if total <= offset:
+            continue
+        if len(results) >= limit:
+            continue
+
+        results.append({"id": ent.id, "path": f"/profile/{ent.id}"})
+
+    return {
+        "results": results,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "has_next": (offset + len(results)) < total,
+    }
 
 
 @app.get("/statements/{id}")

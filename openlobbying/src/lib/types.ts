@@ -152,3 +152,16 @@ export interface RankedActor {
 	schema: string;
 	connections: number;
 }
+
+export interface ProfileSitemapEntry {
+	id: string;
+	path: string;
+}
+
+export interface ProfileSitemapResponse {
+	results: ProfileSitemapEntry[];
+	total: number;
+	offset: number;
+	limit: number;
+	has_next: boolean;
+}

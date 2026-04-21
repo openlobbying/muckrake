@@ -1,6 +1,9 @@
 import { redirect, error } from '@sveltejs/kit';
 import { isAdminUser } from '$lib/auth-roles';
 import { getAuthSecret } from '$lib/server/auth';
+import { getMuckrakeApiBaseUrl } from '$lib/server/muckrake-api';
+
+export { getMuckrakeApiBaseUrl };
 
 export function requireAdmin(locals: App.Locals, url: URL): void {
 	if (!locals.user || !locals.session) {
@@ -11,10 +14,6 @@ export function requireAdmin(locals: App.Locals, url: URL): void {
 	if (!isAdminUser(locals.user)) {
 		redirect(303, '/account');
 	}
-}
-
-export function getMuckrakeApiBaseUrl(): string {
-	return process.env.MUCKRAKE_API_URL || 'http://127.0.0.1:8000';
 }
 
 export function getAdminApiHeaders(): HeadersInit {

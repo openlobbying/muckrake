@@ -43,5 +43,6 @@ You can preview the production build with `npm run preview`.
 - Production runtime command is `node build`.
 - In production we expect a reverse proxy (Caddy/Nginx) in front of the Node process.
 - Production env comes from `/etc/muckrake/app.env`, shared with the API service.
+- The app serves a runtime sitemap index at `/sitemap.xml`, with profile sitemap shards backed by the FastAPI API.
 
 See `../ops/README.md` for the deployment runbook and `../ops/` for service templates and proxy config used by this project.
