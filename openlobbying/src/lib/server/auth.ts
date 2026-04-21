@@ -38,8 +38,8 @@ function readEnvFile(fileUrl: URL): Record<string, string> {
 	}
 }
 
-const frontendEnv = readEnvFile(new URL('../../../../.env', import.meta.url));
-const repoEnv = readEnvFile(new URL('../../../../../.env', import.meta.url));
+const frontendEnv = dev ? readEnvFile(new URL('../../../../.env', import.meta.url)) : {};
+const repoEnv = dev ? readEnvFile(new URL('../../../../../.env', import.meta.url)) : {};
 
 export function resolveEnvValue(...keys: string[]): string | undefined {
 	for (const key of keys) {

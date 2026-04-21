@@ -18,7 +18,7 @@
 	let currentUser = $derived(data.user);
 	let navItems = $derived([
 		{ href: '/datasets', label: 'Datasets' },
-		{ href: '/licence', label: 'Use our data' },
+		// { href: '/licence', label: 'Use our data' },
 		{ href: '/about', label: 'About' }
 	]);
 	let adminUser = $derived(isAdminUser(currentUser));

@@ -2,10 +2,40 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 
+from muckrake.util import parse_date
+
 BASE_URL = "https://www.lobbying.scot/SPS/"
 COOKIE_URL = f"{BASE_URL}/?AspxAutoDetectCookieSupport=1"
 SEARCH_URL = f"{BASE_URL}/Search/Search?AspxAutoDetectCookieSupport=1"
 RESULT_URL = f"{BASE_URL}/Search/SearchResult"
+
+INFORMATION_RETURNS_COLUMNS = [
+    "Count",
+    "Return ID",
+    "Date of lobbying activity",
+    "Published date",
+    "Registrant name",
+    "Registrant subject area",
+    "Person lobbied roles",
+    "Persons lobbied",
+    "Location",
+    "Lobbying activity",
+    "Communication type",
+    "Lobbyist names",
+    "Undertaken on registrants behalf",
+    "Client name",
+    "Purpose of lobbying",
+    "Registrant type",
+]
+
+
+def parse_imported_date(value):
+    if not value:
+        return None
+    parsed = parse_date(value, "%d/%m/%Y %H:%M:%S")
+    if parsed is None:
+        raise ValueError(f"Could not parse imported date: {value}")
+    return parsed
 
 
 def crawl(dataset):
@@ -233,6 +263,8 @@ def crawl(dataset):
         "Priority": "u=0, i",
     }
 
+    dataset.log.info("Fetching information returns CSV")
+
     path = dataset.fetch_resource(
         "information_returns.csv",
         "https://www.lobbying.scot/SPS/Search/OutputSearchResult",
@@ -243,47 +275,68 @@ def crawl(dataset):
         timeout=300,
     )
 
-    with open(path, "r", encoding="utf-8") as f:
-        # filter to where Date of lobbying activity is not Nil Return
-        rows = [row for row in csv.DictReader(f) if row.get("Date of Lobbying Activity")]
+    with open(path, "r", encoding="utf-8", newline="") as f:
+        dataset.log.info("Processing information returns")
+        reader = csv.DictReader(f, fieldnames=INFORMATION_RETURNS_COLUMNS)
+        next(reader, None)
+
+        # Skip nil returns so only actual lobbying activity is emitted.
+        rows = [
+            row
+            for row in reader
+            if row.get("Date of lobbying activity")
+            and row.get("Date of lobbying activity") != "Nil Return"
+        ]
 
         for row in rows:
             record_id = row.get("Return ID")
-            print(f"Processing information return {record_id}")
+            dataset.log.info(f"Processing information return {record_id}")
 
             meeting = dataset.make("Event")
-            meeting.id = dataset.make_id("scottish_lobbying_register", "information_return", record_id)
+            meeting.id = dataset.make_id(
+                "scottish_lobbying_register", "information_return", record_id
+            )
             meeting.add("recordId", record_id)
 
-            lobbying_activity = row.get("Lobbying Activity")
+            lobbying_activity = row.get("Lobbying activity")
             meeting.add("name", lobbying_activity)
 
-            purpose_of_lobbying = row.get("Purpose of Lobbying")
+            purpose_of_lobbying = row.get("Purpose of lobbying")
             meeting.add("summary", purpose_of_lobbying)
-            communication_type = row.get("Communication Type")
+            communication_type = row.get("Communication type")
             meeting.add("description", f"Communication Type: {communication_type}")
 
-            date_of_lobbying_activity = row.get("Date of Lobbying Activity")
-            published_date = row.get("Published Date")
+            date_of_lobbying_activity = row.get("Date of lobbying activity")
+            published_date = row.get("Published date")
             if date_of_lobbying_activity:
-                meeting.add("date", date_of_lobbying_activity)
+                meeting.add("date", parse_imported_date(date_of_lobbying_activity))
             elif published_date:
-                meeting.add("date", published_date)
-            
+                meeting.add("date", parse_imported_date(published_date))
+
             location = row.get("Location")
             if location:
                 meeting.add("location", location)
-            
-            # create hosts (politicians)
-            persons_lobbied = row.get("Persons Lobbied")
-            persons_lobbied = [p.strip() for p in persons_lobbied.split(";")] if persons_lobbied else []
 
-            persons_lobbied_roles = row.get("Person Lobbied Roles")
-            persons_lobbied_roles = [r.strip() for r in persons_lobbied_roles.split(";")] if persons_lobbied_roles else []
+            # create hosts (politicians)
+            persons_lobbied = row.get("Persons lobbied")
+            persons_lobbied = (
+                [p.strip() for p in persons_lobbied.split(";")]
+                if persons_lobbied
+                else []
+            )
+
+            persons_lobbied_roles = row.get("Person lobbied roles")
+            persons_lobbied_roles = (
+                [r.strip() for r in persons_lobbied_roles.split(";")]
+                if persons_lobbied_roles
+                else []
+            )
 
             for i, name in enumerate(persons_lobbied):
                 politician = dataset.make("Person")
-                politician.id = dataset.make_id("scottish_lobbying_register", "politician", name)
+                politician.id = dataset.make_id(
+                    "scottish_lobbying_register", "politician", name
+                )
                 politician.add("name", name)
                 politician.add("jurisdiction", "gb-sct")
                 politician.add("topics", "role.pep")
@@ -291,14 +344,17 @@ def crawl(dataset):
                 dataset.emit(politician)
                 meeting.add("organizer", politician)
 
-
             # create meeting participants
-            registrant_name = row.get("Registrant Name")
-            undertaken_on_registrants_behalf = row.get("Undertaken on Registrant's Behalf")
+            registrant_name = row.get("Registrant name")
+            undertaken_on_registrants_behalf = row.get(
+                "Undertaken on registrants behalf"
+            )
             if undertaken_on_registrants_behalf == "No":
                 # create lobbyist
                 lobbyist = dataset.make("Organization")
-                lobbyist.id = dataset.make_id("scottish_lobbying_register", "lobbyist", registrant_name)
+                lobbyist.id = dataset.make_id(
+                    "scottish_lobbying_register", "lobbyist", registrant_name
+                )
                 lobbyist.add("name", registrant_name)
                 lobbyist.add("topics", "role.lobby")
                 dataset.emit(lobbyist)
@@ -306,35 +362,47 @@ def crawl(dataset):
 
                 # create client
                 client = dataset.make("Organization")
-                client_name = row.get(13)
-                client.id = dataset.make_id("scottish_lobbying_register", "client", client_name)
+                client_name = row.get("Client name")
+                client.id = dataset.make_id(
+                    "scottish_lobbying_register", "client", client_name
+                )
                 client.add("name", client_name)
                 dataset.emit(client)
                 meeting.add("involved", client)
 
                 # link lobbyist to client
                 lobbying_relationship = dataset.make("Representation")
-                lobbying_relationship.id = dataset.make_id("scottish_lobbying_register", lobbyist.id, client.id)
+                lobbying_relationship.id = dataset.make_id(
+                    "scottish_lobbying_register", lobbyist.id, client.id
+                )
                 lobbying_relationship.add("agent", lobbyist)
                 lobbying_relationship.add("client", client)
                 # TODO: add date
                 dataset.emit(lobbying_relationship)
 
                 # add lobbyist employment
-                employees = row.get(11)
-                employees = [e.strip() for e in employees.split(";")] if employees else []
+                employees = row.get("Lobbyist names")
+                employees = (
+                    [e.strip() for e in employees.split(";")] if employees else []
+                )
                 for employee_name in employees:
                     employee = dataset.make("Person")
-                    employee.id = dataset.make_id("scottish_lobbying_register", "employee", employee_name)
+                    employee.id = dataset.make_id(
+                        "scottish_lobbying_register", "employee", employee_name
+                    )
                     employee.add("name", employee_name)
                     dataset.emit(employee)
                     meeting.add("involved", employee)
 
                     employment = dataset.make("Employment")
-                    employment.id = dataset.make_id("scottish_lobbying_register", "employment", lobbyist.id, employee_name)
+                    employment.id = dataset.make_id(
+                        "scottish_lobbying_register",
+                        "employment",
+                        lobbyist.id,
+                        employee_name,
+                    )
                     employment.add("employer", lobbyist)
                     employment.add("employee", employee)
                     dataset.emit(employment)
-                
-            dataset.emit(meeting)
 
+            dataset.emit(meeting)

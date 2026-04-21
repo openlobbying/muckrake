@@ -12,8 +12,10 @@ KEY_PATH="${2:-$HOME/.ssh/id_ed25519}"
 echo "[1/3] Sync code to VPS"
 rsync -az --delete \
   --exclude ".git" \
+  --exclude ".env" \
   --exclude ".venv" \
   --exclude "data" \
+  --exclude "openlobbying/.env" \
   --exclude "openlobbying/node_modules" \
   -e "ssh -i $KEY_PATH" \
   ./ "deploy@$SERVER:/home/deploy/muckrake/"

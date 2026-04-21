@@ -6,7 +6,7 @@ updated: 26 March 2026
 
 ## Who we are
 
-OpenLobbying is an independent public-interest data journalism project. For the purposes of UK data protection law, the data controller is [Nicu Calcea](https://nicu.md/).
+OpenLobbying is an independent public-interest data journalism project. For the purposes of UK data protection law, the data controller is [OpenLobbying CIC](https://find-and-update.company-information.service.gov.uk/company/17146175).
 
 Contact: [mail@openlobbying.org](mailto:mail@openlobbying.org)
 

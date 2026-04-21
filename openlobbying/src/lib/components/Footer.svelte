@@ -9,9 +9,8 @@
 <footer class="site-footer">
 	<div class="footer-content">
 		<div>
-			<a href="/" class="footer-logo">OpenLobbying</a>
 			<p class="footer-copy">
-				Public-interest lobbying and political finance data for the UK.
+				OpenLobbying is a not-for-profit Community Interest Company registered in England and Wales (<a href="https://find-and-update.company-information.service.gov.uk/company/17146175" target="_blank" rel="noopener noreferrer">17146175</a>).
 			</p>
 		</div>
 		<nav aria-label="Footer">
@@ -42,13 +41,6 @@
 		gap: 1rem 2rem;
 		align-items: center;
 		justify-content: space-between;
-	}
-
-	.footer-logo {
-		font-size: 1rem;
-		font-weight: 700;
-		color: #1e40af;
-		text-decoration: none;
 	}
 
 	.footer-copy {

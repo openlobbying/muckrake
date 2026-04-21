@@ -31,7 +31,8 @@ def _normalize_database_url(url: str | None) -> str | None:
     return url
 
 
-_load_dotenv(BASE_PATH / ".env")
+if os.getenv("ENVIRONMENT") != "production":
+    _load_dotenv(BASE_PATH / ".env")
 
 
 def _require_database_url(name: str) -> str:
