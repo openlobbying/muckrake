@@ -38,16 +38,11 @@ function readEnvFile(fileUrl: URL): Record<string, string> {
 	}
 }
 
-const frontendEnv = dev ? readEnvFile(new URL('../../../../.env', import.meta.url)) : {};
-const repoEnv = dev ? readEnvFile(new URL('../../../../../.env', import.meta.url)) : {};
+const repoEnv = dev ? readEnvFile(new URL('../../../../.env', import.meta.url)) : {};
 
 export function resolveEnvValue(...keys: string[]): string | undefined {
 	for (const key of keys) {
-		const value =
-			env[key] ??
-			process.env[key] ??
-			frontendEnv[key] ??
-			repoEnv[key];
+		const value = env[key] ?? process.env[key] ?? repoEnv[key];
 
 		if (value) {
 			return value;
@@ -57,7 +52,8 @@ export function resolveEnvValue(...keys: string[]): string | undefined {
 	return undefined;
 }
 
-const authSecret = resolveEnvValue('AUTH_SECRET', 'BETTER_AUTH_SECRET');
+const authSecret = resolveEnvValue('BETTER_AUTH_SECRET');
+const authBaseUrl = resolveEnvValue('BETTER_AUTH_URL');
 const databaseUrl = resolveEnvValue('MUCKRAKE_DATABASE_URL');
 
 export function getAuthSecret(): string {
@@ -69,7 +65,7 @@ export function getAuthSecret(): string {
 		return 'openlobbying-dev-auth-secret-change-me';
 	}
 
-	throw new Error('AUTH_SECRET must be set when running OpenLobbying auth outside development.');
+	throw new Error('BETTER_AUTH_SECRET must be set when running OpenLobbying auth outside development.');
 }
 
 if (!databaseUrl) {
@@ -82,6 +78,7 @@ const pool = new Pool({
 
 export const auth = betterAuth({
 	basePath: '/auth',
+	baseURL: authBaseUrl,
 	secret: getAuthSecret(),
 	database: pool,
 	emailAndPassword: {

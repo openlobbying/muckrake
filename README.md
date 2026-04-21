@@ -86,17 +86,25 @@ npm run dev
 
 In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8000` via Vite.
 
-## Database configuration
+## Environment setup
 
-- Set `MUCKRAKE_DATABASE_URL`. `.env` is loaded automatically from the repo root.
-- Optional: set `MUCKRAKE_ARTIFACT_PATH` to control where immutable run artifacts are stored locally.
-- Set `MUCKRAKE_PUBLISHED_DATABASE_URL` to a separate published Postgres database used by the API.
+- Copy `.env.example` to `.env` in the repo root.
+- That single repo-root `.env` is used for local Python and frontend development.
+- Required for local development:
+  - `MUCKRAKE_DATABASE_URL`
+- Common local settings:
+  - `MUCKRAKE_PUBLISHED_DATABASE_URL` for a separate published API database
+  - `BETTER_AUTH_SECRET` for a stable local auth secret. If omitted, development falls back to a fixed local secret.
+  - `BETTER_AUTH_URL`, usually `http://localhost:5173`
+- Optional local overrides:
+  - `MUCKRAKE_API_URL`
+  - `MUCKRAKE_DATA_PATH`
+  - `MUCKRAKE_ARTIFACT_PATH`
+  - `OPENROUTER_API_KEY`, `LLM_MODEL`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`
 - Example:
 
 ```bash
-export MUCKRAKE_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5432/muckrake"
-export MUCKRAKE_PUBLISHED_DATABASE_URL="postgresql+psycopg://muckrake:password@127.0.0.1:5432/muckrake_published"
-export MUCKRAKE_ARTIFACT_PATH="data/artifacts"
+cp .env.example .env
 ```
 
 ## Deployment docs

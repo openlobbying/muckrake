@@ -2,6 +2,8 @@ import os
 import logging
 from typing import Optional, Any
 
+from muckrake.env import load_env_file
+
 log = logging.getLogger(__name__)
 
 _LOGFIRE_CONFIGURED = False
@@ -29,19 +31,9 @@ def configure_logging(
 
     # If we haven't configured the global Logfire instance yet, do it now
     if not _LOGFIRE_CONFIGURED:
-        # Load .env if present and not already loaded (simple manual load)
         from muckrake.settings import BASE_PATH
 
-        env_path = BASE_PATH / ".env"
-        if env_path.exists():
-            for line in env_path.read_text(encoding="utf-8").splitlines():
-                raw = line.strip()
-                if not raw or raw.startswith("#") or "=" not in raw:
-                    continue
-                key, value = raw.split("=", 1)
-                key = key.strip()
-                value = value.strip().strip('"').strip("'")
-                os.environ.setdefault(key, value)
+        load_env_file(BASE_PATH / ".env")
 
         logfire.configure(
             send_to_logfire="if-token-present",

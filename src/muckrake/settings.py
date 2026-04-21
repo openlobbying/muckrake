@@ -1,26 +1,10 @@
 import os
 from pathlib import Path
 
+from muckrake.env import load_env_file
+
 # Base directory of the project
 BASE_PATH = Path(__file__).parent.parent.parent
-
-
-def _load_dotenv(path: Path) -> None:
-    if not path.exists():
-        return
-
-    for raw_line in path.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        if line.startswith("export "):
-            line = line[7:].strip()
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip("\"'")
-        if key:
-            os.environ.setdefault(key, value)
 
 
 def _normalize_database_url(url: str | None) -> str | None:
@@ -32,7 +16,7 @@ def _normalize_database_url(url: str | None) -> str | None:
 
 
 if os.getenv("ENVIRONMENT") != "production":
-    _load_dotenv(BASE_PATH / ".env")
+    load_env_file(BASE_PATH / ".env")
 
 
 def _require_database_url(name: str) -> str:

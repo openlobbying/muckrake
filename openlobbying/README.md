@@ -11,12 +11,15 @@ npm run dev -- --open
 
 Frontend calls use relative `/api/*` routes. In local development, Vite proxies `/api` to `http://127.0.0.1:8000`.
 
+Local environment variables live in the repo-root `.env`, not `openlobbying/.env`.
+
 ## Authentication
 
 This app uses Better Auth for email/password login.
 
 - Auth tables are created automatically in the database pointed to by `MUCKRAKE_DATABASE_URL`.
-- Set `AUTH_SECRET` in production. In development only, the app falls back to a fixed local secret.
+- Better Auth uses `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`.
+- Set `BETTER_AUTH_SECRET` in production. In development only, the app falls back to a fixed local secret.
 - Better Auth runs on `/auth/*` so it does not clash with the existing `/api/*` FastAPI proxy in development.
 - Better Auth's admin plugin is enabled, and the admin panel lives at `/admin`.
 - Admin access is role-based using Better Auth's built-in `user` and `admin` roles.
@@ -39,5 +42,6 @@ You can preview the production build with `npm run preview`.
 - This app uses `@sveltejs/adapter-node`.
 - Production runtime command is `node build`.
 - In production we expect a reverse proxy (Caddy/Nginx) in front of the Node process.
+- Production env comes from `/etc/muckrake/app.env`, shared with the API service.
 
 See `../ops/README.md` for the deployment runbook and `../ops/` for service templates and proxy config used by this project.

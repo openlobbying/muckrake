@@ -9,7 +9,6 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from followthemoney import model
 from functools import lru_cache
-from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -34,7 +33,7 @@ from muckrake.api.serialization import (
     get_all_datasets_metadata,
 )
 from muckrake.api.graph_logic import get_entity_graph_data
-from muckrake.settings import ACTOR_SCHEMATA, BASE_PATH
+from muckrake.settings import ACTOR_SCHEMATA
 
 log = logging.getLogger(__name__)
 
@@ -52,40 +51,8 @@ app.add_middleware(
 )
 
 
-def _read_env_file(path: Path) -> Dict[str, str]:
-    if not path.exists():
-        return {}
-
-    values: Dict[str, str] = {}
-    for raw_line in path.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        if line.startswith("export "):
-            line = line[7:].strip()
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip("\"'")
-        if key:
-            values[key] = value
-
-    return values
-
-
-@lru_cache(maxsize=1)
-def _frontend_env() -> Dict[str, str]:
-    return _read_env_file(BASE_PATH / "openlobbying" / ".env")
-
-
 def get_admin_api_secret() -> str:
-    return (
-        os.getenv("AUTH_SECRET")
-        or os.getenv("BETTER_AUTH_SECRET")
-        or _frontend_env().get("AUTH_SECRET")
-        or _frontend_env().get("BETTER_AUTH_SECRET")
-        or DEV_ADMIN_SECRET
-    )
+    return os.getenv("BETTER_AUTH_SECRET") or DEV_ADMIN_SECRET
 
 
 @app.on_event("startup")

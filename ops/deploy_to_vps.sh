@@ -15,7 +15,6 @@ rsync -az --delete \
   --exclude ".env" \
   --exclude ".venv" \
   --exclude "data" \
-  --exclude "openlobbying/.env" \
   --exclude "openlobbying/node_modules" \
   -e "ssh -i $KEY_PATH" \
   ./ "deploy@$SERVER:/home/deploy/muckrake/"
