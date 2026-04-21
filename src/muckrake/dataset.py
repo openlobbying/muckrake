@@ -16,6 +16,17 @@ from muckrake.extract.fetch import fetch_file, fetch_json, fetch_html, fetch_tex
 from muckrake.settings import DATA_PATH, SQL_URI
 
 
+def load_raw_config(path: Path) -> Dict[str, Any]:
+    import yaml
+
+    with path.open("r") as fh:
+        return yaml.safe_load(fh) or {}
+
+
+def get_dataset_config(data: Dict[str, Any]) -> Dict[str, Any]:
+    return data.get("dataset", data)
+
+
 def get_dataset_path(name: str) -> Path:
     return DATA_PATH / "datasets" / name
 
@@ -30,13 +41,7 @@ def clear_dataset(name: str):
 
 def load_config(path: Path) -> FTMDataset:
     """Load a dataset configuration from a file path."""
-    import yaml
-
-    with open(path, "r") as fh:
-        data = yaml.safe_load(fh)
-        # Handle new nested structure
-        config = data.get("dataset", data)
-        return FTMDataset.make(config)
+    return FTMDataset.make(get_dataset_config(load_raw_config(path)))
 
 
 class Dataset:
@@ -48,17 +53,11 @@ class Dataset:
         writer: Any,
         timestamps: Optional[Dict[str, str]] = None,
     ):
-        # Load the FTM dataset
-        self.ftm = load_config(config_path)
+        self._data = load_raw_config(config_path)
+        config = get_dataset_config(self._data)
+        self.ftm = FTMDataset.make(config)
         self.name = self.ftm.name
-
-        # Extract prefix from raw YAML (similar to how zavod uses Pydantic model)
-        import yaml
-
-        with open(config_path, "r") as fh:
-            self._data = yaml.safe_load(fh)
-            config = self._data.get("dataset", self._data)
-            self.prefix = config.get("prefix", self.name)
+        self.prefix = config.get("prefix", self.name)
 
         self.writer = writer
         self.timestamps = timestamps or {}

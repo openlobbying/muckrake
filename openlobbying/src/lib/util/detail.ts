@@ -65,13 +65,6 @@ export function buildRemainingRows(
 	return buildRowsForKeys(properties, keys);
 }
 
-export function getDatasetLabel(dataset: any): string {
-	if (dataset && typeof dataset === 'object') {
-		return dataset.title || dataset.name || 'Unknown dataset';
-	}
-	return String(dataset || 'Unknown dataset');
-}
-
 export function renderableValue(value: any, key: string) {
 	if (isEntity(value)) {
 		return {

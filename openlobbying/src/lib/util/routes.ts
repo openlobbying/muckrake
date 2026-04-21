@@ -9,10 +9,3 @@ export function getEntityRoute(id: string, schema: string): string {
 	// Default to statement view for everything else (Payments, Relationships, etc.)
 	return `/statement/${id}`;
 }
-
-export function getApiEndpoint(id: string, schema: string): string {
-    if (ACTOR_SCHEMATA.has(schema)) {
-        return `/api/profiles/${id}`;
-    }
-    return `/api/statements/${id}`;
-}

@@ -1,11 +1,7 @@
 <script lang="ts">
+	import DatasetList from '$lib/components/DatasetList.svelte';
 	import { getPropertyLabel, getTimelineDetailRows } from '$lib/presentation/property-profile';
-	import {
-		formatLabel,
-		getDatasetLabel,
-		renderableValue,
-		type DetailRow
-	} from '$lib/util/detail';
+	import { formatLabel, renderableValue, type DetailRow } from '$lib/util/detail';
 
 	interface Props {
 		activity: any;
@@ -21,13 +17,7 @@
 {#if hasContent}
 	<div class="mt-3 border-t border-gray-100 pt-3">
 		{#if hasDatasets}
-			<p class="text-sm text-gray-700">
-				<span class="text-gray-500">Datasets:</span>
-				{#each activity.datasets as dataset, i}
-					{#if i > 0}, {/if}
-					{getDatasetLabel(dataset)}
-				{/each}
-			</p>
+			<DatasetList datasets={activity.datasets} variant="inline" />
 		{/if}
 
 		{#if detailRows.length > 0}

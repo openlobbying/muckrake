@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DatasetList from '$lib/components/DatasetList.svelte';
 	import Properties from '$lib/components/Properties.svelte';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
@@ -39,18 +40,8 @@
 				<CardTitle>Datasets</CardTitle>
 			</CardHeader>
 			<CardContent>
-			<div class="flex flex-wrap gap-2">
-				{#each entity.datasets as dataset}
-					<Badge variant="secondary">{dataset.title ?? dataset.name}</Badge>
-				{/each}
-			</div>
+				<DatasetList datasets={entity.datasets} variant="badges" />
 			</CardContent>
 		</Card>
 	{/if}
 </div>
-
-<style>
-	:global(body) {
-		background-color: #f9fafb;
-	}
-</style>

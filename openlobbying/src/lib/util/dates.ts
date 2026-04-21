@@ -1,3 +1,6 @@
+const MONTH_TOKEN = /^\d{4}-\d{2}$/;
+const DATE_TOKEN = /^\d{4}-\d{2}-\d{2}$/;
+
 export function getBestDate(props: Record<string, any[]>): string | undefined {
 	const dateProps = [
 		'date',
@@ -17,12 +20,48 @@ export function getBestDate(props: Record<string, any[]>): string | undefined {
 	return undefined;
 }
 
+export function isDateToken(value: unknown): value is string {
+	return typeof value === 'string' && (MONTH_TOKEN.test(value) || DATE_TOKEN.test(value));
+}
+
+export function toDateBoundary(value: string, end = false): Date | undefined {
+	if (MONTH_TOKEN.test(value)) {
+		const [year, month] = value.split('-').map(Number);
+		const day = end ? new Date(Date.UTC(year, month, 0)).getUTCDate() : 1;
+		return new Date(Date.UTC(year, month - 1, day));
+	}
+
+	if (DATE_TOKEN.test(value)) {
+		return new Date(`${value}T00:00:00Z`);
+	}
+
+	return undefined;
+}
+
+export function formatDateToken(value?: string): string | undefined {
+	if (!value) return undefined;
+
+	const date = toDateBoundary(value);
+	if (!date) return value;
+
+	if (MONTH_TOKEN.test(value)) {
+		return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+	}
+
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		timeZone: 'UTC'
+	});
+}
+
 /**
  * Format a date as a quarter (e.g., "Q1 2024")
  */
 export function formatQuarterDate(dateStr: string): string {
 	try {
-		const date = new Date(dateStr);
+		const date = toDateBoundary(dateStr) || new Date(dateStr);
 		if (Number.isNaN(date.getTime())) return dateStr;
 		const year = date.getFullYear();
 		const month = date.getMonth(); // 0-11
@@ -40,8 +79,8 @@ export function formatQuarterRange(startDate?: string, endDate?: string): string
 	if (start && end) {
 		if (start === end) return start;
 
-		const startParsed = startDate ? new Date(startDate) : undefined;
-		const endParsed = endDate ? new Date(endDate) : undefined;
+		const startParsed = startDate ? toDateBoundary(startDate) : undefined;
+		const endParsed = endDate ? toDateBoundary(endDate, true) : undefined;
 		if (
 			startParsed &&
 			endParsed &&
@@ -66,7 +105,7 @@ export function formatQuarterRange(startDate?: string, endDate?: string): string
  */
 export function formatFullDate(dateStr: string): string {
 	try {
-		const date = new Date(dateStr);
+		const date = toDateBoundary(dateStr) || new Date(dateStr);
 		if (Number.isNaN(date.getTime())) return dateStr;
 		const day = date.getDate();
 		const month = date.toLocaleDateString('en-GB', { month: 'long' });

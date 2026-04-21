@@ -2,6 +2,7 @@
 	import { getEntityRoute } from '$lib/util/routes';
 	import { Badge } from '$lib/components/ui/badge';
 	import { getPropertyLabel } from '$lib/presentation/property-profile';
+	import { renderableValue } from '$lib/util/detail';
 
 	interface Props {
 		properties: Record<string, any[]>;
@@ -18,13 +19,6 @@
 			.map((key) => [key, properties[key]] as const);
 	});
 
-	function isEntity(value: any): value is { id: string; caption: string; schema: string } {
-		return typeof value === 'object' && value !== null && 'id' in value && 'caption' in value;
-	}
-
-	function isUrl(value: unknown): value is string {
-		return typeof value === 'string' && /^https?:\/\//.test(value);
-	}
 </script>
 
 <div class="overflow-hidden">
@@ -36,28 +30,29 @@
 			<div class="sm:col-span-2">
 				<dd class={`text-sm text-gray-900 ${key === 'summary' ? 'space-y-2' : 'flex flex-wrap gap-2'}`}>
 					{#each values as value}
-						{#if isEntity(value)}
+						{@const item = renderableValue(value, key)}
+						{#if item.type === 'entity'}
 							<a
-								href={getEntityRoute(value.id, value.schema || 'Entity')}
+								href={item.href}
 								class="transition-colors hover:opacity-90"
 							>
-							<Badge variant="secondary">{value.caption}</Badge>
+							<Badge variant="secondary">{item.text}</Badge>
 							</a>
-						{:else if key === 'sourceUrl' && isUrl(value)}
+						{:else if item.type === 'url'}
 							<a
-								href={value}
+								href={item.href}
 								target="_blank"
 								rel="noopener noreferrer"
 								class="text-blue-700 underline decoration-blue-300 transition-colors hover:text-blue-900"
 							>
-								{value}
+								{item.text}
 							</a>
 						{:else if key === 'summary' && typeof value === 'string'}
 							<div class="w-full rounded-md bg-gray-50 px-3 py-2 leading-relaxed text-gray-800">
 								{value}
 							</div>
 						{:else}
-							<Badge variant="secondary">{value}</Badge>
+							<Badge variant="secondary">{item.text}</Badge>
 						{/if}
 					{/each}
 				</dd>

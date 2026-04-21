@@ -1,13 +1,11 @@
-from typing import Any, Dict, List, Optional
-from datetime import date
-from calendar import monthrange
+from typing import Any, Dict
 from followthemoney import model
 from followthemoney.types import registry
 from functools import lru_cache
-import yaml
 
-from muckrake.dataset import find_datasets
+from muckrake.dataset import find_datasets, get_dataset_config, load_raw_config
 from muckrake.settings import ACTOR_SCHEMATA
+from muckrake.util import parse_date_token
 
 
 @lru_cache(maxsize=1)
@@ -16,10 +14,8 @@ def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
     datasets = {}
 
     for config_path in find_datasets():
-        with open(config_path, "r") as fh:
-            raw = yaml.safe_load(fh) or {}
-
-        cfg = raw.get("dataset", raw)
+        raw = load_raw_config(config_path)
+        cfg = get_dataset_config(raw)
         name = cfg.get("name")
         if not name:
             continue
@@ -71,16 +67,6 @@ def is_actor(schema_name: str) -> bool:
     return schema is not None and any(schema.is_a(s) for s in ACTOR_SCHEMATA)
 
 
-def _parse_date_token(value: str, is_end: bool = False) -> Optional[date]:
-    if len(value) == 7:
-        year, month = value.split("-")
-        day = monthrange(int(year), int(month))[1] if is_end else 1
-        return date.fromisoformat(f"{value}-{day:02d}")
-    if len(value) == 10:
-        return date.fromisoformat(value)
-    return None
-
-
 def _collapse_edge_temporal_extent(data: Dict[str, Any]) -> None:
     if data.get("schema") != "Representation":
         return
@@ -94,11 +80,11 @@ def _collapse_edge_temporal_extent(data: Dict[str, Any]) -> None:
     start_tokens = []
     end_tokens = []
     for token in starts:
-        parsed = _parse_date_token(token, is_end=False)
+        parsed = parse_date_token(token, is_end=False)
         if parsed is not None:
             start_tokens.append((parsed, token))
     for token in ends:
-        parsed = _parse_date_token(token, is_end=True)
+        parsed = parse_date_token(token, is_end=True)
         if parsed is not None:
             end_tokens.append((parsed, token))
 

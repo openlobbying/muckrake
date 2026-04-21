@@ -5,7 +5,167 @@ import type {
 	RelationshipItem,
 	RelationshipPeriod,
 } from "../types";
-import { formatQuarterRange, getBestDate } from "./dates";
+import {
+	formatDateToken,
+	formatQuarterRange,
+	getBestDate,
+	isDateToken,
+	toDateBoundary,
+} from "./dates";
+
+type RelationshipDefinition = {
+	schema: string;
+	leftProp: string;
+	rightProp: string;
+	leftGroup: string;
+	rightGroup: string;
+};
+
+type EntityRef = {
+	id: string;
+	caption: string;
+	schema: string;
+};
+
+const TIMELINE_SCHEMAS = new Set([
+	'Event',
+	'Trip',
+	'Representation',
+	'Payment',
+	'Ownership',
+	'Directorship',
+	'Family',
+	'UnknownLink',
+	'PublicDisclosure'
+]);
+
+const RELATIONSHIP_DEFINITIONS: RelationshipDefinition[] = [
+	{
+		schema: 'Employment',
+		leftProp: 'employee',
+		rightProp: 'employer',
+		leftGroup: 'employers',
+		rightGroup: 'employees'
+	},
+	{
+		schema: 'Membership',
+		leftProp: 'member',
+		rightProp: 'organization',
+		leftGroup: 'organizations',
+		rightGroup: 'members'
+	},
+	{
+		schema: 'Representation',
+		leftProp: 'client',
+		rightProp: 'agent',
+		leftGroup: 'lobbyists',
+		rightGroup: 'clients'
+	}
+];
+
+function getStringProp(item: Entity, key: string): string | undefined {
+	const value = item.properties[key]?.[0];
+	return typeof value === 'string' ? value : undefined;
+}
+
+function hasKeyword(item: Entity, needle: string): boolean {
+	return item.properties.keywords?.some((keyword: string) => keyword.includes(needle)) ?? false;
+}
+
+function getActivityType(item: Entity): string | null {
+	if (!TIMELINE_SCHEMAS.has(item.schema)) {
+		return null;
+	}
+
+	if (item.schema === 'Event') {
+		if (hasKeyword(item, 'Oral Evidence') || hasKeyword(item, 'Written Evidence')) {
+			return 'Evidence';
+		}
+		if (hasKeyword(item, 'Meeting')) {
+			return 'Meeting';
+		}
+		return item.properties.country?.length ? 'Visit' : 'Event';
+	}
+
+	if (item.schema === 'Payment') {
+		const purpose = getStringProp(item, 'purpose')?.toLowerCase() || '';
+		const summary = getStringProp(item, 'summary')?.toLowerCase() || '';
+		if (purpose.includes('gift') || summary.includes('gift')) {
+			return 'Gift';
+		}
+		if (
+			purpose.includes('donation') ||
+			summary.includes('donation') ||
+			summary.includes('support')
+		) {
+			return 'Donation';
+		}
+	}
+
+	if (item.schema === 'Ownership' && item.properties.asset?.[0]?.schema === 'Asset') {
+		return 'Property';
+	}
+
+	return item.schema;
+}
+
+function getActivityTitle(item: Entity): string {
+	if (item.schema === 'Representation') {
+		return getStringProp(item, 'role') || item.caption;
+	}
+
+	if (item.schema === 'Family') {
+		return getStringProp(item, 'relationship') || 'Family member';
+	}
+
+	return item.caption;
+}
+
+function getDatasetNames(item: Entity): string[] {
+	return (item.datasets || [])
+		.map((dataset) => String(dataset?.name || ''))
+		.filter(Boolean);
+}
+
+function getEntityRefs(values: unknown[]): EntityRef[] {
+	return values.flatMap((value) => {
+		if (!value || typeof value !== 'object') {
+			return [];
+		}
+
+		const ref = value as Record<string, unknown>;
+		const id = typeof ref.id === 'string' ? ref.id : '';
+		if (!id) {
+			return [];
+		}
+
+		return [
+			{
+				id,
+				caption: typeof ref.caption === 'string' ? ref.caption : '',
+				schema: typeof ref.schema === 'string' ? ref.schema : 'Entity'
+			}
+		];
+	});
+}
+
+function buildRelationshipItems(item: Entity, refs: EntityRef[]): RelationshipItem[] {
+	const role = getStringProp(item, 'role');
+	const startDate = getStringProp(item, 'startDate');
+	const endDate = getStringProp(item, 'endDate');
+	const datasetNames = getDatasetNames(item);
+
+	return refs.map((ref) => ({
+		id: ref.id,
+		statementId: item.id,
+		name: ref.caption,
+		schema: ref.schema,
+		role,
+		startDate,
+		endDate,
+		datasetNames,
+	}));
+}
 
 export function transformActivities(entity: Entity): TimelineItem[] {
     if (!entity.adjacent) return [];
@@ -13,85 +173,20 @@ export function transformActivities(entity: Entity): TimelineItem[] {
     const items: TimelineItem[] = [];
     for (const [_, group] of Object.entries(entity.adjacent)) {
         for (const item of group.results) {
-            const schema = item.schema;
-            if (schema === "Employment") {
-                continue;
-            }
-            let type = schema;
-            let title = item.caption;
-            let description = (item.properties.description?.[0] as string) || "";
-            let date = getBestDate(item.properties) || "";
-            let amount = item.properties.amount?.[0] as string | undefined;
+			const type = getActivityType(item);
+			if (type === null) {
+				continue;
+			}
 
-            if (schema === "Event") {
-                if (
-                    item.properties.keywords?.some(
-                        (k: string) =>
-                            k.includes("Oral Evidence") ||
-                            k.includes("Written Evidence"),
-                    )
-                ) {
-                    type = "Evidence";
-                } else if (
-                    item.properties.keywords?.some((k: string) =>
-                        k.includes("Meeting"),
-                    )
-                ) {
-                    type = "Meeting";
-                } else if (
-                    item.properties.country && 
-                    item.properties.country.length > 0
-                ) {
-                    // Visits outside UK have country property
-                    type = "Visit";
-                }
-            } else if (schema === "Trip") {
-                // Trip entities from register of interests
-                type = "Trip";
-            } else if (schema === "Representation") {
-                title = (item.properties.role?.[0] as string) || item.caption;
-            } else if (schema === "Payment") {
-                // Distinguish between different payment types
-                const purpose = item.properties.purpose?.[0] as string;
-                const summary = item.properties.summary?.[0] as string;
-                
-                // Check if it's a gift or donation based on purpose/summary
-                if (purpose?.toLowerCase().includes("gift") || 
-                    summary?.toLowerCase().includes("gift")) {
-                    type = "Gift";
-                } else if (purpose?.toLowerCase().includes("donation") || 
-                          summary?.toLowerCase().includes("donation") ||
-                          summary?.toLowerCase().includes("support")) {
-                    type = "Donation";
-                }
-            } else if (schema === "Ownership") {
-                const asset = item.properties.asset?.[0];
-                // Determine if it's property or shareholding based on asset schema
-                if (asset?.schema === "Asset") {
-                    type = "Property";
-                }
-            } else if (schema === "Directorship") {
-            } else if (schema === "Family") {
-                const relationship = item.properties.relationship?.[0] as string;
-                title = relationship || "Family member";
-            } else if (schema === "UnknownLink") {
-                // Miscellaneous interests
-            } else if (schema === "PublicDisclosure") {
-                // Public disclosure statement
-            } else {
-                // Skip unknown schemas
-                continue;
-            }
-
-            items.push({
-                id: item.id,
-                type,
-                title,
-                description,
-                date,
-                amount,
-                properties: item.properties,
-                schema: item.schema,
+			items.push({
+				id: item.id,
+				type,
+				title: getActivityTitle(item),
+				description: getStringProp(item, 'description') || '',
+				date: getBestDate(item.properties) || '',
+				amount: getStringProp(item, 'amount'),
+				properties: item.properties,
+				schema: item.schema,
 				datasets: item.datasets,
             });
         }
@@ -102,42 +197,9 @@ export function transformActivities(entity: Entity): TimelineItem[] {
 export function transformRelationships(entity: Entity): RelationshipGroup[] {
     if (!entity.adjacent) return [];
 
-    const toDateToken = (value: unknown): string | undefined => {
-        if (typeof value !== "string") return undefined;
-        if (/^\d{4}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-        return undefined;
-    };
-
     const relationshipUsesQuarterLabels = (datasetNames?: string[]): boolean => {
         if (!datasetNames || datasetNames.length === 0) return false;
         return datasetNames.some((name) => name === "orcl" || name === "gb_prca");
-    };
-
-    const toDateBoundary = (value: string, end = false): Date | undefined => {
-        if (/^\d{4}-\d{2}$/.test(value)) {
-            const [year, month] = value.split("-").map(Number);
-            const day = end ? new Date(Date.UTC(year, month, 0)).getUTCDate() : 1;
-            return new Date(Date.UTC(year, month - 1, day));
-        }
-        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            return new Date(`${value}T00:00:00Z`);
-        }
-        return undefined;
-    };
-
-    const formatDate = (value?: string): string | undefined => {
-        if (!value) return undefined;
-        const monthOnly = /^(\d{4})-(\d{2})$/.exec(value);
-        if (monthOnly) {
-            const date = new Date(Date.UTC(Number(monthOnly[1]), Number(monthOnly[2]) - 1, 1));
-            return date.toLocaleDateString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
-        }
-        const full = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-        if (full) {
-            const date = new Date(Date.UTC(Number(full[1]), Number(full[2]) - 1, Number(full[3])));
-            return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-        }
-        return value;
     };
 
     const formatPeriodLabel = (
@@ -150,8 +212,8 @@ export function transformRelationships(entity: Entity): RelationshipGroup[] {
             return quarterRange === "Unknown Date" ? undefined : quarterRange;
         }
 
-        const start = formatDate(startDate);
-        const end = formatDate(endDate);
+		const start = formatDateToken(startDate);
+		const end = formatDateToken(endDate);
         if (!start && !end) return undefined;
         if (start && end && start === end) return start;
         return `${start || ""} - ${end || ""}`;
@@ -237,8 +299,8 @@ export function transformRelationships(entity: Entity): RelationshipGroup[] {
         const grouped = new Map<string, RelationshipItem>();
         for (const item of items) {
             const key = [item.id, item.schema, item.role || ""].join("|");
-            const periodStart = toDateToken(item.startDate);
-            const periodEnd = toDateToken(item.endDate);
+			const periodStart = isDateToken(item.startDate) ? item.startDate : undefined;
+			const periodEnd = isDateToken(item.endDate) ? item.endDate : undefined;
             const period: RelationshipPeriod | undefined = periodStart || periodEnd
                 ? {
                     label: formatPeriodLabel(periodStart, periodEnd, item.datasetNames) || "",
@@ -288,110 +350,26 @@ export function transformRelationships(entity: Entity): RelationshipGroup[] {
         members: [],
     };
 
-    const currentId = entity.id;
+	const currentId = entity.id;
 
     for (const [_, group] of Object.entries(entity.adjacent)) {
         for (const item of group.results) {
-            const schema = item.schema;
-            const props = item.properties;
+			const definition = RELATIONSHIP_DEFINITIONS.find(
+				(definition) => definition.schema === item.schema
+			);
+			if (!definition) {
+				continue;
+			}
 
-            if (schema === "Employment") {
-                const employees = props.employee || [];
-                const employers = props.employer || [];
+			const leftRefs = getEntityRefs(item.properties[definition.leftProp] || []);
+			const rightRefs = getEntityRefs(item.properties[definition.rightProp] || []);
 
-                if (employees.some((e: Record<string, unknown>) => e.id === currentId)) {
-                    for (const employer of employers) {
-                        groups.employers.push({
-                            id: String((employer as Record<string, unknown>).id || ""),
-                            statementId: item.id,
-                            name: String((employer as Record<string, unknown>).caption || ""),
-                            schema: String((employer as Record<string, unknown>).schema || "Entity"),
-                            role: props.role?.[0],
-                            startDate: props.startDate?.[0],
-                            endDate: props.endDate?.[0],
-                            datasetNames: (item.datasets || []).map((d: { name?: string }) => String(d?.name || "")).filter(Boolean),
-                        });
-                    }
-                }
-                if (employers.some((e: Record<string, unknown>) => e.id === currentId)) {
-                    for (const employee of employees) {
-                        groups.employees.push({
-                            id: String((employee as Record<string, unknown>).id || ""),
-                            statementId: item.id,
-                            name: String((employee as Record<string, unknown>).caption || ""),
-                            schema: String((employee as Record<string, unknown>).schema || "Entity"),
-                            role: props.role?.[0],
-                            startDate: props.startDate?.[0],
-                            endDate: props.endDate?.[0],
-                            datasetNames: (item.datasets || []).map((d: { name?: string }) => String(d?.name || "")).filter(Boolean),
-                        });
-                    }
-                }
-            } else if (schema === "Membership") {
-                const members = props.member || [];
-                const organizations = props.organization || [];
-
-                if (members.some((m: Record<string, unknown>) => m.id === currentId)) {
-                    for (const organization of organizations) {
-                        groups.organizations.push({
-                            id: String((organization as Record<string, unknown>).id || ""),
-                            statementId: item.id,
-                            name: String((organization as Record<string, unknown>).caption || ""),
-                            schema: String((organization as Record<string, unknown>).schema || "Entity"),
-                            role: props.role?.[0],
-                            startDate: props.startDate?.[0],
-                            endDate: props.endDate?.[0],
-                            datasetNames: (item.datasets || []).map((d: { name?: string }) => String(d?.name || "")).filter(Boolean),
-                        });
-                    }
-                }
-                if (organizations.some((o: Record<string, unknown>) => o.id === currentId)) {
-                    for (const member of members) {
-                        groups.members.push({
-                            id: String((member as Record<string, unknown>).id || ""),
-                            statementId: item.id,
-                            name: String((member as Record<string, unknown>).caption || ""),
-                            schema: String((member as Record<string, unknown>).schema || "Entity"),
-                            role: props.role?.[0],
-                            startDate: props.startDate?.[0],
-                            endDate: props.endDate?.[0],
-                            datasetNames: (item.datasets || []).map((d: { name?: string }) => String(d?.name || "")).filter(Boolean),
-                        });
-                    }
-                }
-            } else if (schema === "Representation") {
-                const agents = props.agent || [];
-                const clients = props.client || [];
-
-                if (clients.some((c: Record<string, unknown>) => c.id === currentId)) {
-                    for (const agent of agents) {
-                        groups.lobbyists.push({
-                            id: String((agent as Record<string, unknown>).id || ""),
-                            statementId: item.id,
-                            name: String((agent as Record<string, unknown>).caption || ""),
-                            schema: String((agent as Record<string, unknown>).schema || "Entity"),
-                            role: props.role?.[0],
-                            startDate: props.startDate?.[0],
-                            endDate: props.endDate?.[0],
-                            datasetNames: (item.datasets || []).map((d: { name?: string }) => String(d?.name || "")).filter(Boolean),
-                        });
-                    }
-                }
-                if (agents.some((a: Record<string, unknown>) => a.id === currentId)) {
-                    for (const client of clients) {
-                        groups.clients.push({
-                            id: String((client as Record<string, unknown>).id || ""),
-                            statementId: item.id,
-                            name: String((client as Record<string, unknown>).caption || ""),
-                            schema: String((client as Record<string, unknown>).schema || "Entity"),
-                            role: props.role?.[0],
-                            startDate: props.startDate?.[0],
-                            endDate: props.endDate?.[0],
-                            datasetNames: (item.datasets || []).map((d: { name?: string }) => String(d?.name || "")).filter(Boolean),
-                        });
-                    }
-                }
-            }
+			if (leftRefs.some((ref) => ref.id === currentId)) {
+				groups[definition.leftGroup].push(...buildRelationshipItems(item, rightRefs));
+			}
+			if (rightRefs.some((ref) => ref.id === currentId)) {
+				groups[definition.rightGroup].push(...buildRelationshipItems(item, leftRefs));
+			}
         }
     }
 

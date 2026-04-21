@@ -1,9 +1,10 @@
 <script lang="ts">
+	import DatasetList from '$lib/components/DatasetList.svelte';
 	import Properties from '$lib/components/Properties.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import type { Entity } from '$lib/types';
-	import { getEntityDatasets, getEntityHref, getEntityName } from './utils';
+	import { getEntityRoute } from '$lib/util/routes';
 
 	interface Props {
 		entity: Entity;
@@ -23,9 +24,8 @@
 		checkboxLabel = 'Include this record'
 	}: Props = $props();
 
-	let datasetTitles = $derived(getEntityDatasets(entity));
-	let href = $derived(getEntityHref(entity));
-	let name = $derived(getEntityName(entity));
+	let href = $derived(getEntityRoute(entity.id, entity.schema));
+	let name = $derived(String(entity.properties.name?.[0] ?? entity.caption ?? entity.id));
 </script>
 
 <Card class="h-full border-slate-200 bg-white shadow-sm">
@@ -65,12 +65,8 @@
 			</div>
 		{/if}
 
-		{#if datasetTitles.length > 0}
-			<div class="flex flex-wrap gap-2">
-				{#each datasetTitles as title (title)}
-					<Badge variant="secondary">{title}</Badge>
-				{/each}
-			</div>
+		{#if entity.datasets && entity.datasets.length > 0}
+			<DatasetList datasets={entity.datasets} variant="badges" />
 		{/if}
 
 		<a href={href} class="text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-950">

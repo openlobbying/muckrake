@@ -1,5 +1,4 @@
 import logging
-from calendar import monthrange
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -11,6 +10,7 @@ from muckrake.db import get_resolver
 from muckrake.dataset import find_datasets, load_config
 from muckrake.dedupe.dedupe import load_statements
 from muckrake.store import get_level_store
+from muckrake.util import parse_date_token
 
 log = logging.getLogger(__name__)
 
@@ -39,16 +39,6 @@ def _normalize_role(value: Optional[str]) -> Optional[str]:
     if not normalized:
         return None
     return ROLE_NORMALIZATION.get(normalized, normalized)
-
-
-def _parse_date(value: Optional[str], is_end: bool = False) -> Optional[date]:
-    if value is None:
-        return None
-    if len(value) == 7:
-        year, month = value.split("-")
-        day = monthrange(int(year), int(month))[1] if is_end else 1
-        return date.fromisoformat(f"{value}-{day:02d}")
-    return date.fromisoformat(value)
 
 
 def _edge_vertices(entity) -> Optional[tuple[str, str]]:
@@ -89,8 +79,8 @@ def _extract_edge_record(entity, resolver) -> Optional[EdgeRecord]:
     ends = sorted(str(value) for value in entity.get("endDate") if value)
 
     try:
-        start = _parse_date(starts[0], is_end=False) if starts else None
-        end = _parse_date(ends[0], is_end=True) if ends else None
+        start = parse_date_token(starts[0], is_end=False) if starts else None
+        end = parse_date_token(ends[0], is_end=True) if ends else None
     except ValueError:
         return None
 

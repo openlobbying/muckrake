@@ -28,6 +28,7 @@ from muckrake.dedupe import (
     record_dedupe_judgement,
     skip_dedupe_cluster,
 )
+from muckrake.dedupe.cluster import LockedPair
 from muckrake.api.serialization import (
     is_actor,
     get_all_datasets_metadata,
@@ -258,16 +259,42 @@ def postgres_search_ready() -> bool:
         return False
 
 
-def _serialize(ent) -> Dict[str, Any]:
-    return serialize_view_entity(ent)
+def _search_response(
+    results: List[Dict[str, Any]],
+    total: int,
+    offset: int,
+    limit: int,
+    requested_schema: List[str],
+    applied_schema: List[str],
+) -> Dict[str, Any]:
+    return {
+        "results": results,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "has_next": (offset + len(results)) < total,
+        "schema": applied_schema,
+        "requested_schema": requested_schema,
+        "applied_schema": applied_schema,
+    }
 
 
 def _redirect_payload(ent, route: str) -> Dict[str, Any]:
     return {
         "redirect": True,
         "correct_route": route,
-        **_serialize(ent),
+        **serialize_view_entity(ent),
     }
+
+
+def _get_entity_or_404(id: str, detail: str):
+    if not view:
+        raise HTTPException(status_code=503, detail="Database not ready")
+
+    ent = view.get_entity(id)
+    if ent is None:
+        raise HTTPException(status_code=404, detail=detail)
+    return ent
 
 
 class DedupeJudgementBody(BaseModel):
@@ -290,6 +317,15 @@ class DedupeClusterJudgementBody(BaseModel):
     intent: str
     user_id: str
     user_name: Optional[str] = None
+
+
+def _locked_pairs_from_body(
+    pairs: List[DedupeLockedPairBody],
+) -> List[LockedPair]:
+    return [
+        {"left_id": pair.left_id, "right_id": pair.right_id, "score": None}
+        for pair in pairs
+    ]
 
 
 def require_admin_secret(x_admin_secret: Optional[str] = Header(default=None)) -> None:
@@ -365,7 +401,7 @@ def judge_admin_dedupe_cluster(
 ):
     require_admin_secret(x_admin_secret)
     try:
-        locked_pairs = [pair.model_dump() for pair in body.locked_pairs]
+        locked_pairs = _locked_pairs_from_body(body.locked_pairs)
         if body.intent == "skip":
             skip_dedupe_cluster(locked_pairs, body.user_id)
             canonical_id = None
@@ -423,7 +459,7 @@ def list_entities(
             continue
         if len(results) >= limit:
             continue
-        results.append(_serialize(ent))
+        results.append(serialize_view_entity(ent))
 
     return {
         "count": len(results),
@@ -437,23 +473,18 @@ def list_entities(
 @app.get("/profiles/{id}")
 def get_profile(id: str) -> Dict[str, Any]:
     """Endpoint for actor profiles, includes adjacency (timeline)."""
-    if not view:
-        raise HTTPException(status_code=503, detail="Database not ready")
-
-    ent = view.get_entity(id)
-    if ent is None:
-        raise HTTPException(status_code=404, detail="Profile not found")
+    ent = _get_entity_or_404(id, "Profile not found")
 
     # If it's not actually an actor, suggest a redirect
     if not is_actor(ent.schema.name):
         return _redirect_payload(ent, f"/statement/{ent.id}")
 
-    data = _serialize(ent)
+    data = serialize_view_entity(ent)
     adjacent = {}
     for prop, adj_ent in view.get_adjacent(ent):
         if prop.name not in adjacent:
             adjacent[prop.name] = {"results": [], "total": 0}
-        adjacent[prop.name]["results"].append(_serialize(adj_ent))
+        adjacent[prop.name]["results"].append(serialize_view_entity(adj_ent))
         adjacent[prop.name]["total"] += 1
 
     data["adjacent"] = adjacent
@@ -463,18 +494,13 @@ def get_profile(id: str) -> Dict[str, Any]:
 @app.get("/statements/{id}")
 def get_statement(id: str) -> Dict[str, Any]:
     """Endpoint for statements/events, simple view."""
-    if not view:
-        raise HTTPException(status_code=503, detail="Database not ready")
-
-    ent = view.get_entity(id)
-    if ent is None:
-        raise HTTPException(status_code=404, detail="Statement not found")
+    ent = _get_entity_or_404(id, "Statement not found")
 
     # If it's actually an actor, suggest a redirect to profile
     if is_actor(ent.schema.name):
         return _redirect_payload(ent, f"/profile/{ent.id}")
 
-    return _serialize(ent)
+    return serialize_view_entity(ent)
 
 
 @app.get("/search")
@@ -487,32 +513,14 @@ def search_entities(
     requested_schema, schema_filter = _expand_actor_schema_filter(schema)
 
     if not view:
-        return {
-            "results": [],
-            "total": 0,
-            "offset": offset,
-            "limit": limit,
-            "has_next": False,
-            "schema": schema_filter,
-            "requested_schema": requested_schema,
-            "applied_schema": schema_filter,
-        }
+        return _search_response([], 0, offset, limit, requested_schema, schema_filter)
 
     query = q.strip()
     limit = max(1, min(limit, 100))
     offset = max(0, offset)
 
     if not query:
-        return {
-            "results": [],
-            "total": 0,
-            "offset": offset,
-            "limit": limit,
-            "has_next": False,
-            "schema": schema_filter,
-            "requested_schema": requested_schema,
-            "applied_schema": schema_filter,
-        }
+        return _search_response([], 0, offset, limit, requested_schema, schema_filter)
 
     if postgres_search_ready():
         try:
@@ -545,16 +553,9 @@ def search_entities(
                     item.pop("sim_word", None)
                     results.append(item)
             total = int(total or 0)
-            return {
-                "results": results,
-                "total": total,
-                "offset": offset,
-                "limit": limit,
-                "has_next": (offset + len(results)) < total,
-                "schema": schema_filter,
-                "requested_schema": requested_schema,
-                "applied_schema": schema_filter,
-            }
+            return _search_response(
+                results, total, offset, limit, requested_schema, schema_filter
+            )
         except Exception as exc:
             log.exception(
                 "Postgres search failed, falling back to Python scan: %s", exc
@@ -580,16 +581,9 @@ def search_entities(
     total = len(matched)
     results = matched[offset : offset + limit]
 
-    return {
-        "results": results,
-        "total": total,
-        "offset": offset,
-        "limit": limit,
-        "has_next": (offset + len(results)) < total,
-        "schema": schema_filter,
-        "requested_schema": requested_schema,
-        "applied_schema": schema_filter,
-    }
+    return _search_response(
+        results, total, offset, limit, requested_schema, schema_filter
+    )
 
 
 @app.get("/stats")

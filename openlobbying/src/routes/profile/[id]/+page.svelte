@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ProfileBox from "$lib/components/ProfileBox.svelte";
+	import DatasetList from '$lib/components/DatasetList.svelte';
 	import KeyDetails from "$lib/components/KeyDetails.svelte";
 	import Relationships from "$lib/components/Relationships.svelte";
 	import Timeline from "$lib/components/timeline/Timeline.svelte";
@@ -118,13 +119,7 @@
 							<CardTitle>Datasets</CardTitle>
 						</CardHeader>
 						<CardContent>
-						<div class="space-y-2">
-							{#each entity.datasets as dataset}
-								<div class="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
-									<p class="text-sm text-gray-700">{dataset.title}</p>
-								</div>
-							{/each}
-						</div>
+							<DatasetList datasets={entity.datasets} variant="stacked" />
 						</CardContent>
 					</Card>
 				{/if}
@@ -190,9 +185,3 @@
 		</Card>
 	{/await}
 </div>
-
-<style>
-	:global(body) {
-		background-color: #f9fafb;
-	}
-</style>
