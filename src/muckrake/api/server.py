@@ -467,27 +467,6 @@ def list_entities(
     }
 
 
-@app.get("/entities/{id}")
-def get_entity(id: str) -> Dict[str, Any]:
-    """Generic entity endpoint with redirect hints."""
-    if not view:
-        raise HTTPException(status_code=503, detail="Database not ready")
-
-    ent = view.get_entity(id)
-    if ent is None:
-        raise HTTPException(status_code=404, detail="Entity not found")
-
-    actor = is_actor(ent.schema.name)
-    route = f"/profile/{ent.id}" if actor else f"/statement/{ent.id}"
-
-    return {
-        "id": ent.id,
-        "schema": ent.schema.name,
-        "is_actor": actor,
-        **_redirect_payload(ent, route),
-    }
-
-
 @app.get("/profiles/{id}")
 def get_profile(id: str) -> Dict[str, Any]:
     """Endpoint for actor profiles, includes adjacency (timeline)."""
