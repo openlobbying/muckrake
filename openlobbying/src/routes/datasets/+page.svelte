@@ -7,7 +7,16 @@
 </script>
 
 <svelte:head>
-    <title>Datasets - OpenLobbying</title>
+	<title>Datasets - OpenLobbying</title>
+	<meta
+		name="description"
+		content="Browse the public data sources, publishers, and methodology behind OpenLobbying's UK lobbying database."
+	/>
+	<meta property="og:title" content="Datasets - OpenLobbying" />
+	<meta
+		property="og:description"
+		content="Browse the public data sources, publishers, and methodology behind OpenLobbying's UK lobbying database."
+	/>
 </svelte:head>
 
 <div class="max-w-7xl mx-auto px-4 py-8">

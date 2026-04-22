@@ -16,6 +16,7 @@
 	let mobileMenuOpen = $state(false);
 	let currentSearchQuery = $derived(page.url.searchParams.get('q') ?? '');
 	let currentUser = $derived(data.user);
+	let canonicalUrl = $derived(new URL(page.url.pathname, `${page.url.origin}/`).toString());
 	let navItems = $derived([
 		{ href: '/datasets', label: 'Datasets' },
 		// { href: '/licence', label: 'Use our data' },
@@ -62,6 +63,13 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link rel="canonical" href={canonicalUrl} />
+	<meta name="application-name" content="OpenLobbying" />
+	<meta property="og:site_name" content="OpenLobbying" />
+	<meta property="og:locale" content="en_GB" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={canonicalUrl} />
+	<meta name="twitter:card" content="summary" />
 </svelte:head>
 
 <div class="app-shell">

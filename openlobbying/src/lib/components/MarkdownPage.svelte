@@ -11,9 +11,12 @@
 <svelte:head>
 	{#if title}
 		<title>{title} - OpenLobbying</title>
+		<meta property="og:title" content={`${title} - OpenLobbying`} />
 	{/if}
 	{#if description}
 		<meta name="description" content={description} />
+		<meta property="og:description" content={description} />
+		<meta name="twitter:description" content={description} />
 	{/if}
 </svelte:head>
 

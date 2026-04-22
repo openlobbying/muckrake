@@ -105,6 +105,7 @@
 		name="description"
 		content="Search organisations, individuals, and public bodies across OpenLobbying datasets."
 	/>
+	<meta name="robots" content="noindex,follow" />
 </svelte:head>
 
 <div class="mx-auto max-w-6xl overflow-x-hidden px-4 py-12">

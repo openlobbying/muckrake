@@ -114,6 +114,7 @@
 		name="description"
 		content="Log in to access protected OpenLobbying pages backed by Better Auth."
 	/>
+	<meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 
 <div class="bg-gradient-to-b from-slate-50 via-white to-amber-50 px-4 py-14 sm:px-6">

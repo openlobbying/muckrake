@@ -47,10 +47,27 @@
 <svelte:head>
 	{#await data.entity}
 		<title>Profile - OpenLobbying</title>
+		<meta
+			name="description"
+			content="Explore lobbying relationships, activity, and linked source datasets on OpenLobbying."
+		/>
 	{:then entity}
 		<title>{entity.caption ?? entity.canonical_id} - OpenLobbying</title>
+		<meta
+			name="description"
+			content={`Explore lobbying relationships, activity, and linked source datasets for ${entity.caption ?? entity.canonical_id} on OpenLobbying.`}
+		/>
+		<meta property="og:title" content={`${entity.caption ?? entity.canonical_id} - OpenLobbying`} />
+		<meta
+			property="og:description"
+			content={`Explore lobbying relationships, activity, and linked source datasets for ${entity.caption ?? entity.canonical_id} on OpenLobbying.`}
+		/>
 	{:catch}
 		<title>Profile - OpenLobbying</title>
+		<meta
+			name="description"
+			content="Explore lobbying relationships, activity, and linked source datasets on OpenLobbying."
+		/>
 	{/await}
 </svelte:head>
 

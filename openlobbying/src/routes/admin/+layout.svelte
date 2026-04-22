@@ -23,6 +23,10 @@
 	}
 </script>
 
+<svelte:head>
+	<meta name="robots" content="noindex,nofollow" />
+</svelte:head>
+
 <div class="px-4 py-10 sm:px-6">
 	<div class="mx-auto max-w-7xl space-y-6">
 		<div class="space-y-2">

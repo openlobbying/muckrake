@@ -9,8 +9,7 @@ export const STATIC_SITEMAP_PATHS = [
 	'/about',
 	'/datasets',
 	'/licence',
-	'/privacy',
-	'/search'
+	'/privacy'
 ] as const;
 
 export const XML_HEADERS = {

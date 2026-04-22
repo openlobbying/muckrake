@@ -12,6 +12,15 @@
 
 <svelte:head>
 	<title>{entity.caption ?? entity.canonical_id} - OpenLobbying</title>
+	<meta
+		name="description"
+		content={`View the source record and structured properties for ${entity.caption ?? entity.canonical_id} on OpenLobbying.`}
+	/>
+	<meta property="og:title" content={`${entity.caption ?? entity.canonical_id} - OpenLobbying`} />
+	<meta
+		property="og:description"
+		content={`View the source record and structured properties for ${entity.caption ?? entity.canonical_id} on OpenLobbying.`}
+	/>
 </svelte:head>
 
 <div class="max-w-4xl mx-auto px-4 py-8">

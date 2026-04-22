@@ -36,6 +36,7 @@
 		name="description"
 		content="A protected page that is only available to authenticated OpenLobbying users."
 	/>
+	<meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 
 <div class="bg-gradient-to-b from-white via-slate-50 to-amber-50 px-4 py-14 sm:px-6">

@@ -17,6 +17,27 @@
 
 	let { data }: { data: HomePageData } = $props();
 	let stats = $derived(data.stats);
+	const siteUrl = 'https://openlobbying.org';
+	const pageTitle = 'OpenLobbying | UK lobbying data explorer';
+	const pageDescription =
+		'Search UK lobbying organisations, individuals and public bodies, with linked source datasets and relationship data.';
+	const homeStructuredData = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: 'OpenLobbying',
+		url: siteUrl,
+		description: pageDescription,
+		publisher: {
+			'@type': 'Organization',
+			name: 'OpenLobbying',
+			url: siteUrl
+		},
+		potentialAction: {
+			'@type': 'SearchAction',
+			target: `${siteUrl}/search?q={search_term_string}`,
+			'query-input': 'required name=search_term_string'
+		}
+	});
 
 	function formatNumber(value: number): string {
 		return new Intl.NumberFormat('en-GB').format(value);
@@ -24,11 +45,14 @@
 </script>
 
 <svelte:head>
-	<title>OpenLobbying - UK lobbying data explorer</title>
-	<meta
-		name="description"
-		content="Search UK lobbying organizations, individuals, and public bodies in one place."
-	/>
+	<title>{pageTitle}</title>
+	<meta name="description" content={pageDescription} />
+	<meta property="og:title" content={pageTitle} />
+	<meta property="og:description" content={pageDescription} />
+	<meta property="og:url" content={siteUrl} />
+	<meta name="twitter:title" content={pageTitle} />
+	<meta name="twitter:description" content={pageDescription} />
+	<script type="application/ld+json">{homeStructuredData}</script>
 </svelte:head>
 
 <div class="bg-gradient-to-b from-amber-50 via-slate-50 to-white">
