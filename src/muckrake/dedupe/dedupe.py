@@ -7,9 +7,8 @@ from nomenklatura.matching import DefaultAlgorithm, get_algorithm
 from nomenklatura.xref import xref as nk_xref
 
 from muckrake.db import get_resolver
-from muckrake.dataset import find_datasets, load_config
+from muckrake.dataset import find_datasets, get_dataset_path, load_config
 from muckrake.extract.ner.materialize import iter_dataset_statements
-from muckrake.runs import resolve_dataset_pack
 from muckrake.settings import DATA_PATH
 from muckrake.store import get_level_store
 
@@ -21,13 +20,10 @@ def load_statements(store, dataset_names):
     log.info("Loading statements into store...")
     with store.writer() as writer:
         for ds_name in dataset_names:
-            try:
-                _, pack_path = resolve_dataset_pack(ds_name)
-            except ValueError as exc:
-                log.warning(str(exc))
-                continue
-            for stmt in iter_dataset_statements(ds_name, pack_path):
-                writer.add_statement(stmt)
+            pack_path = get_dataset_path(ds_name) / "statements.pack.csv"
+            if pack_path.exists():
+                for stmt in iter_dataset_statements(ds_name, pack_path):
+                    writer.add_statement(stmt)
 
 
 def run_xref(
@@ -74,8 +70,9 @@ def run_dedupe() -> None:
     all_configs = find_datasets()
     dataset_names = [load_config(c).name for c in all_configs]
 
-    store = get_level_store(dataset_names, fresh=True)
-    load_statements(store, dataset_names)
+    store = get_level_store(dataset_names, fresh=False)
+    if not any(store.view(store.dataset).entities()):
+        load_statements(store, dataset_names)
 
     resolver = get_resolver()
     resolver.begin()

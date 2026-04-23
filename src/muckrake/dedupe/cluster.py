@@ -114,6 +114,7 @@ def _build_cluster_payload(
     if len(member_ids) < 2 or len(locked_pairs) == 0:
         return None
 
+    view = get_view()
     best_scores: Dict[str, Optional[float]] = {
         entity_id: None for entity_id in member_ids
     }
@@ -123,8 +124,6 @@ def _build_cluster_payload(
             previous = best_scores[entity_id]
             if previous is None or (score is not None and score > previous):
                 best_scores[entity_id] = score
-
-    view = get_view()
 
     members: List[ClusterMember] = []
     for entity_id in member_ids:

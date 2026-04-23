@@ -17,7 +17,6 @@ from sqlalchemy import MetaData
 from muckrake.artifacts import get_artifact_store
 from muckrake.dataset import find_datasets, load_config
 from muckrake.db import (
-    get_ner_candidates_table,
     get_release_artifacts_table,
     get_release_inputs_table,
     get_releases_table,
@@ -28,8 +27,8 @@ from muckrake.db import (
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.runs import (
     detect_code_version,
+    get_dataset_run_artifact,
     get_latest_successful_run,
-    resolve_dataset_pack,
     utc_now_iso,
 )
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
@@ -73,9 +72,7 @@ def create_release(
             )
         )
         release_id = result.inserted_primary_key[0]
-        row = (
-            conn.execute(select(table).where(table.c.id == release_id)).mappings().one()
-        )
+        row = conn.execute(select(table).where(table.c.id == release_id)).mappings().one()
     return Release(**row)
 
 
@@ -110,11 +107,7 @@ def get_release(release_id: int) -> Release | None:
     engine = init_database()
     table = get_releases_table()
     with engine.begin() as conn:
-        row = (
-            conn.execute(select(table).where(table.c.id == release_id))
-            .mappings()
-            .first()
-        )
+        row = conn.execute(select(table).where(table.c.id == release_id)).mappings().first()
     if row is None:
         return None
     return Release(**row)
@@ -124,11 +117,9 @@ def list_releases(limit: int = 20) -> list[Release]:
     engine = init_database()
     table = get_releases_table()
     with engine.begin() as conn:
-        rows = (
-            conn.execute(select(table).order_by(desc(table.c.id)).limit(limit))
-            .mappings()
-            .all()
-        )
+        rows = conn.execute(
+            select(table).order_by(desc(table.c.id)).limit(limit)
+        ).mappings().all()
     return [Release(**row) for row in rows]
 
 
@@ -149,15 +140,11 @@ def get_release_inputs(release_id: int) -> list[dict[str, Any]]:
     engine = init_database()
     table = get_release_inputs_table()
     with engine.begin() as conn:
-        rows = (
-            conn.execute(
-                select(table)
-                .where(table.c.release_id == release_id)
-                .order_by(table.c.dataset_name.asc())
-            )
-            .mappings()
-            .all()
-        )
+        rows = conn.execute(
+            select(table)
+            .where(table.c.release_id == release_id)
+            .order_by(table.c.dataset_name.asc())
+        ).mappings().all()
     return [dict(row) for row in rows]
 
 
@@ -184,9 +171,7 @@ def add_release_artifact(
                 content_type=content_type,
                 sha256=sha256,
                 size_bytes=size_bytes,
-                metadata_json=json.dumps(metadata, sort_keys=True)
-                if metadata
-                else None,
+                metadata_json=json.dumps(metadata, sort_keys=True) if metadata else None,
                 created_at=utc_now_iso(),
             )
         )
@@ -199,16 +184,12 @@ def get_release_artifact(
     engine = init_database()
     table = get_release_artifacts_table()
     with engine.begin() as conn:
-        row = (
-            conn.execute(
-                select(table)
-                .where(table.c.release_id == release_id)
-                .where(table.c.artifact_type == artifact_type)
-                .order_by(desc(table.c.id))
-            )
-            .mappings()
-            .first()
-        )
+        row = conn.execute(
+            select(table)
+            .where(table.c.release_id == release_id)
+            .where(table.c.artifact_type == artifact_type)
+            .order_by(desc(table.c.id))
+        ).mappings().first()
     if row is None:
         return None
     return dict(row)
@@ -224,15 +205,16 @@ def run_release_build(
         run = get_latest_successful_run(dataset_name)
         if run is None:
             raise ValueError(f"No successful dataset run found for {dataset_name}")
-        run_id, path = resolve_dataset_pack(dataset_name, run.id)
-        dataset_runs.append((dataset_name, run_id, path))
+        artifact = get_dataset_run_artifact(run.id, artifact_type="statements_pack")
+        if artifact is None:
+            raise ValueError(f"Dataset run {run.id} has no statements artifact")
+        path = get_artifact_store().resolve_path(artifact.storage_key)
+        dataset_runs.append((dataset_name, run.id, path))
 
     release = create_release(notes=notes)
     store = get_artifact_store()
     temp_dir = Path(tempfile.mkdtemp(prefix=f"muckrake-release-{release.id}-"))
     temp_pack = temp_dir / "statements.pack.csv"
-    temp_resolver = temp_dir / "resolver.json"
-    temp_ner = temp_dir / "ner-candidates.json"
     storage_prefix = f"releases/{release.id}"
 
     try:
@@ -256,32 +238,6 @@ def run_release_build(
             metadata={"dataset_names": [name for name, _, _ in dataset_runs]},
         )
 
-        _write_resolver_snapshot(temp_resolver)
-        stored_resolver = store.put_file(
-            temp_resolver, f"{storage_prefix}/resolver.json"
-        )
-        add_release_artifact(
-            release.id,
-            artifact_type="resolver_snapshot",
-            storage_backend=stored_resolver.storage_backend,
-            storage_key=stored_resolver.storage_key,
-            content_type="application/json",
-            sha256=stored_resolver.sha256,
-            size_bytes=stored_resolver.size_bytes,
-        )
-
-        _write_approved_ner_snapshot(temp_ner)
-        stored_ner = store.put_file(temp_ner, f"{storage_prefix}/ner-candidates.json")
-        add_release_artifact(
-            release.id,
-            artifact_type="ner_candidates_snapshot",
-            storage_backend=stored_ner.storage_backend,
-            storage_key=stored_ner.storage_key,
-            content_type="application/json",
-            sha256=stored_ner.sha256,
-            size_bytes=stored_ner.size_bytes,
-        )
-
         manifest = {
             "release_id": release.id,
             "status": "built",
@@ -295,19 +251,7 @@ def run_release_build(
                     "storage_key": stored_pack.storage_key,
                     "sha256": stored_pack.sha256,
                     "size_bytes": stored_pack.size_bytes,
-                },
-                {
-                    "artifact_type": "resolver_snapshot",
-                    "storage_key": stored_resolver.storage_key,
-                    "sha256": stored_resolver.sha256,
-                    "size_bytes": stored_resolver.size_bytes,
-                },
-                {
-                    "artifact_type": "ner_candidates_snapshot",
-                    "storage_key": stored_ner.storage_key,
-                    "sha256": stored_ner.sha256,
-                    "size_bytes": stored_ner.size_bytes,
-                },
+                }
             ],
         }
         stored_manifest = store.put_json(manifest, f"{storage_prefix}/manifest.json")
@@ -337,18 +281,11 @@ def run_release_publish(release_id: int) -> None:
     if release is None:
         raise ValueError(f"Release {release_id} does not exist")
     if release.status not in {"built", "published", "superseded"}:
-        raise ValueError(
-            f"Release {release_id} is not ready to publish (status={release.status})"
-        )
+        raise ValueError(f"Release {release_id} is not ready to publish (status={release.status})")
 
     artifact = get_release_artifact(release_id, artifact_type="statements_pack")
     if artifact is None:
         raise ValueError(f"Release {release_id} has no statements artifact")
-    resolver_artifact = get_release_artifact(
-        release_id, artifact_type="resolver_snapshot"
-    )
-    if resolver_artifact is None:
-        raise ValueError(f"Release {release_id} has no resolver snapshot")
 
     release_inputs = get_release_inputs(release_id)
     if not release_inputs:
@@ -356,12 +293,9 @@ def run_release_publish(release_id: int) -> None:
 
     dataset_names = [str(item["dataset_name"]) for item in release_inputs]
     pack_path = get_artifact_store().resolve_path(str(artifact["storage_key"]))
-    resolver_path = get_artifact_store().resolve_path(
-        str(resolver_artifact["storage_key"])
-    )
 
     try:
-        _load_resolver_snapshot(resolver_path)
+        _copy_resolver_state()
         _load_release_into_published_db(dataset_names, pack_path)
         update_release(release_id, status="published", published=True)
     except Exception as exc:
@@ -386,50 +320,21 @@ def _load_release_into_published_db(dataset_names: list[str], pack_path: Path) -
     refresh_postgres_search(PUBLISHED_SQL_URI)
 
 
-def _load_resolver_snapshot(path: Path) -> None:
+def _copy_resolver_state() -> None:
+    source_engine = get_engine(SQL_URI)
     target_engine = init_published_database(PUBLISHED_SQL_URI)
+    source_resolver = Resolver(source_engine, MetaData(), create=False)
     target_resolver = Resolver(target_engine, MetaData(), create=False)
 
-    rows = json.loads(path.read_text())
-    if not isinstance(rows, list):
-        raise ValueError(f"Invalid resolver snapshot: {path}")
+    with source_engine.connect() as source_conn:
+        rows = source_conn.execute(
+            select(source_resolver._table).where(source_resolver._table.c.deleted_at.is_(None))
+        ).mappings().all()
 
     with target_engine.begin() as target_conn:
         target_conn.execute(delete(target_resolver._table))
         if rows:
-            target_conn.execute(
-                target_resolver._table.insert(), [dict(row) for row in rows]
-            )
-
-
-def _write_resolver_snapshot(path: Path) -> None:
-    source_engine = get_engine(SQL_URI)
-    source_resolver = Resolver(source_engine, MetaData(), create=False)
-
-    with source_engine.connect() as source_conn:
-        rows = (
-            source_conn.execute(
-                select(source_resolver._table).where(
-                    source_resolver._table.c.deleted_at.is_(None)
-                )
-            )
-            .mappings()
-            .all()
-        )
-
-    path.write_text(json.dumps([dict(row) for row in rows], indent=2, sort_keys=True))
-
-
-def _write_approved_ner_snapshot(path: Path) -> None:
-    engine = init_database()
-    table = get_ner_candidates_table()
-    with engine.connect() as conn:
-        rows = (
-            conn.execute(select(table).where(table.c.status == "approved"))
-            .mappings()
-            .all()
-        )
-    path.write_text(json.dumps([dict(row) for row in rows], indent=2, sort_keys=True))
+            target_conn.execute(target_resolver._table.insert(), [dict(row) for row in rows])
 
 
 def _resolve_dataset_names(dataset_names: Optional[Iterable[str]]) -> list[str]:

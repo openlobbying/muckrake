@@ -39,22 +39,20 @@ def list_all_dataset_names() -> List[str]:
     return sorted(names)
 
 
+@lru_cache(maxsize=1)
 def get_view():
-    store = get_sql_store(
-        list_all_dataset_names(),
-        uri=PUBLISHED_SQL_URI,
-        engine=get_published_engine(),
-    )
+    store = get_sql_store(list_all_dataset_names(), uri=PUBLISHED_SQL_URI)
     return store.default_view(external=True)
 
 
-def serialize_view_entity(ent) -> Dict[str, Any]:
+@lru_cache(maxsize=2000)
+def get_entity_details(entity_id: str) -> Dict[str, str]:
     view = get_view()
+    ent = view.get_entity(entity_id)
+    if ent is None:
+        return {"caption": entity_id, "schema": "Entity"}
+    return {"caption": ent.caption, "schema": ent.schema.name}
 
-    def get_entity_details(entity_id: str) -> Dict[str, str]:
-        detail = view.get_entity(entity_id)
-        if detail is None:
-            return {"caption": entity_id, "schema": "Entity"}
-        return {"caption": detail.caption, "schema": detail.schema.name}
 
+def serialize_view_entity(ent) -> Dict[str, Any]:
     return serialize_entity(ent, get_all_datasets_metadata(), get_entity_details)

@@ -1,15 +1,14 @@
+import hashlib
 import logging
 from pathlib import Path
 from typing import Iterable, Optional
 
 from followthemoney.statement.serialize import read_pack_statements
 
-from muckrake.dataset import find_datasets, load_config
-from muckrake.runs import resolve_dataset_pack
+from muckrake.dataset import find_datasets, get_dataset_path, load_config
 
 from .engines import get_extractor
 from .engines.base import RecoverableExtractionError
-from .materialize import text_fingerprint
 from .storage import (
     Candidate,
     get_connection,
@@ -28,6 +27,10 @@ TARGET_FIELDS = {
 }
 
 DEFAULT_EXTRACTOR_VERSION = "default"
+
+
+def text_fingerprint(value: str) -> str:
+    return hashlib.sha1(value.encode("utf-8")).hexdigest()
 
 
 def is_complex_text(value: str) -> bool:
@@ -74,10 +77,9 @@ def run_ner_extract(
 
     for config in configs:
         ds = load_config(config)
-        try:
-            _, pack_path = resolve_dataset_pack(ds.name)
-        except ValueError as exc:
-            log.warning(str(exc))
+        pack_path = get_dataset_path(ds.name) / "statements.pack.csv"
+        if not pack_path.exists():
+            log.warning("No statements found for %s", ds.name)
             continue
 
         existing = load_cached_keys(

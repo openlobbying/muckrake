@@ -17,6 +17,7 @@ from muckrake.dedupe import (
 )
 from muckrake.extract.ner import run_ner_extract, run_ner_review
 from muckrake.extract.ner.engines import list_extractors
+from muckrake.load import run_load
 from muckrake.release import list_releases, run_release_build, run_release_publish
 
 log = logging.getLogger("muckrake")
@@ -39,7 +40,7 @@ class MuckrakeGroup(click.Group):
             ],
         ),
         ("Build releases", ["release-build", "release-list", "release-publish"]),
-        ("Export", ["export"]),
+        ("Load to database", ["load", "export"]),
         ("Start server", ["server"]),
     ]
 
@@ -244,6 +245,21 @@ def dedupe_edges(dataset_name, max_gap_days, dry_run):
         log.exception(e)
         sys.exit(1)
 
+
+@cli.command()
+@click.argument("dataset_name", required=False)
+@click.option("--run-id", type=int, help="Load statements from a specific dataset run")
+def load(dataset_name, run_id):
+    """Load statements into the database.
+
+    DATASET_NAME should be the dataset name from config.yml (e.g., gb_political_finance).
+    If not provided, loads all datasets.
+    """
+    try:
+        run_load(dataset_name, run_id=run_id)
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
 
 @cli.command("ner-extract")
 @click.argument("dataset_name", required=False)

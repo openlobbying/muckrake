@@ -61,6 +61,8 @@ def ensure_admin_dedupe_schema() -> None:
     get_lock_engine()
 
 
+view = get_view()
+
 POSTGRES_SEARCH_SQL = text(
     """
     WITH q AS (
@@ -193,10 +195,6 @@ def _actor_schema_filter(schema: Optional[List[str]]) -> List[str]:
     return sorted(set(filtered))
 
 
-def _published_view():
-    return get_view()
-
-
 SCHEMA_CHILDREN: Dict[str, List[str]] = {
     "LegalEntity": ["Organization", "Person"],
     "Organization": ["Company", "PublicBody"],
@@ -308,7 +306,6 @@ def _redirect_payload(ent, route: str) -> Dict[str, Any]:
 
 
 def _get_entity_or_404(id: str, detail: str):
-    view = _published_view()
     if not view:
         raise HTTPException(status_code=503, detail="Database not ready")
 
@@ -458,7 +455,6 @@ def list_entities(
     limit: int = 25,
     offset: int = 0,
 ) -> Dict[str, object]:
-    view = _published_view()
     if not view:
         return {"results": [], "total": 0}
 
@@ -495,9 +491,6 @@ def list_entities(
 @app.get("/profiles/{id}")
 def get_profile(id: str) -> Dict[str, Any]:
     """Endpoint for actor profiles, includes adjacency (timeline)."""
-    view = _published_view()
-    if not view:
-        raise HTTPException(status_code=503, detail="Database not ready")
     ent = _get_entity_or_404(id, "Profile not found")
 
     # If it's not actually an actor, suggest a redirect
@@ -525,7 +518,6 @@ def list_profile_sitemap_entries(
     limit = max(1, min(limit, 50000))
     offset = max(0, offset)
 
-    view = _published_view()
     if not view:
         return {
             "results": [],
@@ -623,7 +615,6 @@ def search_entities(
 ) -> Dict[str, Any]:
     requested_schema, schema_filter = _expand_actor_schema_filter(schema)
 
-    view = _published_view()
     if not view:
         return _search_response([], 0, offset, limit, requested_schema, schema_filter)
 
@@ -704,7 +695,6 @@ def get_stats() -> Dict[str, Any]:
     if _stats_cache["value"] is not None and _stats_cache["expires_at"] > now:
         return _stats_cache["value"]
 
-    view = _published_view()
     if not view:
         empty = {
             "organizations": 0,
@@ -781,7 +771,6 @@ def get_stats() -> Dict[str, Any]:
 @app.get("/entities/{id}/graph")
 def get_entity_graph(id: str) -> Dict[str, Any]:
     """Get aggregated 1st-degree connections for graph visualization."""
-    view = _published_view()
     if not view:
         raise HTTPException(status_code=503, detail="Database not ready")
 
