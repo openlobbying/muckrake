@@ -1,21 +1,21 @@
-import logging
 import shutil
-from typing import Iterable, Set, List, Optional
+from typing import Iterable, List, Optional, Set
 
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
-from nomenklatura.store.sql import SQLStore, SQLView
-from nomenklatura.db import get_metadata, make_statement_table
+from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
+from nomenklatura.db import make_statement_table
+from sqlalchemy import MetaData
 from sqlalchemy import select
 from sqlalchemy.engine import create_engine
 
 from muckrake.db import get_resolver
 from muckrake.settings import SQL_URI, LEVEL_PATH
 
-log = logging.getLogger(__name__)
+SQL_BATCH_STATEMENTS = 2000
 
 
 class CombinedDataset(Dataset):
@@ -60,8 +60,10 @@ class MergedSQLView(SQLView[DS, SE]):
     def get_entity(self, id: str) -> Optional[SE]:
         """Get entity by canonical ID, merging all statements from merged entities."""
         table = self.store.table
+        referents = self.store.linker.get_referents(id)
+        entity_ids = [id, *sorted(referents)]
         q = select(table)
-        q = q.where(table.c.canonical_id == id)
+        q = q.where(table.c.entity_id.in_(entity_ids))
         q = q.where(table.c.dataset.in_(self.dataset_names))
         # Order by entity_id to ensure consistent grouping if needed for debugging,
         # but we'll collect ALL statements regardless
@@ -83,20 +85,36 @@ class MergedSQLView(SQLView[DS, SE]):
 class MergedSQLStore(SQLStore[DS, SE]):
     """Custom SQL store that uses MergedSQLView."""
 
-    def __init__(self, dataset: DS, linker, uri: str = SQL_URI, **engine_kwargs):
+    def __init__(
+        self,
+        dataset: DS,
+        linker,
+        uri: str = SQL_URI,
+        engine=None,
+        **engine_kwargs,
+    ):
         Store.__init__(self, dataset, linker)
-        if "pool_size" not in engine_kwargs:
+        if engine is None and "pool_size" not in engine_kwargs:
             engine_kwargs["pool_size"] = nk_settings.DB_POOL_SIZE
-        metadata = get_metadata()
-        self.engine = create_engine(uri, **engine_kwargs)
+        metadata = MetaData()
+        self.engine = engine or create_engine(uri, **engine_kwargs)
         self.table = make_statement_table(metadata)
         metadata.create_all(self.engine, tables=[self.table], checkfirst=True)
+
+    def writer(self) -> SQLWriter[DS, SE]:
+        return MergedSQLWriter(self)
 
     def view(self, scope: DS, external: bool = False) -> SQLView[DS, SE]:
         return MergedSQLView(self, scope, external=external)
 
 
-def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:
+class MergedSQLWriter(SQLWriter[DS, SE]):
+    BATCH_STATEMENTS = SQL_BATCH_STATEMENTS
+
+
+def get_sql_store(
+    dataset_names: Iterable[str], uri: str = SQL_URI, engine=None
+) -> MergedSQLStore:
     """Get a SQL store for serving with proper entity merging."""
     dataset = CombinedDataset("all", dataset_names)
     resolver = get_resolver(uri=uri, begin=True)
@@ -104,4 +122,4 @@ def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQL
         linker = resolver.get_linker()
     finally:
         resolver.rollback()
-    return MergedSQLStore(dataset, linker, uri=uri)
+    return MergedSQLStore(dataset, linker, uri=uri, engine=engine)

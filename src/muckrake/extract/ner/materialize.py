@@ -1,5 +1,6 @@
 import json
 import logging
+import hashlib
 from pathlib import Path
 from typing import Iterator
 
@@ -10,10 +11,13 @@ from sqlalchemy import text
 
 from org_id import make_hashed_id
 
-from .pipeline import text_fingerprint
 from .storage import get_connection
 
 log = logging.getLogger(__name__)
+
+
+def text_fingerprint(value: str) -> str:
+    return hashlib.sha1(value.encode("utf-8")).hexdigest()
 
 
 def _can_use_replacement(schema_name: str, prop_name: str, target_schema: str) -> bool:
@@ -54,13 +58,15 @@ def _clone_statement(stmt: Statement, value: str) -> Statement:
     )
 
 
-def load_approved_candidates() -> dict[tuple[str, str], dict]:
+def load_approved_candidates() -> dict[tuple[str, str, str, str], dict]:
     try:
         conn = get_connection()
         rows = conn.execute(
             text(
                 """
             SELECT
+                dataset,
+                entity_id,
                 property_name,
                 fingerprint,
                 extraction_json
@@ -73,10 +79,15 @@ def load_approved_candidates() -> dict[tuple[str, str], dict]:
     except Exception:
         return {}
 
-    out: dict[tuple[str, str], dict] = {}
+    out: dict[tuple[str, str, str, str], dict] = {}
     for row in rows:
         mapping = row._mapping
-        key = (mapping["property_name"], mapping["fingerprint"])
+        key = (
+            mapping["dataset"],
+            mapping["entity_id"],
+            mapping["property_name"],
+            mapping["fingerprint"],
+        )
         if key in out:
             continue
         try:
@@ -93,7 +104,9 @@ def load_approved_candidates() -> dict[tuple[str, str], dict]:
 
 
 def build_replacement_plan(
-    pack_path: Path, candidates: dict[tuple[str, str], dict]
+    dataset_name: str,
+    pack_path: Path,
+    candidates: dict[tuple[str, str, str, str], dict],
 ) -> dict[str, list[tuple[str, str, dict[str, list[str]]]]]:
     replacements: dict[str, list[tuple[str, str, dict[str, list[str]]]]] = {}
     with open(pack_path, "rb") as fh:
@@ -101,7 +114,12 @@ def build_replacement_plan(
             if stmt.prop != "name":
                 continue
 
-            key = (stmt.prop, text_fingerprint(stmt.value))
+            key = (
+                dataset_name,
+                stmt.entity_id,
+                stmt.prop,
+                text_fingerprint(stmt.value),
+            )
             candidate = candidates.get(key)
             if candidate is None:
                 continue
@@ -243,7 +261,7 @@ def iter_transformed_statements(
 
 def iter_dataset_statements(dataset_name: str, pack_path: Path) -> Iterator[Statement]:
     candidates = load_approved_candidates()
-    replacements = build_replacement_plan(pack_path, candidates)
+    replacements = build_replacement_plan(dataset_name, pack_path, candidates)
 
     if replacements:
         log.info(

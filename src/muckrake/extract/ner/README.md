@@ -24,7 +24,7 @@ Code locations:
 
 ## Input model
 
-Extraction runs over normalized crawler output (`statements.pack.csv`), not raw source files.
+Extraction runs over immutable crawl `statements.pack.csv` artifacts, not raw source files.
 
 Currently selected statement fields:
 
@@ -93,9 +93,9 @@ Uniqueness key:
 
 So reruns with unchanged input + extractor configuration are idempotent.
 
-## Load-time import
+## Materialization
 
-`muckrake load` and `muckrake xref` both read `ner_candidates` and apply matching extractions before materializing statements:
+`muckrake xref` and `muckrake release-build` both read `ner_candidates` and apply matching extractions before materializing statements:
 
 - if a candidate matches `(entity_id, property_name, fingerprint)`, the original source entity is skipped,
 - extracted fragments from `extraction_json` are materialized as new FtM entities,
@@ -105,7 +105,7 @@ So reruns with unchanged input + extractor configuration are idempotent.
 
 Only candidates with `status = approved` are applied.
 
-This mirrors the dedupe philosophy: extraction decisions alter load-time materialization.
+This mirrors the dedupe philosophy: extraction decisions alter materialization at build time.
 Current implementation applies the latest approved matching candidate.
 
 ## Usage
@@ -190,10 +190,10 @@ uv run muckrake ner-extract open_access --limit 20
 uv run muckrake ner-review open_access --limit 20
 ```
 
-4. Load dataset and verify approved candidates are applied:
+4. Run xref or build a release and verify approved candidates are applied:
 
 ```bash
-uv run muckrake load open_access
+uv run muckrake xref
 ```
 
 5. Run extraction again with same options and confirm no new rows are inserted.

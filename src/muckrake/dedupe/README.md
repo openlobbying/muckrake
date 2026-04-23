@@ -1,6 +1,6 @@
 One of the most important features of muckrake is the ability to deduplicate unique legal entities. For example, if we have a record for "BP" from one source and "British Petroleum" from another source, we want to display information about both records on the same page.
 
-Muckrake largely relies on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library to generate resolver suggestions for pairs of records that may represent the same entity. We run `uv run muckrake xref` to generate these suggestions, which are stored in the `resolver` table in the database. By default, `nomenklatura` comes with a TUI for reviewing these suggestions, with options to approve, reject, or skip each suggestion.
+Muckrake largely relies on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library to generate resolver suggestions for pairs of records that may represent the same entity. We run `uv run muckrake xref` to generate these suggestions from the latest crawl artifacts, and store them in the `resolver` table in the database. By default, `nomenklatura` comes with a TUI for reviewing these suggestions, with options to approve, reject, or skip each suggestion.
 
 We have additionally [implemented](./review.py) a web-based review interface replicating the functionality of the TUI, allowing for this to be done outside of the terminal. One major benefit to this is the deduplication is now available to multiple users at the same time.
 

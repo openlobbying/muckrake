@@ -7,13 +7,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from nomenklatura.db import get_engine
 from sqlalchemy import desc, select, update
 
+from muckrake.artifacts import get_artifact_store
 from muckrake.db import (
     get_dataset_run_artifacts_table,
     get_dataset_runs_table,
     init_database,
 )
+from muckrake.settings import SQL_URI
 
 
 def utc_now_iso() -> str:
@@ -149,17 +152,23 @@ def record_dataset_run_artifact(
                 content_type=content_type,
                 sha256=sha256,
                 size_bytes=size_bytes,
-                metadata_json=json.dumps(metadata, sort_keys=True) if metadata else None,
+                metadata_json=json.dumps(metadata, sort_keys=True)
+                if metadata
+                else None,
                 created_at=now,
             )
         )
         artifact_id = result.inserted_primary_key[0]
-        row = conn.execute(select(table).where(table.c.id == artifact_id)).mappings().one()
+        row = (
+            conn.execute(select(table).where(table.c.id == artifact_id))
+            .mappings()
+            .one()
+        )
     return DatasetRunArtifact(**row)
 
 
 def get_dataset_run(run_id: int) -> DatasetRun | None:
-    engine = init_database()
+    engine = get_engine(SQL_URI)
     table = get_dataset_runs_table()
     with engine.begin() as conn:
         row = conn.execute(select(table).where(table.c.id == run_id)).mappings().first()
@@ -172,15 +181,19 @@ def get_dataset_run_artifact(
     run_id: int,
     artifact_type: str = "statements_pack",
 ) -> DatasetRunArtifact | None:
-    engine = init_database()
+    engine = get_engine(SQL_URI)
     table = get_dataset_run_artifacts_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(table)
-            .where(table.c.dataset_run_id == run_id)
-            .where(table.c.artifact_type == artifact_type)
-            .order_by(desc(table.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(table)
+                .where(table.c.dataset_run_id == run_id)
+                .where(table.c.artifact_type == artifact_type)
+                .order_by(desc(table.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return DatasetRunArtifact(**row)
@@ -190,36 +203,67 @@ def get_latest_successful_artifact(
     dataset_name: str,
     artifact_type: str = "statements_pack",
 ) -> DatasetRunArtifact | None:
-    engine = init_database()
+    engine = get_engine(SQL_URI)
     runs = get_dataset_runs_table()
     artifacts = get_dataset_run_artifacts_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(artifacts)
-            .join(runs, artifacts.c.dataset_run_id == runs.c.id)
-            .where(runs.c.dataset_name == dataset_name)
-            .where(runs.c.status == "succeeded")
-            .where(artifacts.c.artifact_type == artifact_type)
-            .order_by(desc(runs.c.started_at), desc(artifacts.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(artifacts)
+                .join(runs, artifacts.c.dataset_run_id == runs.c.id)
+                .where(runs.c.dataset_name == dataset_name)
+                .where(runs.c.status == "succeeded")
+                .where(artifacts.c.artifact_type == artifact_type)
+                .order_by(desc(runs.c.started_at), desc(artifacts.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return DatasetRunArtifact(**row)
 
 
 def get_latest_successful_run(dataset_name: str) -> DatasetRun | None:
-    engine = init_database()
+    engine = get_engine(SQL_URI)
     table = get_dataset_runs_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(table)
-            .where(table.c.dataset_name == dataset_name)
-            .where(table.c.status == "succeeded")
-            .order_by(desc(table.c.started_at), desc(table.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(table)
+                .where(table.c.dataset_name == dataset_name)
+                .where(table.c.status == "succeeded")
+                .order_by(desc(table.c.started_at), desc(table.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return DatasetRun(**row)
+
+
+def resolve_dataset_pack(
+    dataset_name: str, run_id: int | None = None
+) -> tuple[int, Path]:
+    if run_id is None:
+        run = get_latest_successful_run(dataset_name)
+        if run is None:
+            raise ValueError(f"No successful dataset run found for {dataset_name}")
+        run_id = run.id
+    else:
+        run = get_dataset_run(run_id)
+        if run is None:
+            raise ValueError(f"Dataset run {run_id} does not exist")
+        if run.dataset_name != dataset_name:
+            raise ValueError(
+                f"Dataset run {run_id} belongs to {run.dataset_name}, not {dataset_name}"
+            )
+
+    artifact = get_dataset_run_artifact(run_id, artifact_type="statements_pack")
+    if artifact is None:
+        raise ValueError(f"Dataset run {run_id} has no statements artifact")
+    return run_id, get_artifact_store().resolve_path(artifact.storage_key)
 
 
 def _sha256_bytes(data: bytes) -> str:

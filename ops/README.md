@@ -11,5 +11,6 @@ Production env must live on the server under `/etc/muckrake/app.env`.
 - Web runtime settings: `HOST`, `PORT`, `ORIGIN`, `NODE_ENV`.
 - Optional shared settings: `MUCKRAKE_API_URL`, `MUCKRAKE_DATA_PATH`, `MUCKRAKE_ARTIFACT_PATH`, `OPENROUTER_API_KEY`, `LLM_MODEL`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`.
 - `deploy_to_vps.sh` intentionally does not sync local `.env` files to the VPS.
+- Release artifacts are stored under `MUCKRAKE_ARTIFACT_PATH` on the VPS. Back up that directory alongside Postgres.
 
 For the full runbook, see `ops/hetzner/README.md`.

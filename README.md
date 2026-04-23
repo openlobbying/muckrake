@@ -17,7 +17,7 @@ You can find crawlers for [various datasets](https://openlobbying.org/datasets) 
 
 To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muckrake list` to see available datasets.
 
-Each crawl now creates a `dataset_runs` record in Postgres and stores immutable artifacts under `MUCKRAKE_ARTIFACT_PATH` (defaults to `data/artifacts`). The latest successful run remains mirrored into `data/datasets/{name}/statements.pack.csv` for local compatibility.
+Each crawl creates a `dataset_runs` record in Postgres and stores an immutable `statements.pack.csv` artifact under `MUCKRAKE_ARTIFACT_PATH` (defaults to `data/artifacts`). These crawl artifacts are the input to the rest of the pipeline.
 
 ### AI-based NER
 
@@ -49,22 +49,16 @@ We also want to collapse duplicate relationship edges across datasets, especiall
 uv run muckrake dedupe-edges
 ```
 
-### Loading
+### Releases
 
-Statements are loaded into Postgres with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
-
-To load from a specific immutable crawl snapshot instead of the local workspace copy:
-
-```bash
-uv run muckrake load gb_political_finance --run-id 123
-```
-
-For the published site, prefer the release workflow instead of loading directly into the serving database:
+Build a release from the latest successful crawl artifact for each dataset. Approved NER decisions and resolver state are snapshotted into the release so publish is reproducible.
 
 ```bash
 uv run muckrake release-build
 uv run muckrake release-publish 1
 ```
+
+`release-build` snapshots the resolver state and approved NER candidates into the release artifacts.
 
 
 ## OpenLobbying
