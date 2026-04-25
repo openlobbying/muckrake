@@ -12,7 +12,16 @@ from urllib.parse import urlparse
 import pandas as pd
 
 from muckrake.dataset import Dataset
-from muckrake.util import parse_amount, parse_date, to_string
+from muckrake.util import parse_amount, to_string
+from muckrake.utils.dates import (
+    month_last_day,
+    parse_date,
+    parse_month_span as shared_parse_month_span,
+    parse_month_value as shared_parse_month_value,
+    parse_partial_date as shared_parse_partial_date,
+    parse_year_hint_date as shared_parse_year_hint_date,
+    safe_iso_date,
+)
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +55,7 @@ MONTHS = {
     "sep": 9,
     "sept": 9,
     "september": 9,
+    "septeber": 9,
     "oct": 10,
     "october": 10,
     "nov": 11,
@@ -63,10 +73,11 @@ FIELD_ALIASES = {
             "name of minister",
             "official",
         ],
-        "date": ["date", "date of meeting", "meeting date"],
+        "date": ["date", "date of meeting", "dates of meeting", "meeting date"],
         "counterparty": [
             "name of organisation or individual",
             "name of individual or organisation",
+            "name of individuals",
             "name of organisation",
             "name of organization",
             "name of external organisation",
@@ -170,6 +181,14 @@ MINISTER_SECTION_KEYWORDS = (
 )
 
 MEETING_NAME_COLUMN = "name"
+RECORD_METADATA_FIELDS = {
+    "category",
+    "record_index",
+    "source_url",
+    "publication_url",
+    "publication_title",
+    "period",
+}
 
 
 @dataclass(frozen=True)
@@ -274,37 +293,38 @@ def month_number(value: str) -> Optional[int]:
     return MONTHS.get(value.strip().lower())
 
 
-def month_last_day(year: int, month: int) -> int:
-    if month == 12:
-        return 31
-    return (date(year, month + 1, 1) - date.resolution).day
-
-
 def parse_period(title: str) -> Optional[Period]:
-    text = normalize_whitespace(title)
+    text = normalize_whitespace(re.sub(r"[-_]+", " ", title))
     match = re.search(
-        r"(?P<start_day>\d{1,2})?\s*(?P<start_month>[A-Za-z]+)\s+to\s+(?P<end_day>\d{1,2})?\s*(?P<end_month>[A-Za-z]+)\s+(?P<year>\d{4})",
+        r"(?P<start_day>\d{1,2})?\s*(?P<start_month>[A-Za-z]+)(?:\s+(?P<start_year>\d{4}))?\s+to\s+(?P<end_day>\d{1,2})?\s*(?P<end_month>[A-Za-z]+)\s+(?P<end_year>\d{4})",
         text,
         re.IGNORECASE,
     )
     if match is not None:
-        year = int(match.group("year"))
         start_month = month_number(match.group("start_month"))
         end_month = month_number(match.group("end_month"))
         if start_month is None or end_month is None:
             return None
-        start_day = min(int(match.group("start_day") or 1), month_last_day(year, start_month))
+        end_year = int(match.group("end_year"))
+        start_year_text = match.group("start_year")
+        if start_year_text is not None:
+            start_year = int(start_year_text)
+        elif start_month > end_month:
+            start_year = end_year - 1
+        else:
+            start_year = end_year
+        start_day = min(int(match.group("start_day") or 1), month_last_day(start_year, start_month))
         end_day = min(
-            int(match.group("end_day") or month_last_day(year, end_month)),
-            month_last_day(year, end_month),
+            int(match.group("end_day") or month_last_day(end_year, end_month)),
+            month_last_day(end_year, end_month),
         )
         return Period(
-            start=date(year, start_month, start_day),
-            end=date(year, end_month, end_day),
+            start=date(start_year, start_month, start_day),
+            end=date(end_year, end_month, end_day),
         )
 
     match = re.search(
-        r"(?P<start_month>[A-Za-z]+)-(?P<end_month>[A-Za-z]+)\s+(?P<year>\d{4})",
+        r"(?P<start_month>[A-Za-z]+)(?:\s+to)?\s+(?P<end_month>[A-Za-z]+)\s+(?P<year>\d{4})",
         text,
         re.IGNORECASE,
     )
@@ -345,7 +365,9 @@ def extract_publications(dataset: Dataset, collection_urls: str | Iterable[str])
                 continue
             seen_urls.add(url)
             title = normalize_whitespace("".join(element.itertext()))
-            publications.append(Publication(url=url, title=title, period=parse_period(title)))
+            url_title = Path(urlparse(url).path).name.replace("-", " ")
+            period = parse_period(title) or parse_period(url_title)
+            publications.append(Publication(url=url, title=title, period=period))
     return publications
 
 
@@ -552,16 +574,20 @@ def iter_publication_tables(
         except Exception as exc:
             log.warning("Skipping unreadable publication page %s: %s", publication.url, exc)
             continue
-        seen_urls: set[str] = set()
+        attachment_links: dict[str, str] = {}
         for element in doc.xpath("//a[contains(@href, 'assets.publishing.service.gov.uk')]"):
             source_url = element.get("href")
-            if source_url is None or source_url in seen_urls:
+            if source_url is None:
                 continue
-            seen_urls.add(source_url)
+            title = normalize_whitespace("".join(element.itertext()))
+            best_title = attachment_links.get(source_url)
+            if best_title is None or (not best_title and title):
+                attachment_links[source_url] = title
+
+        for source_url, title in attachment_links.items():
             ext = extension_for_url(source_url)
             if ext not in TABULAR_EXTENSIONS:
                 continue
-            title = normalize_whitespace("".join(element.itertext()))
             file_name = Path(urlparse(source_url).path).name
             if ext == "csv":
                 category = detect_category(title, file_name, source_url)
@@ -588,6 +614,12 @@ def iter_publication_tables(
                 continue
 
 
+def period_bounds(period: Optional[Period]) -> tuple[Optional[date], Optional[date]]:
+    if period is None:
+        return None, None
+    return period.start, period.end
+
+
 def parse_cell_date(value: Any) -> Optional[str]:
     if isinstance(value, pd.Timestamp):
         return value.date().isoformat()
@@ -599,61 +631,81 @@ def parse_cell_date(value: Any) -> Optional[str]:
 
 
 def parse_month_value(value: str, period: Optional[Period]) -> Optional[tuple[str, str]]:
-    cleaned = normalize_whitespace(value)
-    match = re.fullmatch(r"([A-Za-z]+)(?:-(\d{2}))?", cleaned)
-    if match is None:
-        return None
-    month = month_number(match.group(1))
-    if month is None:
-        return None
-    if match.group(2) is not None:
-        year = 2000 + int(match.group(2))
-    elif period is not None:
-        year = period.start.year
-    else:
-        return None
-    start = date(year, month, 1)
-    end = date(year, month, month_last_day(year, month))
-    return start.isoformat(), end.isoformat()
+    start, end = period_bounds(period)
+    return shared_parse_month_value(value, start, end)
 
 
 def infer_year(month: int, period: Optional[Period]) -> Optional[int]:
+    start, end = period_bounds(period)
+    if start is None or end is None:
+        return None
+    if start.year == end.year:
+        return start.year
+    if month >= start.month:
+        return start.year
+    return end.year
+
+
+def parse_partial_date(text: str, period: Optional[Period]) -> Optional[str]:
+    start, end = period_bounds(period)
+    return shared_parse_partial_date(text, start, end)
+
+
+def parse_year_hint_date(text: str, period: Optional[Period]) -> Optional[str]:
+    start, end = period_bounds(period)
+    return shared_parse_year_hint_date(text, start, end)
+
+
+def parse_month_span(text: str, period: Optional[Period]) -> Optional[tuple[str, str]]:
     if period is None:
         return None
-    if period.start.year == period.end.year:
-        return period.start.year
-    if month >= period.start.month:
-        return period.start.year
-    return period.end.year
+    return shared_parse_month_span(text, period.end.year)
 
 
-def safe_iso_date(year: int, month: int, day: int) -> Optional[str]:
+def date_within_period(parsed: str, period: Optional[Period]) -> bool:
+    if period is None or len(parsed) != 10:
+        return True
     try:
-        return date(year, month, day).isoformat()
+        parsed_date = date.fromisoformat(parsed)
     except ValueError:
-        return None
+        return True
+    return period.start.year <= parsed_date.year <= period.end.year
 
 
-def parse_single_partial_date(text: str, period: Optional[Period]) -> Optional[str]:
-    parsed = parse_date(text)
-    if parsed is not None:
-        return parsed
-    match = re.fullmatch(r"(\d{1,2})[\s-]+([A-Za-z]+)(?:[\s-]+(\d{2,4}))?", normalize_whitespace(text))
-    if match is None:
+def source_period(source: TableSource) -> Optional[Period]:
+    for part in (
+        source.publication.title,
+        source.publication.url,
+        source.title,
+        source.file_name,
+        source.source_url,
+    ):
+        if not part:
+            continue
+        period = parse_period(part)
+        if period is not None:
+            return period
+
+    year_hint: Optional[int] = None
+    for part in (source.publication.title, source.publication.url, source.source_url):
+        if not part:
+            continue
+        years = {int(match) for match in re.findall(r"\b(?:19|20)\d{2}\b", part)}
+        if len(years) == 1:
+            year_hint = years.pop()
+            break
+
+    if year_hint is None:
         return None
-    month = month_number(match.group(2))
-    if month is None:
-        return None
-    year_text = match.group(3)
-    if year_text is None:
-        year = infer_year(month, period)
-    elif len(year_text) == 2:
-        year = 2000 + int(year_text)
-    else:
-        year = int(year_text)
-    if year is None:
-        return None
-    return safe_iso_date(year, month, int(match.group(1)))
+
+    for part in (source.title, source.file_name, source.source_url):
+        month_span = shared_parse_month_span(part, year_hint)
+        if month_span is None:
+            continue
+        start_date, end_date = month_span
+        return Period(start=date.fromisoformat(start_date), end=date.fromisoformat(end_date))
+
+    return None
 
 
 def clean_date_range_text(value: str) -> str:
@@ -766,7 +818,7 @@ def parse_range_dates(value: Any, period: Optional[Period]) -> tuple[Optional[st
             safe_iso_date(end_year, end_month, int(match.group(3))),
         )
 
-    single = parse_single_partial_date(cleaned, period)
+    single = parse_partial_date(cleaned, period)
     if single is not None:
         return single, single
     return None, None
@@ -806,6 +858,22 @@ def extract_minister_name(text: str) -> Optional[str]:
 
 def canonical_records(source: TableSource) -> Iterator[dict[str, Any]]:
     field_map = detect_field_mapping(source.category, source.frame.columns)
+    period = source_period(source)
+    base_record = {
+        "category": source.category,
+        "source_url": source.source_url,
+        "publication_url": source.publication.url,
+        "publication_title": source.publication.title,
+        "period": period,
+    }
+    default_gift_direction = None
+    if source.category == "gifts":
+        default_gift_direction = detect_gift_direction(source.title, source.file_name, source.source_url)
+        if default_gift_direction is None and field_map.get("counterparty") == "to":
+            default_gift_direction = "Given"
+        if default_gift_direction is None and field_map.get("counterparty") == "from":
+            default_gift_direction = "Received"
+
     last_minister: Optional[str] = None
     pending_minister_name = False
     last_meeting_date: Any = None
@@ -834,14 +902,7 @@ def canonical_records(source: TableSource) -> Iterator[dict[str, Any]]:
         if is_repeated_header_row(row_values):
             continue
 
-        record: dict[str, Any] = {
-            "category": source.category,
-            "record_index": index + 1,
-            "source_url": source.source_url,
-            "publication_url": source.publication.url,
-            "publication_title": source.publication.title,
-            "period": source.publication.period,
-        }
+        record: dict[str, Any] = dict(base_record, record_index=index + 1)
 
         for field, column_name in field_map.items():
             if column_name in row.index:
@@ -854,13 +915,8 @@ def canonical_records(source: TableSource) -> Iterator[dict[str, Any]]:
             record["minister"] = last_minister
 
         if source.category == "gifts" and clean_text(record.get("direction")) is None:
-            direction = detect_gift_direction(source.title, source.file_name, source.source_url)
-            if direction is None and field_map.get("counterparty") == "to":
-                direction = "Given"
-            if direction is None and field_map.get("counterparty") == "from":
-                direction = "Received"
-            if direction is not None:
-                record["direction"] = direction
+            if default_gift_direction is not None:
+                record["direction"] = default_gift_direction
 
         if source.category == "meetings":
             counterparty = clean_text(record.get("counterparty"))
@@ -879,15 +935,7 @@ def canonical_records(source: TableSource) -> Iterator[dict[str, Any]]:
         meaningful = [
             clean_text(value)
             for key, value in record.items()
-            if key
-            not in {
-                "category",
-                "record_index",
-                "source_url",
-                "publication_url",
-                "publication_title",
-                "period",
-            }
+            if key not in RECORD_METADATA_FIELDS
         ]
         if not any(value is not None for value in meaningful):
             continue

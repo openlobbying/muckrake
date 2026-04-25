@@ -14,6 +14,7 @@ from datasets.gb.meetings.common import (
     extract_publications,
     iter_publication_tables,
     make_resource_name,
+    parse_period,
     read_excel_tables,
     normalize_excel_sheet,
     normalize_tabular_frame,
@@ -281,6 +282,50 @@ def test_parse_range_dates_rejects_invalid_calendar_dates():
     assert end_date is None
 
 
+def test_parse_cell_date_supports_abbreviated_month_names():
+    from datasets.gb.meetings.common import parse_cell_date
+
+    assert parse_cell_date("04-Nov-2015") == "2015-11-04"
+
+
+def test_parse_cell_date_supports_weekday_and_full_month_formats():
+    from datasets.gb.meetings.common import parse_cell_date
+
+    assert parse_cell_date("Thursday, 2 March 17") == "2017-03-02"
+
+
+def test_parse_month_value_supports_spaced_and_comma_year_formats():
+    from datasets.gb.meetings.common import parse_month_value
+
+    period = Period(start=datetime(2015, 7, 1).date(), end=datetime(2015, 9, 30).date())
+
+    assert parse_month_value("Sep-2015", period) == ("2015-09-01", "2015-09-30")
+    assert parse_month_value("September 2015", period) == ("2015-09-01", "2015-09-30")
+    assert parse_month_value("October, 2010", period) == ("2010-10-01", "2010-10-31")
+
+
+def test_parse_month_value_supports_known_source_typo():
+    from datasets.gb.meetings.common import parse_month_value
+
+    period = Period(start=datetime(2015, 4, 1).date(), end=datetime(2015, 9, 30).date())
+
+    assert parse_month_value("Septeber", period) == ("2015-09-01", "2015-09-30")
+
+
+def test_parse_period_supports_cross_year_ranges_and_slugs():
+    period = parse_period("cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-2014-to-march-2015")
+
+    assert period == Period(start=datetime(2014, 7, 1).date(), end=datetime(2015, 3, 31).date())
+
+
+def test_parse_cell_date_supports_excel_serials_and_short_years():
+    from datasets.gb.meetings.common import parse_cell_date
+
+    assert parse_cell_date(42917) == "2017-07-01"
+    assert parse_cell_date("01/08/17") == "2017-08-01"
+    assert parse_cell_date("01.05.2024") == "2024-05-01"
+
+
 def test_read_csv_table_falls_back_for_irregular_legacy_rows(tmp_path):
     from datasets.gb.meetings.common import read_csv_table
 
@@ -345,3 +390,46 @@ def test_iter_publication_tables_skips_dead_publication_pages():
     tables = list(iter_publication_tables(dataset, ["https://example.com/collection"]))
 
     assert tables == []
+
+
+def test_iter_publication_tables_prefers_non_empty_duplicate_attachment_title():
+    from lxml import html
+
+    dataset = DummyHtmlDataset(
+        {
+            "https://example.com/collection": html.fromstring(
+                '<a href="https://www.gov.uk/government/publications/example-publication">Example publication</a>'
+            ),
+            "https://www.gov.uk/government/publications/example-publication": html.fromstring(
+                """
+                <html>
+                  <body>
+                    <a href="https://assets.publishing.service.gov.uk/media/example/Alistair-Burt-Meetings.csv"></a>
+                    <a href="https://assets.publishing.service.gov.uk/media/example/Alistair-Burt-Meetings.csv">
+                      DFID Minister of State Burt, meetings return: July to September 2017
+                    </a>
+                  </body>
+                </html>
+                """
+            ),
+        }
+    )
+
+    path = Path(__file__).parent / "fixtures" / "alistair-burt-meetings.csv"
+    dataset.path = path
+
+    def fetch_resource(name: str, url: str):
+        return path
+
+    dataset.fetch_resource = fetch_resource  # type: ignore[attr-defined]
+
+    tables = list(iter_publication_tables(dataset, ["https://example.com/collection"]))
+
+    assert len(tables) == 1
+    assert tables[0].title == "DFID Minister of State Burt, meetings return: July to September 2017"
+    assert tables[0].category == "meetings"
+    records = list(canonical_records(tables[0]))
+    assert records[0]["period"] == Period(
+        start=datetime(2017, 7, 1).date(),
+        end=datetime(2017, 9, 30).date(),
+    )

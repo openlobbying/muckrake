@@ -1,3 +1,5 @@
+from datetime import date
+
 from datasets.gb.meetings.govuk_ministerial import (
     emit_gift,
     emit_hospitality,
@@ -117,3 +119,62 @@ def test_emit_hospitality_uses_raw_counterparty_legal_entity():
     assert hospitality.first("beneficiary") == minister.id
     assert hospitality.first("purpose") == "Dinner"
     assert "recordId" not in hospitality.properties
+
+
+def test_emit_meeting_uses_lower_specificity_month_date_and_quarter_fallback():
+    from datasets.gb.meetings.common import Period
+
+    dataset = DummyDataset()
+    department = make_department(dataset, "Department Example")
+
+    month_record = {
+        "publication_url": "https://www.gov.uk/government/publications/example-quarterly-return",
+        "source_url": "https://assets.publishing.service.gov.uk/example.csv",
+        "record_index": 5,
+        "period": Period(date(2024, 1, 1), date(2024, 3, 31)),
+        "minister": "Minister Example",
+        "date": "February",
+        "counterparty": "Example Org",
+        "purpose": "Monthly roundtable",
+    }
+    fallback_record = {
+        "publication_url": "https://www.gov.uk/government/publications/example-quarterly-return",
+        "source_url": "https://assets.publishing.service.gov.uk/example.csv",
+        "record_index": 6,
+        "period": Period(date(2024, 1, 1), date(2024, 3, 31)),
+        "minister": "Minister Example",
+        "date": None,
+        "counterparty": "Undated Org",
+        "purpose": "Undated quarterly meeting",
+    }
+
+    emit_meeting(dataset, department, "Department Example", month_record, {}, set(), {})
+    emit_meeting(dataset, department, "Department Example", fallback_record, {}, set(), {})
+
+    events = [entity for entity in dataset.emitted if entity.schema.name == "Event"]
+
+    assert events[0].first("date") == "2024-02"
+    assert events[1].first("date") == "2024-01-01"
+
+
+def test_emit_meeting_repairs_malformed_year_before_quarter_fallback():
+    from datasets.gb.meetings.common import Period
+
+    dataset = DummyDataset()
+    department = make_department(dataset, "Department Example")
+    record = {
+        "publication_url": "https://www.gov.uk/government/publications/example-quarterly-return",
+        "source_url": "https://assets.publishing.service.gov.uk/example.csv",
+        "record_index": 7,
+        "period": Period(date(2020, 4, 1), date(2020, 6, 30)),
+        "minister": "Minister Example",
+        "date": "0202-05-15",
+        "counterparty": "Example Org",
+        "purpose": "Quarterly discussion",
+    }
+
+    emit_meeting(dataset, department, "Department Example", record, {}, set(), {})
+
+    event = next(entity for entity in dataset.emitted if entity.schema.name == "Event")
+
+    assert event.first("date") == "2020-05-15"

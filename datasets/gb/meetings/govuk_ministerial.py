@@ -6,11 +6,15 @@ from .common import (
     Period,
     canonical_records,
     clean_text,
+    date_within_period,
     extract_amount,
     iter_publication_tables,
     parse_cell_date,
+    parse_month_span,
     parse_month_value,
     parse_range_dates,
+    parse_partial_date,
+    parse_year_hint_date,
 )
 
 
@@ -106,19 +110,50 @@ def record_in_date_range(record, start_date: date | None, end_date: date | None)
     return True
 
 
+def add_event_date_range(event, start_date: str, end_date: str | None = None, date_value: str | None = None):
+    event.add("date", date_value or start_date)
+    event.add("startDate", start_date)
+    if end_date is not None:
+        event.add("endDate", end_date)
+
+
 def apply_meeting_date(event, raw_date, period: Period | None):
     exact = parse_cell_date(raw_date)
-    if exact is not None:
+    if exact is not None and date_within_period(exact, period):
         event.add("date", exact)
         return
+
     text = clean_text(raw_date)
     if text is None:
+        if period is not None:
+            event.add("date", period.start.isoformat())
         return
+
+    text = text.lstrip(" ?")
+    for parsed in (parse_partial_date(text, period), parse_year_hint_date(text, period)):
+        if parsed is not None and date_within_period(parsed, period):
+            event.add("date", parsed)
+            return
+
     month_range = parse_month_value(text, period)
     if month_range is not None:
         start_date, end_date = month_range
-        event.add("startDate", start_date)
-        event.add("endDate", end_date)
+        add_event_date_range(event, start_date, end_date, date_value=start_date[:7])
+        return
+
+    range_start, range_end = parse_range_dates(text, period)
+    if range_start is not None:
+        add_event_date_range(event, range_start, range_end)
+        return
+
+    month_range = parse_month_span(text, period)
+    if month_range is not None:
+        start_date, end_date = month_range
+        add_event_date_range(event, start_date, end_date)
+        return
+
+    if period is not None:
+        event.add("date", period.start.isoformat())
 
 
 def emit_meeting(dataset, department, department_name: str, record, minister_cache, employment_cache, participant_cache):
