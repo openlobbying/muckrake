@@ -1,0 +1,37 @@
+dataset:
+  name: meetings
+  prefix: gb-meet
+  title: UK Government ministerial transparency returns
+  summary: UK government ministers' meetings, gifts, hospitality and overseas travel from GOV.UK source files.
+  data:
+    url: https://www.gov.uk/government/government-efficiency-transparency-and-accountability
+  tags:
+    - lobbying
+    - meetings
+    - government
+    - transparency
+  licence:
+    name: Open Government Licence v3.0
+    url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+coverage:
+  countries:
+    - gb
+  frequency: quarterly
+publisher:
+  name: UK Government
+  url: https://www.gov.uk/government/organisations
+  country: gb
+  country_label: United Kingdom
+  official: true
+
+departments:
+  - name: HM Treasury
+    collection_urls:
+      - https://www.gov.uk/government/collections/hmt-ministers-meetings-hospitality-gifts-and-overseas-travel
+      - https://www.gov.uk/government/collections/hm-treasury-ministerial-overseas-travel-and-meetings
+  - name: Department for Transport
+    collection_urls:
+      - https://www.gov.uk/government/collections/dft-ministerial-gifts-hospitality-travel-and-meetings
+  - name: Department for Energy Security and Net Zero
+    collection_urls:
+      - https://www.gov.uk/government/collections/desnz-ministerial-gifts-hospitality-travel-and-meetings

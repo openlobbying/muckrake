@@ -7,7 +7,7 @@ from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
-from nomenklatura.store.sql import SQLStore, SQLView
+from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
 from nomenklatura.db import get_metadata, make_statement_table
 from sqlalchemy import select
 from sqlalchemy.engine import create_engine
@@ -16,6 +16,7 @@ from muckrake.db import get_resolver
 from muckrake.settings import SQL_URI, LEVEL_PATH
 
 log = logging.getLogger(__name__)
+SQL_BATCH_STATEMENTS = 500
 
 
 class CombinedDataset(Dataset):
@@ -94,6 +95,14 @@ class MergedSQLStore(SQLStore[DS, SE]):
 
     def view(self, scope: DS, external: bool = False) -> SQLView[DS, SE]:
         return MergedSQLView(self, scope, external=external)
+
+    def writer(self):
+        return MuckrakeSQLWriter(self)
+
+
+class MuckrakeSQLWriter(SQLWriter[DS, SE]):
+    # Keep statement batches moderate to avoid oversized INSERT statements.
+    BATCH_STATEMENTS = SQL_BATCH_STATEMENTS
 
 
 def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:
