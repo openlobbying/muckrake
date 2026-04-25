@@ -25,13 +25,124 @@ publisher:
   official: true
 
 departments:
+  - name: Attorney General's Office
+    collection_urls: []
+    start_date: 1277-01-01
+  - name: Cabinet Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministers-transparency-publications
+    start_date: 1916-12-09
+  - name: Department for Business and Trade
+    collection_urls:
+      - https://www.gov.uk/government/collections/dbt-ministers-transparency-publications
+    start_date: 2023-02-07
+  - name: Department for Culture, Media and Sport
+    collection_urls: []
+    start_date: 1992-04-01
+  - name: Department for Environment, Food and Rural Affairs
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministers-hospitality-gifts-meetings-overseas-travel
+    start_date: 2001-06-08
   - name: HM Treasury
     collection_urls:
       - https://www.gov.uk/government/collections/hmt-ministers-meetings-hospitality-gifts-and-overseas-travel
       - https://www.gov.uk/government/collections/hm-treasury-ministerial-overseas-travel-and-meetings
+    start_date: 1714-01-01
   - name: Department for Transport
     collection_urls:
       - https://www.gov.uk/government/collections/dft-ministerial-gifts-hospitality-travel-and-meetings
+    start_date: 2002-05-29
   - name: Department for Energy Security and Net Zero
     collection_urls:
       - https://www.gov.uk/government/collections/desnz-ministerial-gifts-hospitality-travel-and-meetings
+    start_date: 2023-02-07
+  - name: Ministry of Housing, Communities and Local Government
+    collection_urls:
+      - https://www.gov.uk/government/collections/dclg-ministerial-data
+    start_date: 2024-07-01
+  - name: Department for Science, Innovation and Technology
+    collection_urls:
+      - https://www.gov.uk/government/collections/dsit-ministerial-gifts-hospitality-travel-and-meetings
+    start_date: 2023-02-07
+  - name: Department for Education
+    collection_urls:
+      - https://www.gov.uk/government/collections/dfe-ministers-quarterly-returns
+    start_date: 1992-07-01
+  - name: Department of Health and Social Care
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministerial-gifts-hospitality-overseas-travel-and-meetings
+    start_date: 2018-01-08
+  - name: Department for Work and Pensions
+    collection_urls:
+      - https://www.gov.uk/government/collections/dwp-ministers-hospitality-and-gifts
+    start_date: 2001-06-08
+  - name: Foreign, Commonwealth and Development Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/fcdo-ministerial-travel-and-meetings
+    start_date: 2020-09-02
+  - name: Home Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/home-office-ministers-hospitality-data
+    start_date: 1782-03-27
+  - name: Ministry of Defence
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministerial-gifts-hospitality-travel-and-meetings-with-external-organisations-in-the-ministry-of-defence
+      - https://www.gov.uk/government/collections/mod-ministerial-overseas-travel-and-meetings
+    start_date: 1964-04-01
+  - name: Ministry of Justice
+    collection_urls:
+      - https://www.gov.uk/government/collections/moj-gifts-hospitality-travel-and-meetings
+    start_date: 2007-05-09
+  - name: Northern Ireland Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/nio-ministerial-gifts-hospitality-travel-and-meetings-data-collection
+    start_date: 1972-03-30
+  - name: Office of the Advocate General for Scotland
+    collection_urls: []
+    start_date: 1999-07-01
+  - name: Scotland Office
+    collection_urls: []
+    start_date: 1999-07-01
+  - name: Wales Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/office-of-the-secretary-of-state-for-wales-data-gifts-hospitality-travel-and-meetings
+    start_date: 1999-07-01
+  - name: UK Export Finance
+    collection_urls:
+      - https://www.gov.uk/government/collections/ukef-ministers-meetings-hospitality-gifts-and-overseas-travel
+    start_date: 1919-01-01
+  - name: Department for Business, Energy and Industrial Strategy
+    collection_urls:
+      - https://www.gov.uk/government/collections/beis-ministerial-gifts-hospitality-travel-and-meetings
+    start_date: 2016-07-14
+    end_date: 2023-02-07
+  - name: Department for Business, Innovation and Skills
+    collection_urls:
+      - https://www.gov.uk/government/collections/bis-quarterly-publications-april-to-june-2012
+    start_date: 2009-06-05
+    end_date: 2016-07-14
+  - name: Department of Energy and Climate Change
+    collection_urls:
+      - https://www.gov.uk/government/collections/decc-ministerial-gifts-hospitality-meetings-and-travel
+    start_date: 2008-10-03
+    end_date: 2016-07-14
+  - name: Department for International Development
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministerial-gifts-hospitality-travel-and-meetings-with-external-organisations-in-the-department-for-international-development
+    start_date: 1997-05-01
+    end_date: 2020-09-02
+  - name: Department for International Trade
+    collection_urls:
+      - https://www.gov.uk/government/collections/dit-ministerial-gifts-hospitality-travel-and-meetings
+    start_date: 2016-07-14
+    end_date: 2023-02-07
+  - name: Foreign and Commonwealth Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/minister-data
+    start_date: 1968-10-17
+    end_date: 2020-09-02
+  - name: Department for Levelling Up, Housing and Communities
+    collection_urls:
+      - https://www.gov.uk/government/collections/dclg-ministerial-data
+    start_date: 2021-09-15
+    end_date: 2024-07-01

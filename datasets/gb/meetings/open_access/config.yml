@@ -1,6 +1,6 @@
 dataset:
   name: open_access
-  prefix: gb-meet
+  prefix: gb-open-access
   title: Open Access UK
   summary: Meetings between UK government ministers and external organisations, collected by Transparency International UK.
   data:

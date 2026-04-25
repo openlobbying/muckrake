@@ -1,3 +1,5 @@
+from datetime import date
+
 from collections.abc import Iterable
 
 from .common import (
@@ -74,6 +76,34 @@ def apply_source(entity, record, department_name: str):
     entity.add("sourceUrl", record["source_url"])
     entity.add("publisher", department_name)
     entity.add("publisherUrl", record["publication_url"])
+
+
+def record_in_date_range(record, start_date: date | None, end_date: date | None) -> bool:
+    if start_date is None and end_date is None:
+        return True
+
+    dates = []
+    for field in ("date", "start_date", "end_date"):
+        parsed = parse_cell_date(record.get(field))
+        if parsed is not None:
+            if isinstance(parsed, str):
+                try:
+                    parsed = date.fromisoformat(parsed)
+                except ValueError:
+                    continue
+            dates.append(parsed)
+
+    if not dates:
+        period = record.get("period")
+        if period is None:
+            return True
+        dates.extend([period.start, period.end])
+
+    if start_date is not None and all(record_date < start_date for record_date in dates):
+        return False
+    if end_date is not None and all(record_date >= end_date for record_date in dates):
+        return False
+    return True
 
 
 def apply_meeting_date(event, raw_date, period: Period | None):
@@ -293,6 +323,8 @@ def crawl_ministerial_transparency(
     minister_cache: dict[str, object] | None = None,
     employment_cache: set[str] | None = None,
     participant_cache: dict[str, object] | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
 ):
     department = make_department(dataset, department_name)
     minister_cache = minister_cache or {}
@@ -300,6 +332,8 @@ def crawl_ministerial_transparency(
     participant_cache = participant_cache or {}
     for source in iter_publication_tables(dataset, collection_urls):
         for record in canonical_records(source):
+            if not record_in_date_range(record, start_date, end_date):
+                continue
             if source.category == "meetings":
                 emit_meeting(dataset, department, department_name, record, minister_cache, employment_cache, participant_cache)
             elif source.category == "gifts":

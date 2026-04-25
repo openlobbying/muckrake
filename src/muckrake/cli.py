@@ -121,9 +121,24 @@ def crawl(dataset_name, output, clear):
 
     for config in configs:
         ds = load_config(config)
-        if clear:
-            clear_dataset(ds.name)
-        run_crawl(config, output)
+        quiet_loggers = {}
+        if ds.name == "meetings":
+            for logger_name in (
+                "muckrake.dataset",
+                "muckrake.crawl",
+                "muckrake.extract.fetch",
+            ):
+                logger = logging.getLogger(logger_name)
+                quiet_loggers[logger_name] = logger.level
+                logger.setLevel(logging.WARNING)
+
+        try:
+            if clear:
+                clear_dataset(ds.name)
+            run_crawl(config, output)
+        finally:
+            for logger_name, level in quiet_loggers.items():
+                logging.getLogger(logger_name).setLevel(level)
 
 
 @cli.command("list")

@@ -1,3 +1,6 @@
+import csv
+import hashlib
+import logging
 import re
 import warnings
 from dataclasses import dataclass
@@ -10,6 +13,8 @@ import pandas as pd
 
 from muckrake.dataset import Dataset
 from muckrake.util import parse_amount, parse_date, to_string
+
+log = logging.getLogger(__name__)
 
 TABULAR_EXTENSIONS = {"csv", "xlsx", "xls"}
 HEADER_THRESHOLD = 3
@@ -201,6 +206,18 @@ def normalize_column_name(value: Any) -> str:
     return normalize_whitespace(text).lower()
 
 
+def make_resource_name(publication: Publication, file_name: str, max_stem_length: int = 120) -> str:
+    publication_stem = Path(urlparse(publication.url).path).name or "publication"
+    source_stem = Path(file_name).stem or "attachment"
+    suffix = Path(file_name).suffix
+    digest = hashlib.sha1(f"{publication.url}|{file_name}".encode("utf-8")).hexdigest()[:12]
+
+    stem = normalize_column_name(f"{publication_stem} {source_stem}").replace(" ", "-")
+    stem = stem.strip("-") or "resource"
+    stem = stem[:max_stem_length].rstrip("-") or "resource"
+    return f"{stem}-{digest}{suffix}"
+
+
 def build_normalized_headers(values: Any) -> list[str]:
     headers: list[str] = []
     seen: dict[str, int] = {}
@@ -317,7 +334,11 @@ def extract_publications(dataset: Dataset, collection_urls: str | Iterable[str])
     publications: list[Publication] = []
     seen_urls: set[str] = set()
     for collection_url in iter_collection_urls(collection_urls):
-        doc = dataset.fetch_html(collection_url, cache_days=30, absolute_links=True)
+        try:
+            doc = dataset.fetch_html(collection_url, cache_days=30, absolute_links=True)
+        except Exception as exc:
+            log.warning("Skipping unreadable collection page %s: %s", collection_url, exc)
+            continue
         for element in doc.xpath("//a[starts-with(@href, 'https://www.gov.uk/government/publications/')]"):
             url = element.get("href")
             if url is None or url in seen_urls:
@@ -426,7 +447,7 @@ def normalize_excel_sheet(frame: pd.DataFrame) -> pd.DataFrame:
 def read_csv_table(
     dataset: Dataset, publication: Publication, file_name: str, source_url: str
 ) -> pd.DataFrame:
-    path = dataset.fetch_resource(f"{Path(publication.url).name}-{file_name}", source_url)
+    path = dataset.fetch_resource(make_resource_name(publication, file_name), source_url)
     last_error: Optional[Exception] = None
     for encoding in ("utf-8-sig", "cp1252", "latin1"):
         try:
@@ -434,15 +455,47 @@ def read_csv_table(
             return normalize_tabular_frame(frame)
         except Exception as exc:
             last_error = exc
+            try:
+                with path.open("r", encoding=encoding, newline="") as fh:
+                    rows = list(csv.reader(fh))
+                if rows:
+                    header_width = len(rows[0])
+                    padded = []
+                    for row in rows:
+                        trimmed = row[:header_width]
+                        padded.append(trimmed + [None] * (header_width - len(trimmed)))
+                    frame = pd.DataFrame(padded, dtype=object)
+                    return normalize_tabular_frame(frame)
+            except Exception:
+                pass
     if last_error is not None:
         raise last_error
     return pd.DataFrame()
 
 
+def is_probably_text_file(path: Path, chunk_size: int = 2048) -> bool:
+    with path.open("rb") as fh:
+        chunk = fh.read(chunk_size)
+    if not chunk:
+        return False
+    if b"\x00" in chunk:
+        return False
+    try:
+        chunk.decode("utf-8")
+        return True
+    except UnicodeDecodeError:
+        return False
+
+
 def read_excel_tables(
     dataset: Dataset, publication: Publication, file_name: str, source_url: str
 ) -> Iterator[tuple[str, pd.DataFrame]]:
-    path = dataset.fetch_resource(f"{Path(publication.url).name}-{file_name}", source_url)
+    path = dataset.fetch_resource(make_resource_name(publication, file_name), source_url)
+    if is_probably_text_file(path):
+        yield file_name, read_csv_table(dataset, publication, file_name, source_url)
+        return
+
+    engine = "openpyxl" if file_name.lower().endswith("xlsx") else "xlrd"
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
@@ -450,7 +503,7 @@ def read_excel_tables(
             category=UserWarning,
             module=r"openpyxl\.worksheet\._reader",
         )
-        with pd.ExcelFile(path) as workbook:
+        with pd.ExcelFile(path, engine=engine) as workbook:
             for sheet_name in workbook.sheet_names:
                 frame = pd.read_excel(workbook, sheet_name=sheet_name, header=None, dtype=object)
                 normalized = normalize_tabular_frame(frame)
@@ -494,7 +547,11 @@ def iter_publication_tables(
     dataset: Dataset, collection_urls: str | Iterable[str]
 ) -> Iterator[TableSource]:
     for publication in extract_publications(dataset, collection_urls):
-        doc = dataset.fetch_html(publication.url, cache_days=30, absolute_links=True)
+        try:
+            doc = dataset.fetch_html(publication.url, cache_days=30, absolute_links=True)
+        except Exception as exc:
+            log.warning("Skipping unreadable publication page %s: %s", publication.url, exc)
+            continue
         seen_urls: set[str] = set()
         for element in doc.xpath("//a[contains(@href, 'assets.publishing.service.gov.uk')]"):
             source_url = element.get("href")
@@ -510,16 +567,25 @@ def iter_publication_tables(
                 category = detect_category(title, file_name, source_url)
                 if category is None:
                     continue
-                frame = read_csv_table(dataset, publication, file_name, source_url)
+                try:
+                    frame = read_csv_table(dataset, publication, file_name, source_url)
+                except Exception as exc:
+                    log.warning("Skipping unreadable CSV attachment %s: %s", source_url, exc)
+                    continue
                 if frame.empty:
                     continue
                 yield TableSource(publication, category, source_url, title or file_name, file_name, frame)
                 continue
-            for sheet_name, frame in read_excel_tables(dataset, publication, file_name, source_url):
-                category = detect_category(sheet_name, title, file_name, source_url)
-                if category is None:
-                    continue
-                yield TableSource(publication, category, source_url, sheet_name, file_name, frame)
+            try:
+                tables = read_excel_tables(dataset, publication, file_name, source_url)
+                for sheet_name, frame in tables:
+                    category = detect_category(sheet_name, title, file_name, source_url)
+                    if category is None:
+                        continue
+                    yield TableSource(publication, category, source_url, sheet_name, file_name, frame)
+            except Exception as exc:
+                log.warning("Skipping unreadable spreadsheet attachment %s: %s", source_url, exc)
+                continue
 
 
 def parse_cell_date(value: Any) -> Optional[str]:
@@ -561,6 +627,13 @@ def infer_year(month: int, period: Optional[Period]) -> Optional[int]:
     return period.end.year
 
 
+def safe_iso_date(year: int, month: int, day: int) -> Optional[str]:
+    try:
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
 def parse_single_partial_date(text: str, period: Optional[Period]) -> Optional[str]:
     parsed = parse_date(text)
     if parsed is not None:
@@ -580,7 +653,7 @@ def parse_single_partial_date(text: str, period: Optional[Period]) -> Optional[s
         year = int(year_text)
     if year is None:
         return None
-    return date(year, month, int(match.group(1))).isoformat()
+    return safe_iso_date(year, month, int(match.group(1)))
 
 
 def clean_date_range_text(value: str) -> str:
@@ -615,8 +688,8 @@ def parse_range_dates(value: Any, period: Optional[Period]) -> tuple[Optional[st
         if end_year < 100:
             end_year += 2000
         return (
-            date(start_year, int(match.group(2)), int(match.group(1))).isoformat(),
-            date(end_year, int(match.group(5)), int(match.group(4))).isoformat(),
+            safe_iso_date(start_year, int(match.group(2)), int(match.group(1))),
+            safe_iso_date(end_year, int(match.group(5)), int(match.group(4))),
         )
 
     match = re.fullmatch(r"(\d{1,2})-([A-Za-z]+)-(\d{2,4})-(\d{1,2})-([A-Za-z]+)-(\d{2,4})", cleaned, re.IGNORECASE)
@@ -632,8 +705,8 @@ def parse_range_dates(value: Any, period: Optional[Period]) -> tuple[Optional[st
         if end_year < 100:
             end_year += 2000
         return (
-            date(start_year, start_month, int(match.group(1))).isoformat(),
-            date(end_year, end_month, int(match.group(4))).isoformat(),
+            safe_iso_date(start_year, start_month, int(match.group(1))),
+            safe_iso_date(end_year, end_month, int(match.group(4))),
         )
 
     match = re.fullmatch(r"(\d{1,2})-([A-Za-z]+)-(\d{1,2})-([A-Za-z]+)", cleaned, re.IGNORECASE)
@@ -647,8 +720,8 @@ def parse_range_dates(value: Any, period: Optional[Period]) -> tuple[Optional[st
         if start_year is None or end_year is None:
             return None, None
         return (
-            date(start_year, start_month, int(match.group(1))).isoformat(),
-            date(end_year, end_month, int(match.group(3))).isoformat(),
+            safe_iso_date(start_year, start_month, int(match.group(1))),
+            safe_iso_date(end_year, end_month, int(match.group(3))),
         )
 
     match = re.fullmatch(r"(\d{1,2})-?(\d{1,2})\s*([A-Za-z]+)(?:\s+(\d{2,4}))?", cleaned, re.IGNORECASE)
@@ -666,8 +739,8 @@ def parse_range_dates(value: Any, period: Optional[Period]) -> tuple[Optional[st
         if year is None:
             return None, None
         return (
-            date(year, month, int(match.group(1))).isoformat(),
-            date(year, month, int(match.group(2))).isoformat(),
+            safe_iso_date(year, month, int(match.group(1))),
+            safe_iso_date(year, month, int(match.group(2))),
         )
 
     match = re.fullmatch(r"(\d{1,2})\s*([A-Za-z]+)-(\d{1,2})\s*([A-Za-z]+)(?:\s+(\d{2,4}))?", cleaned, re.IGNORECASE)
@@ -689,8 +762,8 @@ def parse_range_dates(value: Any, period: Optional[Period]) -> tuple[Optional[st
         if start_year is None or end_year is None:
             return None, None
         return (
-            date(start_year, start_month, int(match.group(1))).isoformat(),
-            date(end_year, end_month, int(match.group(3))).isoformat(),
+            safe_iso_date(start_year, start_month, int(match.group(1))),
+            safe_iso_date(end_year, end_month, int(match.group(3))),
         )
 
     single = parse_single_partial_date(cleaned, period)
