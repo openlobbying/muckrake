@@ -1,0 +1,207 @@
+# dataset:
+#   name: gb_gov_transparency
+#   prefix: gb-gov
+#   title: UK Government Transparency data
+#   summary: UK government meetings, gifts, hospitality and overseas travel for ministers, special advisers and senior officials.
+#   data:
+#     url: https://www.gov.uk/government/government-efficiency-transparency-and-accountability
+#   tags:
+#     - lobbying
+#     - meetings
+#     - government
+#     - transparency
+#   licence:
+#     name: Open Government Licence v3.0
+#     url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+# coverage:
+#   countries:
+#     - gb
+#   frequency: quarterly
+# publisher:
+#   name: UK Government
+#   url: https://www.gov.uk/government/organisations
+#   country: gb
+#   country_label: United Kingdom
+#   official: true
+departments:
+  - name: Attorney General's Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/ago-ministerial-data-january-to-march-2012 # ministers hospitality
+      - https://www.gov.uk/government/collections/ago-ministerial-data # ministers gifts
+      - https://www.gov.uk/government/collections/ago-ministerial-data-october-to-december-2011 # ministers overseas travel
+      - https://www.gov.uk/government/collections/ago-ministerial-data-july-to-september-2011 # ministers meetings
+  - name: Cabinet Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministers-transparency-publications # mininsters
+      - https://www.gov.uk/government/collections/special-advisers-transparency-publications # special advisers
+      - https://www.gov.uk/government/collections/business-expenses-and-hospitality-for-senior-officials # senior officials
+      - https://www.gov.uk/government/collections/cabinet-office-permanent-secretaries-meetings-with-external-organisations permanent secretary
+  - name: Department for Business and Trade
+    collection_urls:
+      - https://www.gov.uk/government/collections/dbt-ministers-transparency-publications # ministers meetings and overseas travel
+      - https://www.gov.uk/government/collections/dbt-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/dbt-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Business, Energy & Industrial Strategy
+    collection_urls:
+      - https://www.gov.uk/government/collections/beis-ministerial-gifts-hospitality-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/beis-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/beis-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Business, Innovation & Skills
+    collection_urls:
+      - https://www.gov.uk/government/collections/bis-quarterly-publications-april-to-june-2012 # ministers
+      - https://www.gov.uk/government/collections/bis-special-advisers # special advisers
+      - https://www.gov.uk/government/collections/bis-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Culture, Media and Sport
+    collection_urls:
+      - https://www.gov.uk/government/collections/expenses-and-hospitality # ministers
+      - https://www.gov.uk/government/collections/hospitality-and-overseas-travel-for-dcms-special-advisers # special advisers hospitality and gifts
+      - https://www.gov.uk/government/collections/dcms-senior-officials-hospitality-meetings-and-travel # senior officials
+      - https://www.gov.uk/government/collections/hospitality-and-gifts-for-dcms-permanent-secretary # permanent secretary
+  - name: Department for Digital, Culture, Media & Sport
+    collection_urls:
+      - https://www.gov.uk/government/collections/ddcms-special-advisors-gifts-hospitality-and-meetings # special advisers
+  - name: Department of Energy & Climate Change
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministers-gifts-and-hospitality # ministers
+      - https://www.gov.uk/government/collections/decc-ministerial-gifts-hospitality-meetings-and-travel # ministers
+      - https://www.gov.uk/government/collections/ministers-meeting-with-external-organisations # ministers meetings old
+      - https://www.gov.uk/government/collections/ministers-overseas-travel # ministers overseas travel
+      - https://www.gov.uk/government/collections/special-advisers-gifts-and-hospitality-received--2 # special advisers
+      - https://www.gov.uk/government/collections/business-expenses-and-hospitality-received # permanent secretary and directors
+  - name: Department for Energy Security and Net Zero
+    collection_urls:
+      - https://www.gov.uk/government/collections/desnz-ministerial-gifts-hospitality-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/desnz-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/desnz-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Education
+    collection_urls:
+      - https://www.gov.uk/government/collections/dfe-ministerial-overseas-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/dfe-ministers-quarterly-returns # ministers old
+      - https://www.gov.uk/government/collections/dfe-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/dfe-business-expenses-and-hospitality-for-senior-officials # senior officials
+  - name: Department for Environment, Food & Rural Affairs
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministers-hospitality-gifts-meetings-overseas-travel # ministers
+      - https://www.gov.uk/government/collections/defra-special-advisors-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/management-board-business-costs-and-hospitality # senior officials
+      - https://www.gov.uk/government/collections/permanent-secretary-s-meetings-with-external-organisations # permanent secretary
+  - name: Department of Health and Social Care
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministerial-gifts-hospitality-overseas-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/special-advisers-gifts-hospitality-and-media # special advisers
+      - https://www.gov.uk/government/collections/business-expenses # senior officials
+      - https://www.gov.uk/government/collections/permanent-secretary-meetings # permanent secretary
+  - name: Department for International Development
+    collection_urls:
+      - https://www.gov.uk/government/collections/ministerial-gifts-hospitality-travel-and-meetings-with-external-organisations-in-the-department-for-international-development # ministers
+      - https://www.gov.uk/government/collections/dfid-senior-executives-business-expenses-gifts-travel-and-meetings # senior officials
+      - https://www.gov.uk/government/collections/dfid-senior-officials-travel-report # senior officials old
+      - https://www.gov.uk/government/collections/dfid-special-advisers-gifts-hospitality-and-meetings-returns # special advisers
+      - https://www.gov.uk/government/collections/dfid-permanent-secretarys-meetings-with-external-organisations # permanent secretary
+  - name: Department for Levelling Up, Housing and Communities
+    collection_urls:
+      - https://www.gov.uk/government/collections/dluhc-ministerial-gifts-hospitality-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/dluhc-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/dluhc-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Science, Innovation and Technology
+    collection_urls:
+      - https://www.gov.uk/government/collections/dsit-ministerial-gifts-hospitality-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/dsit-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/dsit-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Transport
+    collection_urls:
+      - https://www.gov.uk/government/collections/dft-ministerial-gifts-hospitality-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/dft-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/dft-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+  - name: Department for Work and Pensions
+    collection_urls:
+      - https://www.gov.uk/government/collections/dwp-ministers-hospitality-and-gifts # ministers
+      - https://www.gov.uk/government/collections/dwp-special-advisers-hospitality-and-gifts # special advisers
+      - https://www.gov.uk/government/collections/dwp-senior-managers-hospitality-and-business-expenses # senior officials
+  - name: Foreign, Commonwealth and Development Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/fcdo-ministerial-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/fcdo-ministerial-gifts-hospitality-travel-and-meetings # ministers old
+      - https://www.gov.uk/government/collections/minister-data # ministers old
+      - https://www.gov.uk/government/collections/fcdo-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/spads-data # special advisers old
+      - https://www.gov.uk/government/collections/fcdo-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+      - https://www.gov.uk/government/collections/pus-data # senior officials old
+  - name: Home Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/home-office-ministers-hospitality-data # ministers
+      - https://www.gov.uk/government/collections/home-office-special-advisers-hospitality-data # special advisers
+      - https://www.gov.uk/government/collections/home-office-board-expenses # senior officials
+  - name: HM Revenue & Customs
+    collection_urls:
+      - https://www.gov.uk/government/collections/hmrc-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+      - https://www.gov.uk/government/collections/hmrc-senior-officials-hospitality-and-meetings # senior officials old
+      - https://www.gov.uk/government/collections/hmrc-senior-officials-travel-reports # senior officials old
+      - https://www.gov.uk/government/collections/hmrc-senior-officials-secondary-outside-employment # senior officials outside employment
+      - https://www.gov.uk/government/collections/hmrc-officials-meetings-with-tobacco-stakeholders # senior officials meetings with tobacco stakeholders
+  - name: HM Treasury
+    collection_urls:
+      - https://www.gov.uk/government/collections/hmt-ministers-meetings-hospitality-gifts-and-overseas-travel # ministers
+      - https://www.gov.uk/government/collections/hm-treasury-ministerial-overseas-travel-and-meetings # also ministers?
+      # - https://www.gov.uk/government/collections/quarterly-information # dead link?
+      - https://www.gov.uk/government/collections/special-advisor-hospitality # special advisers
+      - https://www.gov.uk/government/collections/senior-officials-expenses # senior officials
+  - name: Ministry of Defence
+    collection_urls:
+      - https://www.gov.uk/government/collections/mod-ministerial-overseas-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/ministerial-gifts-hospitality-travel-and-meetings-with-external-organisations-in-the-ministry-of-defence # ministers old
+      - https://www.gov.uk/government/collections/special-advisers-gifts-and-hospitality-received # special advisers
+      - https://www.gov.uk/government/collections/senior-staff-meetings-with-external-organisations # senior officials
+      - https://www.gov.uk/government/collections/senior-officers-of-the-armed-forces-hospitality-received # senior officers
+  - name: Ministry of Housing, Communities and Local Government
+    collection_urls:
+      - https://www.gov.uk/government/collections/mhclg-ministerial-gifts-hospitality-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/dclg-ministerial-data # ministers old
+      - https://www.gov.uk/government/collections/mhclg-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/dclg-special-advisers-data # special advisers old
+      - https://www.gov.uk/government/collections/mhclg-senior-officials-business-expenses-hospitality-and-meetings # senior officials
+      - https://www.gov.uk/government/collections/business-expenses-and-hospitality-for-dclg-senior-officials # senior officials old
+  - name: Ministry of Justice
+    collection_urls:
+      - https://www.gov.uk/government/collections/moj-gifts-hospitality-travel-and-meetings
+  - name: Northern Ireland Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/nio-ministerial-gifts-hospitality-travel-and-meetings-data-collection # ministers
+      - https://www.gov.uk/government/collections/ni-office-ministerial-transparency-data # ministers old
+      - https://www.gov.uk/government/collections/nio-special-advisers-gifts-hospitality-and-meetings-data-collection # special advisers
+      - https://www.gov.uk/government/collections/nio-senior-officials-business-expenses-hospitality-and-meetings-data-collection # senior officials
+      - https://www.gov.uk/government/collections/senior-staff-business-expenses--2 # senior officials old
+      - https://www.gov.uk/government/collections/nio-senior-officials-hospitality-meetings-and-travel # senior officials old
+      - https://www.gov.uk/government/collections/special-advisors-gifts-received-hospitality-and-external-meetings # board members
+      - https://www.gov.uk/government/collections/nio-secretary-of-state-transparency-data # secretary of state
+  - name: Office of the Advocate General for Scotland
+    collection_urls:
+      - https://www.gov.uk/government/collections/oag-ministerial-gifts-hospitality-overseas-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/hospitality--2 # ministers old
+      - https://www.gov.uk/government/collections/oag-senior-officials-business-expenses-and-hospitality # senior officials
+  - name: Office of the Secretary of State for Scotland
+    collection_urls:
+      - https://www.gov.uk/government/collections/scotland-office-quarterly-transparency-returns # ministers, special advisers and senior officials
+      - https://www.gov.uk/government/collections/hospitality # ministers
+      - https://www.gov.uk/government/collections/special-advisers-quarterly-summary-information # special advisers
+      - https://www.gov.uk/government/collections/gifts-received # ministers and special advisers gifts
+      - https://www.gov.uk/government/collections/meetings-with-proprietors-editors-and-media-executives # secretary of state
+      - https://www.gov.uk/government/collections/overseas-travel--2
+  - name: Wales Office
+    collection_urls:
+      - https://www.gov.uk/government/collections/wales-office-ministerial-gifts-hospitality-overseas-travel-and-meetings # ministers
+      - https://www.gov.uk/government/collections/office-of-the-secretary-of-state-for-wales-data-gifts-hospitality-travel-and-meetings # ministers, directors, special advisers
+      - https://www.gov.uk/government/collections/wales-office-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/hospitality--3
+      - https://www.gov.uk/government/collections/gifts
+      - https://www.gov.uk/government/collections/meetings-with-media-organisations
+  - name: UK Export Finance
+    collection_urls:
+      - https://www.gov.uk/government/collections/ukef-ministers-meetings-hospitality-gifts-and-overseas-travel # ministers
+      - https://www.gov.uk/government/collections/ukef-special-advisers-gifts-hospitality-and-meetings # special advisers
+      - https://www.gov.uk/government/collections/ukef-senior-officials-travel-hospitality-and-permanent-secretary-meetings # senior officials
+      - https://www.gov.uk/government/collections/ukef-gifts-and-hospitality-register--2 # senior officials old
+
+
+# https://www.gov.uk/government/collections/register-of-ministers-gifts-and-hospitality
+# https://www.gov.uk/government/collections/dit-ministerial-gifts-hospitality-travel-and-meetings

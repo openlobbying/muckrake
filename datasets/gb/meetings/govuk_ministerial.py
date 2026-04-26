@@ -1,6 +1,7 @@
 from datetime import date
 
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from .common import (
     Period,
@@ -16,6 +17,9 @@ from .common import (
     parse_partial_date,
     parse_year_hint_date,
 )
+
+if TYPE_CHECKING:
+    from .validation import MeetingsValidation, SourceValidation
 
 
 def make_department(dataset, department_name: str):
@@ -161,7 +165,7 @@ def emit_meeting(dataset, department, department_name: str, record, minister_cac
     purpose = clean_text(record.get("purpose"))
     counterparty_text = clean_text(record.get("counterparty"))
     if minister_name is None or (purpose is None and counterparty_text is None):
-        return
+        return False
 
     minister = make_minister(dataset, department, minister_name, minister_cache, employment_cache)
     meeting = dataset.make("Event")
@@ -184,6 +188,7 @@ def emit_meeting(dataset, department, department_name: str, record, minister_cac
         meeting.add("involved", participant)
     apply_source(meeting, record, department_name)
     dataset.emit(meeting)
+    return True
 
 
 def emit_gift(dataset, department, department_name: str, record, minister_cache, employment_cache, participant_cache):
@@ -191,7 +196,7 @@ def emit_gift(dataset, department, department_name: str, record, minister_cache,
     gift_name = clean_text(record.get("gift"))
     direction = clean_text(record.get("direction"))
     if minister_name is None or gift_name is None:
-        return
+        return False
 
     minister = make_minister(dataset, department, minister_name, minister_cache, employment_cache)
     gift = dataset.make("Payment")
@@ -232,13 +237,14 @@ def emit_gift(dataset, department, department_name: str, record, minister_cache,
     gift.add("description", ". ".join(description_parts))
     apply_source(gift, record, department_name)
     dataset.emit(gift)
+    return True
 
 
 def emit_hospitality(dataset, department, department_name: str, record, minister_cache, employment_cache, participant_cache):
     minister_name = clean_text(record.get("minister"))
     hospitality_type = clean_text(record.get("kind"))
     if minister_name is None or hospitality_type is None:
-        return
+        return False
 
     minister = make_minister(dataset, department, minister_name, minister_cache, employment_cache)
     hospitality = dataset.make("Payment")
@@ -267,6 +273,7 @@ def emit_hospitality(dataset, department, department_name: str, record, minister
     hospitality.add("description", ". ".join(description_parts))
     apply_source(hospitality, record, department_name)
     dataset.emit(hospitality)
+    return True
 
 
 def emit_travel(dataset, department, department_name: str, record, minister_cache, employment_cache):
@@ -274,7 +281,7 @@ def emit_travel(dataset, department, department_name: str, record, minister_cach
     destination = clean_text(record.get("destination"))
     purpose = clean_text(record.get("purpose"))
     if minister_name is None or (destination is None and purpose is None):
-        return
+        return False
 
     minister = make_minister(dataset, department, minister_name, minister_cache, employment_cache)
     trip = dataset.make("Trip")
@@ -328,7 +335,7 @@ def emit_travel(dataset, department, department_name: str, record, minister_cach
 
     total_cost = extract_amount(record.get("total_cost"))
     if total_cost is None:
-        return
+        return True
 
     payment = dataset.make("Payment")
     payment.id = dataset.make_id(
@@ -349,6 +356,7 @@ def emit_travel(dataset, department, department_name: str, record, minister_cach
         payment.add("description", destination)
     apply_source(payment, record, department_name)
     dataset.emit(payment)
+    return True
 
 
 def crawl_ministerial_transparency(
@@ -360,20 +368,73 @@ def crawl_ministerial_transparency(
     participant_cache: dict[str, object] | None = None,
     start_date: date | None = None,
     end_date: date | None = None,
+    validator: "MeetingsValidation | None" = None,
 ):
     department = make_department(dataset, department_name)
     minister_cache = minister_cache or {}
     employment_cache = employment_cache or set()
     participant_cache = participant_cache or {}
-    for source in iter_publication_tables(dataset, collection_urls):
+    for source in iter_publication_tables(
+        dataset,
+        collection_urls,
+        validator=validator,
+        department_name=department_name,
+    ):
+        source_validation: "SourceValidation | None" = (
+            validator.start_source(department_name, source) if validator is not None else None
+        )
         for record in canonical_records(source):
+            if source_validation is not None:
+                source_validation.canonical_records += 1
             if not record_in_date_range(record, start_date, end_date):
+                if source_validation is not None:
+                    source_validation.skipped_out_of_range += 1
                 continue
+            if source_validation is not None:
+                source_validation.in_range_records += 1
+                if validator is not None and validator.is_nil_record(record):
+                    source_validation.nil_return_records += 1
+            emitted = False
             if source.category == "meetings":
-                emit_meeting(dataset, department, department_name, record, minister_cache, employment_cache, participant_cache)
+                emitted = emit_meeting(
+                    dataset,
+                    department,
+                    department_name,
+                    record,
+                    minister_cache,
+                    employment_cache,
+                    participant_cache,
+                )
             elif source.category == "gifts":
-                emit_gift(dataset, department, department_name, record, minister_cache, employment_cache, participant_cache)
+                emitted = emit_gift(
+                    dataset,
+                    department,
+                    department_name,
+                    record,
+                    minister_cache,
+                    employment_cache,
+                    participant_cache,
+                )
             elif source.category == "hospitality":
-                emit_hospitality(dataset, department, department_name, record, minister_cache, employment_cache, participant_cache)
+                emitted = emit_hospitality(
+                    dataset,
+                    department,
+                    department_name,
+                    record,
+                    minister_cache,
+                    employment_cache,
+                    participant_cache,
+                )
             elif source.category == "travel":
-                emit_travel(dataset, department, department_name, record, minister_cache, employment_cache)
+                emitted = emit_travel(
+                    dataset,
+                    department,
+                    department_name,
+                    record,
+                    minister_cache,
+                    employment_cache,
+                )
+            if emitted and source_validation is not None:
+                source_validation.emitted_records += 1
+        if source_validation is not None:
+            validator.finish_source(source_validation)

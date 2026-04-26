@@ -6,7 +6,7 @@ import warnings
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Optional
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -25,6 +25,9 @@ from muckrake.utils.dates import (
 
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from .validation import MeetingsValidation
+
 TABULAR_EXTENSIONS = {"csv", "xlsx", "xls"}
 HEADER_THRESHOLD = 3
 CATEGORY_TRAILING_WINDOW = 40
@@ -35,6 +38,19 @@ CATEGORY_KEYWORDS = {
     "gifts": ("gift",),
     "travel": ("travel",),
 }
+
+OUT_OF_SCOPE_ATTACHMENT_KEYWORDS = (
+    "official visit",
+    "official visits",
+    "uk visits",
+    "official reception",
+    "official receptions",
+    "charity reception",
+    "charity receptions",
+    "official and charity receptions",
+    "chequers",
+    "chevening",
+)
 
 MONTHS = {
     "jan": 1,
@@ -68,6 +84,8 @@ FIELD_ALIASES = {
     "meetings": {
         "minister": [
             "minister",
+            "ministers",
+            "prime minister",
             "minister name",
             "ministerial name",
             "name of minister",
@@ -77,6 +95,8 @@ FIELD_ALIASES = {
         "counterparty": [
             "name of organisation or individual",
             "name of individual or organisation",
+            "name of individual s",
+            "name of individual",
             "name of individuals",
             "name of organisation",
             "name of organization",
@@ -100,8 +120,8 @@ FIELD_ALIASES = {
         ],
     },
     "gifts": {
-        "minister": ["minister"],
-        "date": ["date", "date gift given", "date gift received"],
+        "minister": ["minister", "ministers", "prime minister"],
+        "date": ["date", "date gift given", "date gift received", "date received", "date given"],
         "gift": ["gift"],
         "direction": ["given or received"],
         "counterparty": [
@@ -113,7 +133,7 @@ FIELD_ALIASES = {
         "outcome": ["outcome received gifts only", "outcome"],
     },
     "hospitality": {
-        "minister": ["minister"],
+        "minister": ["minister", "ministers", "prime minister"],
         "date": ["date", "date of hospitality"],
         "counterparty": [
             "person or organisation that offered hospitality",
@@ -123,6 +143,7 @@ FIELD_ALIASES = {
         ],
         "kind": [
             "type of hospitality received",
+            "type of hospitality given",
             "type of hospitality received include an asterisk against the entry if accompanied by spouse partner or other family member or friend",
         ],
         "guest": [
@@ -131,38 +152,50 @@ FIELD_ALIASES = {
         ],
     },
     "travel": {
-        "minister": ["minister"],
+        "minister": ["minister", "ministers", "prime minister"],
         "start_date": ["start date", "start date of trip"],
         "end_date": ["end date", "end date of trip"],
-        "date_text": ["dates of trip", "date(s) of trip"],
+        "date_text": ["dates of trip", "date(s) of trip", "date of trip", "date"],
         "destination": ["destination"],
-        "purpose": ["purpose of trip"],
+        "purpose": ["purpose of trip", "purpose"],
         "transport": [
             "mode of transport",
             "modes of transport",
             "no 32 the royal squadron or other raf or charter or eurostar",
+            "no.32 the royal squadron or other raf or charter or scheduled or eurostar",
+            "scheduled no.32 the royal squadron or other raf or charter or scheduled or eurostar",
+            "scheduled no 32 the royal squadron or other raf or charter or scheduled or eurostar",
         ],
         "transport_cost": [
             "cost of private jet or raf plane hire if relevant gbp",
             "subtotal of all travel costs including any non scheduled raf flights gbp",
+            "subtotal of all travel costs including any non scheduled raf flights",
+            "subtotal of all travel costs including any non-scheduled raf flights",
         ],
         "accompanying_officials": [
             "number of officials who accompanied minister if non shceduled travel was used",
             "number of officials who accompanied minister if non scheduled travel was used",
             "number of officials who accompanied the minister if non scheduled flight was taken",
+            "number of officials who accompanied the minister if non-scheduled flight was taken",
             "number of officials accompanying minister where non scheduled travel is used",
+            "number of officials accompanying ministers where non scheduled travel is used",
+            "number of officials accompanying ministers where non-scheduled travel is used",
         ],
         "guest": [
             "accompanied by spouse family members or friend at public expense",
             "accompanied by spouse partner at public expense",
         ],
         "associated_cost": [
-            "subtotal of associated costs for minister only including all visas accommodation meals etc gbp"
+            "subtotal of associated costs for minister only including all visas accommodation meals etc gbp",
+            "subtotal of associated costs for minister only including all visas accommodation meals etc.",
+            "subtotal of associated costs for minister only including all visas accommodation meals etc",
         ],
         "total_cost": [
             "total cost for minister only including all visas accommodation travel meals etc gbp",
             "total cost gbp",
+            "total cost",
             "total cost including travel and accommodation of minister only",
+            "total cost for minister only including all visas accommodation travel meals etc",
         ],
     },
 }
@@ -350,14 +383,22 @@ def iter_collection_urls(collection_urls: str | Iterable[str]) -> Iterator[str]:
             yield collection_url
 
 
-def extract_publications(dataset: Dataset, collection_urls: str | Iterable[str]) -> list[Publication]:
+def extract_publications(
+    dataset: Dataset,
+    collection_urls: str | Iterable[str],
+    validator: "MeetingsValidation | None" = None,
+    department_name: str | None = None,
+) -> list[Publication]:
     publications: list[Publication] = []
     seen_urls: set[str] = set()
     for collection_url in iter_collection_urls(collection_urls):
         try:
             doc = dataset.fetch_html(collection_url, cache_days=30, absolute_links=True)
         except Exception as exc:
-            log.warning("Skipping unreadable collection page %s: %s", collection_url, exc)
+            if validator is not None and department_name is not None:
+                validator.log_collection_page_error(department_name, collection_url, exc)
+            else:
+                log.warning("Skipping unreadable collection page %s: %s", collection_url, exc)
             continue
         for element in doc.xpath("//a[starts-with(@href, 'https://www.gov.uk/government/publications/')]"):
             url = element.get("href")
@@ -407,6 +448,11 @@ def detect_category(*parts: str) -> Optional[str]:
     return None
 
 
+def is_out_of_scope_attachment(*parts: str) -> bool:
+    text = " ".join(normalize_whitespace(part).lower() for part in parts if part)
+    return any(keyword in text for keyword in OUT_OF_SCOPE_ATTACHMENT_KEYWORDS)
+
+
 def detect_gift_direction(*parts: str) -> Optional[str]:
     text = " ".join(normalize_whitespace(part).lower() for part in parts if part)
     if "gift received" in text or "gifts received" in text:
@@ -432,6 +478,36 @@ def score_header_row(values: Any) -> int:
     return best
 
 
+def category_score(category: str, columns: Any) -> int:
+    return len(detect_field_mapping(category, columns))
+
+
+def detect_category_from_columns(columns: Any) -> Optional[str]:
+    scores = {
+        category: category_score(category, columns)
+        for category in FIELD_ALIASES
+    }
+    best_score = max(scores.values(), default=0)
+    if best_score == 0:
+        return None
+    best_categories = [category for category, score in scores.items() if score == best_score]
+    if len(best_categories) != 1:
+        return None
+    return best_categories[0]
+
+
+def resolve_table_category(columns: Any, *parts: str) -> Optional[str]:
+    metadata_category = detect_category(*parts)
+    column_category = detect_category_from_columns(columns)
+    if column_category is None:
+        return metadata_category
+    if metadata_category is None:
+        return column_category
+    if category_score(column_category, columns) > category_score(metadata_category, columns):
+        return column_category
+    return metadata_category
+
+
 def detect_header_row(frame: pd.DataFrame) -> int:
     for index, row in frame.iterrows():
         if score_header_row(row.tolist()) >= HEADER_THRESHOLD:
@@ -449,12 +525,67 @@ def normalize_frame(frame: pd.DataFrame) -> pd.DataFrame:
     return normalized.reset_index(drop=True)
 
 
+def extract_stacked_minister(values: list[Any]) -> Optional[str]:
+    for value in reversed(values):
+        text = to_string(value)
+        if text is None:
+            continue
+        lowered = text.lower()
+        if "minister" not in lowered:
+            continue
+        if "," in text:
+            candidate = text.rsplit(",", 1)[-1].strip()
+            if candidate:
+                return candidate
+        return text
+    return None
+
+
+def normalize_stacked_single_column_frame(frame: pd.DataFrame) -> Optional[pd.DataFrame]:
+    normalized = frame.copy()
+    normalized = normalized.dropna(axis=1, how="all")
+    normalized = normalized.dropna(axis=0, how="all")
+    if normalized.empty or len(normalized.columns) != 1:
+        return None
+
+    values = normalized.iloc[:, 0].tolist()
+    normalized_values = [
+        normalize_column_name(text)
+        if (text := to_string(value)) is not None
+        else None
+        for value in values
+    ]
+
+    for index in range(len(normalized_values) - 2):
+        header_values = normalized_values[index : index + 3]
+        if header_values != ["date of meeting", "name of individual s", "purpose of meeting"]:
+            continue
+
+        data_values = [to_string(value) for value in values[index + 3 :]]
+        data_values = [value for value in data_values if value is not None]
+        rows = [data_values[offset : offset + 3] for offset in range(0, len(data_values), 3)]
+        rows = [row for row in rows if len(row) == 3]
+        if not rows:
+            return None
+
+        table = pd.DataFrame(rows, columns=["date of meeting", "name of individual s", "purpose of meeting"], dtype=object)
+        minister = extract_stacked_minister(values[:index])
+        if minister is not None:
+            table.insert(0, "minister", minister)
+        return normalize_frame(table)
+
+    return None
+
+
 def normalize_tabular_frame(frame: pd.DataFrame) -> pd.DataFrame:
     normalized = frame.copy()
     normalized = normalized.dropna(axis=1, how="all")
     normalized = normalized.dropna(axis=0, how="all")
     if normalized.empty:
         return normalized
+    stacked = normalize_stacked_single_column_frame(normalized)
+    if stacked is not None:
+        return stacked
     header_row = detect_header_row(normalized)
     headers = build_normalized_headers(normalized.iloc[header_row].tolist())
     normalized = normalized.iloc[header_row + 1 :].copy()
@@ -566,13 +697,24 @@ def detect_field_mapping(category: str, columns: Any) -> dict[str, str]:
 
 
 def iter_publication_tables(
-    dataset: Dataset, collection_urls: str | Iterable[str]
+    dataset: Dataset,
+    collection_urls: str | Iterable[str],
+    validator: "MeetingsValidation | None" = None,
+    department_name: str | None = None,
 ) -> Iterator[TableSource]:
-    for publication in extract_publications(dataset, collection_urls):
+    for publication in extract_publications(
+        dataset,
+        collection_urls,
+        validator=validator,
+        department_name=department_name,
+    ):
         try:
             doc = dataset.fetch_html(publication.url, cache_days=30, absolute_links=True)
         except Exception as exc:
-            log.warning("Skipping unreadable publication page %s: %s", publication.url, exc)
+            if validator is not None and department_name is not None:
+                validator.log_publication_page_error(department_name, publication.url, exc)
+            else:
+                log.warning("Skipping unreadable publication page %s: %s", publication.url, exc)
             continue
         attachment_links: dict[str, str] = {}
         for element in doc.xpath("//a[contains(@href, 'assets.publishing.service.gov.uk')]"):
@@ -589,28 +731,92 @@ def iter_publication_tables(
             if ext not in TABULAR_EXTENSIONS:
                 continue
             file_name = Path(urlparse(source_url).path).name
+            if is_out_of_scope_attachment(title, file_name, source_url):
+                if validator is not None and department_name is not None:
+                    validator.log_out_of_scope_table(
+                        department_name,
+                        publication.url,
+                        source_url,
+                        file_name,
+                        title=title,
+                    )
+                continue
             if ext == "csv":
-                category = detect_category(title, file_name, source_url)
-                if category is None:
-                    continue
                 try:
                     frame = read_csv_table(dataset, publication, file_name, source_url)
                 except Exception as exc:
-                    log.warning("Skipping unreadable CSV attachment %s: %s", source_url, exc)
+                    if validator is not None and department_name is not None:
+                        validator.log_attachment_read_error(
+                            department_name,
+                            publication.url,
+                            source_url,
+                            file_name,
+                            exc,
+                        )
+                    else:
+                        log.warning("Skipping unreadable CSV attachment %s: %s", source_url, exc)
                     continue
                 if frame.empty:
+                    if validator is not None and department_name is not None:
+                        validator.log_empty_table(
+                            department_name,
+                            publication.url,
+                            source_url,
+                            file_name,
+                            title=title,
+                        )
+                    continue
+                category = resolve_table_category(frame.columns, title, file_name, source_url)
+                if category is None:
+                    if validator is not None and department_name is not None:
+                        validator.log_unknown_category(
+                            department_name,
+                            publication.url,
+                            source_url,
+                            file_name,
+                            title=title,
+                        )
                     continue
                 yield TableSource(publication, category, source_url, title or file_name, file_name, frame)
                 continue
             try:
                 tables = read_excel_tables(dataset, publication, file_name, source_url)
                 for sheet_name, frame in tables:
-                    category = detect_category(sheet_name, title, file_name, source_url)
+                    if is_out_of_scope_attachment(sheet_name, title, file_name, source_url):
+                        if validator is not None and department_name is not None:
+                            validator.log_out_of_scope_table(
+                                department_name,
+                                publication.url,
+                                source_url,
+                                file_name,
+                                title=title,
+                                sheet_name=sheet_name,
+                            )
+                        continue
+                    category = resolve_table_category(frame.columns, sheet_name, title, file_name, source_url)
                     if category is None:
+                        if validator is not None and department_name is not None:
+                            validator.log_unknown_category(
+                                department_name,
+                                publication.url,
+                                source_url,
+                                file_name,
+                                title=title,
+                                sheet_name=sheet_name,
+                            )
                         continue
                     yield TableSource(publication, category, source_url, sheet_name, file_name, frame)
             except Exception as exc:
-                log.warning("Skipping unreadable spreadsheet attachment %s: %s", source_url, exc)
+                if validator is not None and department_name is not None:
+                    validator.log_attachment_read_error(
+                        department_name,
+                        publication.url,
+                        source_url,
+                        file_name,
+                        exc,
+                    )
+                else:
+                    log.warning("Skipping unreadable spreadsheet attachment %s: %s", source_url, exc)
                 continue
 
 

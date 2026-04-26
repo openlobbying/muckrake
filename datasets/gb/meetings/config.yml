@@ -101,7 +101,8 @@ departments:
     collection_urls: []
     start_date: 1999-07-01
   - name: Scotland Office
-    collection_urls: []
+    collection_urls:
+      - https://www.gov.uk/government/collections/scotland-office-quarterly-transparency-returns
     start_date: 1999-07-01
   - name: Wales Office
     collection_urls:
@@ -121,7 +122,7 @@ departments:
       - https://www.gov.uk/government/collections/bis-quarterly-publications-april-to-june-2012
     start_date: 2009-06-05
     end_date: 2016-07-14
-  - name: Department of Energy and Climate Change
+  - name: Department for Energy and Climate Change
     collection_urls:
       - https://www.gov.uk/government/collections/decc-ministerial-gifts-hospitality-meetings-and-travel
     start_date: 2008-10-03
@@ -146,3 +147,13 @@ departments:
       - https://www.gov.uk/government/collections/dclg-ministerial-data
     start_date: 2021-09-15
     end_date: 2024-07-01
+  - name: Department for Communities and Local Government
+    collection_urls:
+      - https://www.gov.uk/government/collections/dclg-ministerial-data
+    start_date: 2006-05-05
+    end_date: 2018-01-08
+  - name: Ministry of Housing, Communities and Local Government
+    collection_urls:
+      - https://www.gov.uk/government/collections/dclg-ministerial-data
+    start_date: 2018-01-08
+    end_date: 2021-09-15

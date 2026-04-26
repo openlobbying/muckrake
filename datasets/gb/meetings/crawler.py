@@ -1,7 +1,9 @@
 import logging
+import os
 from datetime import date
 
 from .govuk_ministerial import crawl_ministerial_transparency
+from .validation import MeetingsValidation
 
 
 def parse_config_date(value, department_name: str, field_name: str):
@@ -69,8 +71,12 @@ def crawl(dataset):
     minister_cache: dict[str, object] = {}
     employment_cache: set[str] = set()
     participant_cache: dict[str, object] = {}
+    validator = MeetingsValidation()
+    department_filter = os.getenv("MUCKRAKE_MEETINGS_DEPARTMENT")
 
     for department in get_departments(dataset):
+        if department_filter and department["name"] != department_filter:
+            continue
         crawl_ministerial_transparency(
             dataset,
             department["collection_urls"],
@@ -80,4 +86,7 @@ def crawl(dataset):
             participant_cache=participant_cache,
             start_date=department["start_date"],
             end_date=department["end_date"],
+            validator=validator,
         )
+
+    validator.log_summary()
