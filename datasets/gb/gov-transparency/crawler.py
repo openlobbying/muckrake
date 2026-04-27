@@ -85,6 +85,8 @@ def iter_collection_configs(dataset: Dataset):
 def make_content_api_url(value: str) -> str:
     if value.startswith("http://") or value.startswith("https://"):
         path = urlparse(value).path.rstrip("/")
+    elif value.startswith("/"):
+        path = value.rstrip("/")
     else:
         slug = value.strip().strip("/")
         path = f"/government/collections/{slug}"
@@ -152,7 +154,7 @@ def build_provenance(
     if period_start is None and period_end is None:
         period_start, period_end = parse_period(Path(publication_path.rstrip("/")).name)
     return Provenance(
-        department=slugify(department) if department else "",
+        department=department.strip() if department else "",
         collection_type=collection_type_from_url(collection_url),
         publication_title=title,
         attachment_title=attachment_title,
@@ -260,7 +262,7 @@ def format_sheet_preview(rows: list[list[str]]) -> list[str]:
 
 
 def should_fail_on_unknown(dataset: Dataset) -> bool:
-    value = dataset._data.get("fail_on_unknown", False)
+    value = dataset._data.get("fail_on_unknown", True)
     return bool(value)
 
 

@@ -186,3 +186,49 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
     assert rows[0]["date"] == date(2015, 10, 14)
     assert rows[1]["date_from"] == date(2016, 9, 2)
     assert rows[1]["date_to"] == date(2016, 9, 6)
+
+
+def test_extract_parses_mixed_day_or_month_dates():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "hospitality",
+            "data_start_offset": 1,
+            "fill_down_columns": [],
+            "nil_return_markers": ["Nil Return", "Nil return"],
+            "date_source": "column",
+            "date_column": 1,
+            "date_precision": "day_or_month",
+            "columns": {
+                "minister_name": 0,
+                "counterpart_raw": 2,
+                "gift_description": 3,
+            },
+        }
+    )
+    provenance = Provenance(
+        department="ago",
+        collection_type="hospitality",
+        publication_title="AGO hospitality, January to March 2011",
+        attachment_title="Hospitality",
+        url="https://example.test/source.csv",
+        period_start=date(2011, 1, 1),
+        period_end=date(2011, 3, 31),
+    )
+    sheet = NormalisedSheet(
+        name="Hospitality",
+        rows=[
+            ["Minister", "Date", "Name of organisation", "Type of Hospitality Received"],
+            ["Attorney General Dominic Grieve QC MP", "Feb-11", "Telegraph Media Group", "Lunch"],
+            ["Attorney General Dominic Grieve QC MP", "19-Mar-11", "Lunch 4 Life", "Dinner"],
+        ],
+    )
+
+    rows = extract(sheet, schema, provenance)
+
+    assert rows[0]["date_from"] == date(2011, 2, 1)
+    assert rows[0]["date_to"] == date(2011, 2, 28)
+    assert rows[0]["date_precision"] == "month"
+    assert rows[1]["date"] == date(2011, 3, 19)
+    assert rows[1]["date_precision"] == "day"

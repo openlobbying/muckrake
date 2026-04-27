@@ -64,6 +64,7 @@ Important fields:
 - `date_format`: only for day-level column dates when a fixed `strptime` format is valid
 - `date_precision`:
   - `day`
+  - `day_or_month`
   - `month`
   - `quarter`
 - `columns`: mapping from canonical field names to source column indexes
@@ -123,6 +124,7 @@ Use `date_source: "none"` when:
 Date precision rules:
 
 - `day` for exact dates or parseable date-time values
+- `day_or_month` for legacy sheets where the same date column mixes exact days and month values
 - `month` for month names or month-year values
 - `quarter` when the row only belongs to the publication period
 
@@ -135,6 +137,7 @@ Current extractor supports these common patterns:
 - month names like `October`
 - month-year like `December 2015`
 - short month-year like `Oct-12`
+- mixed legacy values like `Feb-11` and `19-Mar-11` in the same column
 - day ranges like `02-06 September`
 
 If a date pattern is not yet supported and is clearly recurring, update code only if needed. Otherwise prefer a schema that reflects the current supported behavior.
@@ -196,6 +199,14 @@ Run tests:
 ```bash
 uv run pytest tests/test_gov_transparency_fingerprint.py tests/test_gov_transparency_schema.py tests/test_gov_transparency_extract.py tests/test_gov_transparency_normalise.py tests/test_gov_transparency_crawler.py
 ```
+
+To inspect partial emitted statements while the crawler is still failing fast on an unknown fingerprint, run:
+
+```bash
+uv run muckrake crawl gb_gov_transparency --output - > partial-gov.pack.csv
+```
+
+This writes emitted statements to stdout as they are produced, so you can inspect partial output even if the crawl aborts later on an unknown fingerprint.
 
 To inspect a cached file manually, use a short `uv run python -c` snippet that imports:
 

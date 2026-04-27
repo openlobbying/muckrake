@@ -88,8 +88,15 @@ def test_parse_period_returns_none_for_unparseable_title():
     assert parse_period("Cabinet Office transparency release") == (None, None)
 
 
+def test_make_content_api_url_keeps_absolute_base_paths():
+    assert MODULE.make_content_api_url("/government/publications/example-publication") == (
+        "https://www.gov.uk/api/content/government/publications/example-publication"
+    )
+
+
 def test_crawl_emits_entities_for_known_schema(tmp_path):
     dataset = DummyDataset(tmp_path)
+    original_load_schema = MODULE.load_schema
     collection_url = MODULE.make_content_api_url("example-collection")
     publication_url = MODULE.make_content_api_url("/government/publications/example-publication")
     attachment_url = "https://assets.publishing.service.gov.uk/example.csv"
@@ -110,10 +117,34 @@ def test_crawl_emits_entities_for_known_schema(tmp_path):
         attachment_url: b"Minister,Date,Name of organisation or individual,Purpose of meeting\nJane Doe,2024-01-10,Example Org,Policy discussion\n",
     }
 
-    MODULE.crawl(dataset)
+    MODULE.load_schema = lambda fingerprint: MODULE.schema_module.schema_from_dict(
+        {
+            "fingerprint": fingerprint,
+            "sheet_type": "data",
+            "activity_type": "meetings",
+            "data_start_offset": 1,
+            "fill_down_columns": [],
+            "nil_return_markers": [],
+            "date_source": "column",
+            "date_column": 1,
+            "date_format": "%Y-%m-%d",
+            "date_precision": "day",
+            "columns": {
+                "minister_name": 0,
+                "counterpart_raw": 2,
+                "purpose": 3,
+            },
+        }
+    )
+    try:
+        MODULE.crawl(dataset)
+    finally:
+        MODULE.load_schema = original_load_schema
 
     assert any(entity.schema.name == "Event" for entity in dataset.emitted)
     assert any(entity.schema.name == "Person" for entity in dataset.emitted)
+    assert any(entity.schema.name == "PublicBody" for entity in dataset.emitted)
+    assert any(entity.schema.name == "Employment" for entity in dataset.emitted)
 
 
 def test_crawl_reports_unknown_fingerprint(tmp_path):

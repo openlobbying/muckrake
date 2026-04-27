@@ -46,7 +46,19 @@ class DummyDataset:
         self.emitted.append(entity)
 
 
-def test_emit_meeting_entities_uses_event_and_unknown_link():
+def make_provenance(collection_type: str, url: str) -> Provenance:
+    return Provenance(
+        department="Cabinet Office",
+        collection_type=collection_type,
+        publication_title="Cabinet Office: transparency return",
+        attachment_title=collection_type.title(),
+        url=url,
+        period_start=date(2024, 1, 1),
+        period_end=date(2024, 3, 31),
+    )
+
+
+def test_emit_meeting_entities_creates_person_public_body_employment_legal_entity_and_event():
     dataset = DummyDataset()
     schema = schema_from_dict(
         {
@@ -56,72 +68,107 @@ def test_emit_meeting_entities_uses_event_and_unknown_link():
             "columns": {"minister_name": 0},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="meetings",
-        publication_title="Cabinet Office meetings",
-        attachment_title="Meetings",
-        url="https://example.test/meetings.csv",
-        period_start=date(2024, 1, 1),
-        period_end=date(2024, 3, 31),
-    )
+    provenance = make_provenance("meetings", "https://example.test/meetings.csv")
     row = {
         "minister_name": "Jane Doe",
         "counterpart_raw": "Example Org",
         "purpose": "Policy discussion",
         "date": date(2024, 1, 10),
         "date_precision": "day",
+        "sheet_name": "Meetings",
+        "row_index": 2,
     }
 
     count = emit_entities(dataset, row, provenance, schema)
 
-    assert count == 3
+    assert count == 5
     person = next(entity for entity in dataset.emitted if entity.schema.name == "Person")
+    public_body = next(entity for entity in dataset.emitted if entity.schema.name == "PublicBody")
+    employment = next(entity for entity in dataset.emitted if entity.schema.name == "Employment")
+    participant = next(entity for entity in dataset.emitted if entity.schema.name == "LegalEntity")
     event = next(entity for entity in dataset.emitted if entity.schema.name == "Event")
-    link = next(entity for entity in dataset.emitted if entity.schema.name == "UnknownLink")
+
     assert person.first("name") == "Jane Doe"
-    assert event.first("summary") == "Example Org"
-    assert person.id in event.get("involved")
-    assert link.first("subject") == person.id
-    assert link.first("object") == event.id
+    assert person.first("topics") == "role.pep"
+    assert public_body.first("name") == "Cabinet Office"
+    assert employment.first("employee") == person.id
+    assert employment.first("employer") == public_body.id
+    assert participant.first("name") == "Example Org"
+    assert event.first("summary") == "Policy discussion"
+    assert sorted(event.get("organizer")) == sorted([person.id, public_body.id])
+    assert event.first("involved") == participant.id
 
 
-def test_emit_outside_employment_entities_creates_employment():
+def test_emit_hospitality_entities_creates_event_with_participant():
     dataset = DummyDataset()
     schema = schema_from_dict(
         {
             "fingerprint": "abc",
             "sheet_type": "data",
-            "activity_type": "outside_employment",
+            "activity_type": "hospitality",
             "columns": {"minister_name": 0},
         }
     )
-    provenance = Provenance(
-        department="hmrc",
-        collection_type="outside-employment",
-        publication_title="Outside employment",
-        attachment_title="Outside employment",
-        url="https://example.test/outside-employment.html",
-        period_start=date(2024, 4, 1),
-        period_end=date(2025, 3, 31),
-    )
+    provenance = make_provenance("hospitality", "https://example.test/hospitality.csv")
     row = {
         "minister_name": "Jane Doe",
-        "counterpart_raw": "Example Advisory Board",
-        "purpose": "Board member",
-        "date_from": date(2024, 4, 1),
-        "date_to": date(2025, 3, 31),
-        "date_precision": "quarter",
+        "counterpart_raw": "Example Org",
+        "gift_description": "Dinner",
+        "outcome": "Accompanied by guest",
+        "date": date(2024, 1, 10),
+        "date_precision": "day",
+        "sheet_name": "Hospitality",
+        "row_index": 4,
     }
 
     count = emit_entities(dataset, row, provenance, schema)
 
-    assert count == 3
-    employment = next(entity for entity in dataset.emitted if entity.schema.name == "Employment")
-    assert employment.first("description") == "Board member"
+    assert count == 5
+    event = next(entity for entity in dataset.emitted if entity.schema.name == "Event")
+    assert event.first("summary") == "Dinner"
+    assert event.first("involved")
+    assert event.first("keywords") == "Hospitality"
 
 
-def test_emit_entities_deduplicates_person_across_rows():
+def test_emit_gift_entities_creates_payment_with_person_and_public_body_as_beneficiaries():
+    dataset = DummyDataset()
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "gifts",
+            "columns": {"minister_name": 0},
+        }
+    )
+    provenance = make_provenance("gifts", "https://example.test/gifts.csv")
+    row = {
+        "minister_name": "Jane Doe",
+        "counterpart_raw": "Example Org",
+        "gift_description": "Bottle of wine",
+        "gift_value": "150",
+        "outcome": "Retained by department",
+        "date": date(2024, 1, 10),
+        "date_precision": "day",
+        "sheet_name": "Gifts",
+        "row_index": 3,
+    }
+
+    count = emit_entities(dataset, row, provenance, schema)
+
+    assert count == 5
+    person = next(entity for entity in dataset.emitted if entity.schema.name == "Person")
+    public_body = next(entity for entity in dataset.emitted if entity.schema.name == "PublicBody")
+    participant = next(entity for entity in dataset.emitted if entity.schema.name == "LegalEntity")
+    payment = next(entity for entity in dataset.emitted if entity.schema.name == "Payment")
+
+    assert payment.first("payer") == participant.id
+    assert sorted(payment.get("beneficiary")) == sorted([person.id, public_body.id])
+    assert payment.first("purpose") == "Bottle of wine"
+    assert payment.first("amount") == "150.00"
+    assert payment.first("currency") == "GBP"
+
+
+def test_emit_entities_deduplicates_context_entities_across_rows():
     dataset = DummyDataset()
     schema = schema_from_dict(
         {
@@ -131,21 +178,15 @@ def test_emit_entities_deduplicates_person_across_rows():
             "columns": {"minister_name": 0},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="meetings",
-        publication_title="Cabinet Office meetings",
-        attachment_title="Meetings",
-        url="https://example.test/meetings.csv",
-        period_start=date(2024, 1, 1),
-        period_end=date(2024, 3, 31),
-    )
+    provenance = make_provenance("meetings", "https://example.test/meetings.csv")
     first = {
         "minister_name": "Jane Doe",
         "counterpart_raw": "Example Org",
         "purpose": "Policy discussion",
         "date": date(2024, 1, 10),
         "date_precision": "day",
+        "sheet_name": "Meetings",
+        "row_index": 2,
     }
     second = {
         "minister_name": "Jane Doe",
@@ -153,12 +194,21 @@ def test_emit_entities_deduplicates_person_across_rows():
         "purpose": "Second discussion",
         "date": date(2024, 1, 11),
         "date_precision": "day",
+        "sheet_name": "Meetings",
+        "row_index": 3,
     }
 
     emit_entities(dataset, first, provenance, schema)
     emit_entities(dataset, second, provenance, schema)
 
     people = [entity for entity in dataset.emitted if entity.schema.name == "Person"]
+    public_bodies = [entity for entity in dataset.emitted if entity.schema.name == "PublicBody"]
+    employments = [entity for entity in dataset.emitted if entity.schema.name == "Employment"]
     events = [entity for entity in dataset.emitted if entity.schema.name == "Event"]
+    participants = [entity for entity in dataset.emitted if entity.schema.name == "LegalEntity"]
+
     assert len(people) == 1
+    assert len(public_bodies) == 1
+    assert len(employments) == 1
     assert len(events) == 2
+    assert len(participants) == 2

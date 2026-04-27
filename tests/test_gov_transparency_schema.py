@@ -110,9 +110,61 @@ def test_validate_schema_rejects_missing_parseable_dates():
     try:
         validate_schema(schema, sheet)
     except ValueError as exc:
-        assert "time data" in str(exc) or "parseable date" in str(exc)
+        assert "Unrecognised day value" in str(exc) or "parseable date" in str(exc)
     else:
         raise AssertionError("Expected validate_schema to fail on invalid date values")
+
+
+def test_validate_schema_accepts_mixed_day_or_month_dates():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc123",
+            "sheet_type": "data",
+            "activity_type": "hospitality",
+            "data_start_offset": 1,
+            "fill_down_columns": [],
+            "nil_return_markers": ["Nil Return", "Nil return"],
+            "date_source": "column",
+            "date_column": 1,
+            "date_precision": "day_or_month",
+            "columns": {"minister_name": 0, "gift_description": 2},
+        }
+    )
+    sheet = NormalisedSheet(
+        name="Hospitality",
+        rows=[
+            ["Minister", "Date", "Gift"],
+            ["Jane Doe", "May-11", "Lunch"],
+        ],
+    )
+
+    validate_schema(schema, sheet)
+
+
+def test_validate_schema_accepts_nil_only_rows_when_layout_is_valid():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc123",
+            "sheet_type": "data",
+            "activity_type": "gifts",
+            "data_start_offset": 1,
+            "fill_down_columns": [],
+            "nil_return_markers": ["Nil Return", "Nil return", "None in this period"],
+            "date_source": "none",
+            "date_precision": "quarter",
+            "columns": {"minister_name": 0, "gift_description": 1},
+        }
+    )
+    sheet = NormalisedSheet(
+        name="Gifts",
+        rows=[
+            ["Minister", "Gift"],
+            ["Jane Doe", "Nil return"],
+            ["John Doe", "Nil return"],
+        ],
+    )
+
+    validate_schema(schema, sheet)
 
 
 def test_validate_schema_rejects_missing_data_rows():
@@ -134,13 +186,39 @@ def test_validate_schema_rejects_missing_data_rows():
         rows=[
             ["Minister", "Date", "Purpose of meeting"],
             ["", "", ""],
-            ["Nil Return", "", "Nil Return"],
+            ["", "", ""],
         ],
     )
 
     try:
         validate_schema(schema, sheet)
     except ValueError as exc:
-        assert "no non-nil data rows" in str(exc)
+        assert "has no data rows" in str(exc)
     else:
         raise AssertionError("Expected validate_schema to fail when no data rows exist")
+
+
+def test_validate_schema_accepts_nil_only_rows_with_blank_date_column():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc123",
+            "sheet_type": "data",
+            "activity_type": "gifts",
+            "data_start_offset": 1,
+            "fill_down_columns": [],
+            "nil_return_markers": ["Nil Return", "Nil return", "None in this period"],
+            "date_source": "column",
+            "date_column": 3,
+            "date_precision": "month",
+            "columns": {"minister_name": 0, "gift_description": 1, "outcome": 6},
+        }
+    )
+    sheet = NormalisedSheet(
+        name="Gifts",
+        rows=[
+            ["Minister", "Gifts received over £140", "Gifts given over £140", "Date received/given", "From/to", "Value", "Outcome"],
+            ["Jane Doe", "Nil return", "None in this period", "", "", "", ""],
+        ],
+    )
+
+    validate_schema(schema, sheet)

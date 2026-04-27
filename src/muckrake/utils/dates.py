@@ -177,6 +177,59 @@ def parse_month_value(value: Any, start: Optional[date] = None, end: Optional[da
     )
 
 
+def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date] = None) -> Optional[tuple[str, str]]:
+    text = normalize_date_text(value)
+    if text is None:
+        return None
+    match = re.fullmatch(r"(\d{1,2})-(\d{1,2})\s+([A-Za-z]+)", text)
+    if match is None:
+        return None
+    month = month_number(match.group(3))
+    if month is None:
+        return None
+    year = infer_year(month, start, end)
+    if year is None:
+        return None
+    start_date = safe_iso_date(year, month, int(match.group(1)))
+    end_date = safe_iso_date(year, month, int(match.group(2)))
+    if start_date is None or end_date is None:
+        return None
+    return start_date, end_date
+
+
+def parse_day_value(
+    value: Any,
+    start: Optional[date] = None,
+    end: Optional[date] = None,
+    format: Optional[str] = None,
+) -> Optional[str | tuple[str, str]]:
+    parsed = parse_date(value, format)
+    if parsed is not None:
+        return parsed
+    parsed = parse_partial_date(value, start, end)
+    if parsed is not None:
+        return parsed
+    parsed = parse_year_hint_date(value, start, end)
+    if parsed is not None:
+        return parsed
+    return parse_day_range(value, start, end)
+
+
+def parse_day_or_month_value(
+    value: Any,
+    start: Optional[date] = None,
+    end: Optional[date] = None,
+    format: Optional[str] = None,
+) -> Optional[tuple[str, str | tuple[str, str]]]:
+    parsed_day = parse_day_value(value, start, end, format)
+    if parsed_day is not None:
+        return "day", parsed_day
+    parsed_month = parse_month_value(value, start, end)
+    if parsed_month is not None:
+        return "month", parsed_month
+    return None
+
+
 def parse_partial_date(value: Any, start: Optional[date] = None, end: Optional[date] = None) -> Optional[str]:
     text = normalize_date_text(value)
     if text is None:

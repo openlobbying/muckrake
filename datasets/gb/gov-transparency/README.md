@@ -433,6 +433,7 @@ Implication for parsing:
 
 - Date parsing needs `raw_date`, normalized date fields, and explicit date precision
 - Exact event dates cannot be assumed to exist
+- Some legacy CSV families mix month-level and day-level values in the same column, so schema handling must allow per-row precision in those cases
 
 ## Example 18: Free-text multi-entity counterpart fields
 

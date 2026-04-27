@@ -3,9 +3,11 @@ import importlib.util
 import json
 import sys
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any
+
+from muckrake.utils.dates import parse_day_or_month_value, parse_day_value, parse_month_value as shared_parse_month_value
 
 try:
     from .common import MONTH_NAMES, normalise_marker
@@ -96,15 +98,19 @@ def validate_schema(schema: Schema, sheet: NormalisedSheet) -> None:
         raise ValueError("Data schemas must define a minister_name column")
 
     mapped_columns = list(schema.columns.values())
+    nil_only_rows = False
     if schema.sheet_type == "data" and not has_non_nil_data_row(sheet, schema, data_start_row, mapped_columns):
-        raise ValueError(f"Schema {schema.fingerprint} has no non-nil data rows in sheet {sheet.name!r}")
+        if not has_any_mapped_row(sheet, data_start_row, mapped_columns):
+            raise ValueError(f"Schema {schema.fingerprint} has no data rows in sheet {sheet.name!r}")
+        nil_only_rows = True
 
     if schema.date_source == "column":
         if schema.date_column is None:
             raise ValueError("Schema with date_source='column' must define date_column")
         if schema.date_column < 0 or schema.date_column >= max_columns:
             raise ValueError(f"Schema date_column points outside sheet width: {schema.date_column}")
-        validate_date_column(schema, sheet, data_start_row)
+        if not nil_only_rows:
+            validate_date_column(schema, sheet, data_start_row)
 
 
 def has_non_nil_data_row(
@@ -124,6 +130,15 @@ def has_non_nil_data_row(
     return False
 
 
+def has_any_mapped_row(sheet: NormalisedSheet, data_start_row: int, mapped_columns: list[int]) -> bool:
+    for row in sheet.rows[data_start_row:]:
+        values = [get_row_value(row, index).strip() for index in mapped_columns]
+        if not any(values):
+            continue
+        return True
+    return False
+
+
 def validate_date_column(schema: Schema, sheet: NormalisedSheet, data_start_row: int) -> None:
     for row in sheet.rows[data_start_row:]:
         raw = get_row_value(row, schema.date_column).strip()
@@ -136,16 +151,24 @@ def validate_date_column(schema: Schema, sheet: NormalisedSheet, data_start_row:
     raise ValueError(f"Schema {schema.fingerprint} has no parseable date values in sheet {sheet.name!r}")
 
 
-def parse_date_value(raw: str, schema: Schema) -> date | tuple[int, int] | tuple[date, date]:
+def parse_date_value(raw: str, schema: Schema) -> object:
+    dummy_period_start = date(1900, 1, 1)
+    dummy_period_end = date(1900, 12, 31)
     if schema.date_precision == "day":
-        if schema.date_format is None:
-            raise ValueError("Day-precision date schemas must define date_format")
-        return datetime.strptime(raw, schema.date_format).date()
+        parsed = parse_day_value(raw, dummy_period_start, dummy_period_end, schema.date_format)
+        if parsed is None:
+            raise ValueError(f"Unrecognised day value: {raw!r}")
+        return parsed
+    if schema.date_precision == "day_or_month":
+        parsed = parse_day_or_month_value(raw, dummy_period_start, dummy_period_end, schema.date_format)
+        if parsed is None:
+            raise ValueError(f"Unrecognised mixed day/month value: {raw!r}")
+        return parsed
     if schema.date_precision == "month":
-        month = MONTH_NAMES.get(raw.strip().lower())
-        if month is None:
+        parsed = parse_month_value(raw)
+        if parsed is None:
             raise ValueError(f"Unrecognised month value: {raw!r}")
-        return 1900, month
+        return parsed
     if schema.date_precision == "quarter":
         return date(1900, 1, 1), date(1900, 3, calendar.monthrange(1900, 3)[1])
     raise ValueError(f"Unsupported date_precision: {schema.date_precision}")
@@ -155,6 +178,14 @@ def get_row_value(row: list[str], index: int | None) -> str:
     if index is None or index >= len(row):
         return ""
     return row[index]
+
+
+def parse_month_value(raw: str) -> tuple[int, int] | None:
+    parsed = shared_parse_month_value(raw, date(1900, 1, 1), date(1900, 12, 31))
+    if parsed is None:
+        return None
+    date_from = date.fromisoformat(parsed[0])
+    return date_from.year, date_from.month
 
 
 def require_string(data: dict[str, Any], key: str, default: str | None = None) -> str:
