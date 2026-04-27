@@ -58,7 +58,7 @@ def ensure_pep_context(dataset, row: dict, provenance: Provenance):
 
 def emit_meeting(dataset, row: dict, provenance: Provenance, person, public_body) -> int:
     counterpart = row.get("counterpart_raw", "").strip()
-    event = dataset.make("Event")
+    event = dataset.make("Meeting")
     event.id = make_row_entity_id(dataset, "meeting", provenance, row)
     event.add("name", build_event_name("Meeting", person.first("name"), counterpart))
     add_row_date(event, row)
@@ -84,7 +84,7 @@ def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_
     hospitality_type = (row.get("gift_description") or row.get("purpose") or "").strip()
     counterpart = row.get("counterpart_raw", "").strip()
 
-    event = dataset.make("Event")
+    event = dataset.make("Hospitality")
     event.id = make_row_entity_id(dataset, "hospitality", provenance, row)
     event.add("name", build_event_name("Hospitality", person.first("name"), counterpart))
     add_row_date(event, row)
@@ -92,6 +92,8 @@ def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_
         event.add("summary", hospitality_type)
     event.add("organizer", public_body.id)
     event.add("organizer", person.id)
+    event.add("beneficiary", person.id)
+    event.add("beneficiary", public_body.id)
 
     emitted = 0
     if counterpart:
@@ -99,9 +101,11 @@ def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_
         if emit_once(dataset, participant):
             emitted += 1
         event.add("involved", participant.id)
+        event.add("payer", participant.id)
         event.add("description", counterpart)
     if row.get("outcome"):
         event.add("notes", row["outcome"])
+    add_amount(event, row)
     event.add("keywords", "Hospitality")
     event.add("topics", "gov.transparency")
     apply_source(event, provenance)
@@ -113,7 +117,7 @@ def emit_gift(dataset, row: dict, provenance: Provenance, person, public_body) -
     counterpart = row.get("counterpart_raw", "").strip()
     gift_name = (row.get("gift_description") or row.get("purpose") or "").strip()
 
-    payment = dataset.make("Payment")
+    payment = dataset.make("Gift")
     payment.id = make_row_entity_id(dataset, "gift", provenance, row)
     add_row_date(payment, row)
     if gift_name:

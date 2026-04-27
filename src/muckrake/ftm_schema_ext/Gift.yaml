@@ -1,0 +1,27 @@
+Gift:
+  label: "Gift"
+  plural: "Gifts"
+  description: "A gift or in-kind benefit between two parties."
+  extends:
+    - Payment
+  matchable: false
+  featured:
+    - payer
+    - beneficiary
+    - date
+    - amount
+    - purpose
+  required:
+    - payer
+    - beneficiary
+  caption:
+    - amount
+  edge:
+    source: payer
+    label: "gave"
+    target: beneficiary
+    directed: true
+    caption:
+      - amount
+      - date
+      - purpose

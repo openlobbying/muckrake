@@ -36,7 +36,7 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 	});
 
 	const isPaymentLike = $derived(
-		activity.type === 'Payment' || activity.type === 'Donation' || activity.type === 'Gift'
+		activity.type === 'Payment' || activity.type === 'Donation' || activity.type === 'Gift' || activity.type === 'Hospitality'
 	);
 	const isVisitLike = $derived(activity.type === 'Visit' || activity.type === 'Trip');
 	const isOwnershipLike = $derived(activity.type === 'Ownership' || activity.type === 'Property');
@@ -113,6 +113,8 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 				Loaned
 			{:else if programme === "Donation"}
 				Donated
+			{:else if activity.type === "Hospitality"}
+				Provided hospitality
 			{:else}
 				Paid
 			{/if}
@@ -127,6 +129,8 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 			Received
 			{#if activity.type === "Gift"}
 				gift of
+			{:else if activity.type === "Hospitality"}
+				hospitality from
 			{:else if activity.type === "Donation"}
 				donation of
 			{:else if programme === "Loan"}
@@ -137,7 +141,9 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 			{#if amount}
 				<strong>{formatCurrency(amount, currency)}</strong>
 			{/if}
-			from
+			{#if activity.type !== "Hospitality"}
+				from
+			{/if}
 			{@render renderEntityList(payers)}
 			{#if purpose && purpose !== "Loan" && purpose !== "Donation" && activity.type !== "Gift"}
 				for {purpose}{/if}

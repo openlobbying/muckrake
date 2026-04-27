@@ -102,8 +102,8 @@ def crawl_donations(dataset):
             )
             dataset.emit(recipient)
 
-            # Create Payment
-            payment = dataset.make("Payment")
+            # Create Donation
+            payment = dataset.make("Donation")
             payment.id = dataset.make_id(pay_ec_ref)
             payment.add("programme", "Donation")
             payment.add("payer", donor)

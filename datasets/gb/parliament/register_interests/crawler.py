@@ -164,7 +164,7 @@ def process_payment(dataset, item: Dict[str, Any], member, parent_employer=None)
     fields_data = get_fields(item)
     item_summary = item.get("summary")
 
-    payment = dataset.make("Payment")
+    payment = dataset.make("Donation")
     payment.id = dataset.make_id("payment", item_id)
 
     amount = fields_data.get("Value")
@@ -229,7 +229,7 @@ def process_donation(dataset, item: Dict[str, Any], member):
     item_id = item.get("id")
     fields_data = get_fields(item)
 
-    payment = dataset.make("Payment")
+    payment = dataset.make("Gift")
     payment.id = dataset.make_id("donation", item_id)
     payment.add("beneficiary", member)
 
@@ -306,7 +306,7 @@ def process_gift_uk(dataset, item: Dict[str, Any], member):
     item_id = item.get("id")
     fields_data = get_fields(item)
 
-    payment = dataset.make("Payment")
+    payment = dataset.make("Gift")
     payment.id = dataset.make_id("gift_uk", item_id)
     payment.add("beneficiary", member)
 

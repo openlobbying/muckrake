@@ -56,6 +56,13 @@ def get_admin_api_secret() -> str:
     return os.getenv("BETTER_AUTH_SECRET") or DEV_ADMIN_SECRET
 
 
+def _schema_filter_values(schema_name: str) -> set[str]:
+    schema_obj = model.get(schema_name)
+    if schema_obj is None:
+        return {schema_name}
+    return {child.name for child in schema_obj.descendants} | {schema_obj.name}
+
+
 @app.on_event("startup")
 def ensure_admin_dedupe_schema() -> None:
     get_lock_engine()
@@ -458,17 +465,17 @@ def list_entities(
     if not view:
         return {"results": [], "total": 0}
 
-    include_schema = model.get(schema) if schema else None
+    allowed_schemata = _schema_filter_values(schema) if schema else None
     results = []
 
     # Python-side filtering for simplicity in this MVP
     # Optimization: use SQL-side filtering if performance becomes an issue
-    entities = view.entities(
-        include_schemata=[include_schema] if include_schema else []
-    )
+    entities = view.entities()
 
     total = 0
     for ent in entities:
+        if allowed_schemata is not None and ent.schema.name not in allowed_schemata:
+            continue
         if dataset and not (set(dataset) & set(ent.datasets)):
             continue
 

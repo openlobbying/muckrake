@@ -79,6 +79,13 @@ const TYPES: Record<string, TypeInfo> = {
     badgeBg: '#fffbeb',
     icon: Gift
   },
+  Hospitality: {
+    key: 'Hospitality',
+    label: 'Hospitality',
+    markerColor: '#14b8a6',
+    badgeBg: '#f0fdfa',
+    icon: Gift
+  },
   Donation: {
     key: 'Donation',
     label: 'Donation',

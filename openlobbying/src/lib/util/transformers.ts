@@ -29,9 +29,13 @@ type EntityRef = {
 
 const TIMELINE_SCHEMAS = new Set([
 	'Event',
+	'Meeting',
+	'Hospitality',
 	'Trip',
 	'Representation',
 	'Payment',
+	'Donation',
+	'Gift',
 	'Ownership',
 	'Directorship',
 	'Family',
@@ -102,6 +106,15 @@ function getActivityType(item: Entity): string | null {
 		}
 	}
 
+	if (
+		item.schema === 'Meeting' ||
+		item.schema === 'Donation' ||
+		item.schema === 'Gift' ||
+		item.schema === 'Hospitality'
+	) {
+		return item.schema;
+	}
+
 	if (item.schema === 'Ownership' && item.properties.asset?.[0]?.schema === 'Asset') {
 		return 'Property';
 	}
@@ -170,7 +183,7 @@ function buildRelationshipItems(item: Entity, refs: EntityRef[]): RelationshipIt
 export function transformActivities(entity: Entity): TimelineItem[] {
     if (!entity.adjacent) return [];
 
-    const items: TimelineItem[] = [];
+    const items = new Map<string, TimelineItem>();
     for (const [_, group] of Object.entries(entity.adjacent)) {
         for (const item of group.results) {
 			const type = getActivityType(item);
@@ -178,20 +191,22 @@ export function transformActivities(entity: Entity): TimelineItem[] {
 				continue;
 			}
 
-			items.push({
-				id: item.id,
-				type,
-				title: getActivityTitle(item),
-				description: getStringProp(item, 'description') || '',
-				date: getBestDate(item.properties) || '',
-				amount: getStringProp(item, 'amount'),
-				properties: item.properties,
-				schema: item.schema,
-				datasets: item.datasets,
-            });
+			if (!items.has(item.id)) {
+				items.set(item.id, {
+					id: item.id,
+					type,
+					title: getActivityTitle(item),
+					description: getStringProp(item, 'description') || '',
+					date: getBestDate(item.properties) || '',
+					amount: getStringProp(item, 'amount'),
+					properties: item.properties,
+					schema: item.schema,
+					datasets: item.datasets,
+				});
+			}
         }
     }
-    return items.sort((a, b) => b.date.localeCompare(a.date));
+    return Array.from(items.values()).sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export function transformRelationships(entity: Entity): RelationshipGroup[] {

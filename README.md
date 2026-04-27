@@ -11,6 +11,8 @@ Run `uv run muckrake --help` for a full list of available commands.
 
 Install Python dependencies with `uv sync`. This now includes the external `org-id` package used for structured organization identifiers.
 
+Muckrake also extends the FollowTheMoney model with local `Meeting`, `Donation`, `Gift`, and `Hospitality` schemata. The package bootstrap configures `FTM_MODEL_PATH` automatically so crawls, loads, exports, releases, and the API all use the same model inside this repo.
+
 ### Crawlers
 
 You can find crawlers for [various datasets](https://openlobbying.org/datasets) in `datasets/`. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawl.py` script that outputs FollowTheMoney statements in CSV format.
@@ -100,6 +102,7 @@ In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8
   - `MUCKRAKE_API_URL`
   - `MUCKRAKE_DATA_PATH`
   - `MUCKRAKE_ARTIFACT_PATH`
+  - `FTM_MODEL_PATH` if you need to override the repo's merged local FollowTheMoney model
   - `OPENROUTER_API_KEY`, `LLM_MODEL`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`
 - Example:
 

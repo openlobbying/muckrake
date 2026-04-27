@@ -6,6 +6,8 @@ Muckrake crawls various [datasets](/datasets/), creates [FollowTheMoney](https:/
 
 Always prefer using existing FollowTheMoney functions and schemata throughout the codebase. We also heavily rely on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library for entity resolution, as well as data storage. Check the documentation and codebase to see if you can use existing functions before writing new ones, chances are they exist.
 
+This repo also ships local FollowTheMoney schema extensions in `src/muckrake/ftm_schema_ext/`. The `muckrake` package bootstrap merges them into the active FtM model before runtime imports. Current custom schemata are `Meeting`, `Donation`, `Gift`, and `Hospitality`.
+
 Key Resources:
 - FtM entity schemata: https://followthemoney.tech/explorer/schemata/
 - FtM property types: https://followthemoney.tech/explorer/types/

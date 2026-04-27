@@ -1,0 +1,27 @@
+Donation:
+  label: "Donation"
+  plural: "Donations"
+  description: "A donation or other political contribution between two parties."
+  extends:
+    - Payment
+  matchable: false
+  featured:
+    - payer
+    - beneficiary
+    - date
+    - amount
+    - purpose
+  required:
+    - payer
+    - beneficiary
+  caption:
+    - amount
+  edge:
+    source: payer
+    label: "donated"
+    target: beneficiary
+    directed: true
+    caption:
+      - amount
+      - date
+      - purpose

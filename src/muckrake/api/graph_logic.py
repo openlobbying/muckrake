@@ -99,11 +99,22 @@ def get_entity_graph_data(view, entity_id: str) -> Dict[str, Any]:
             
         for schema_name, schema_rels in by_schema.items():
             count = len(schema_rels)
-            if schema_name == "Payment":
+            if schema_name in {"Payment", "Donation", "Gift", "Hospitality"}:
                 total = sum(float(amt) for r in schema_rels for amt in r.get("amount") if amt)
-                label = f"Donated {format_currency(total)}" if total > 0 else "Payment"
+                if schema_name == "Donation":
+                    label = f"Donated {format_currency(total)}" if total > 0 else "Donation"
+                elif schema_name == "Gift":
+                    label = f"Gifted {format_currency(total)}" if total > 0 else "Gift"
+                elif schema_name == "Hospitality":
+                    label = f"Hospitality {format_currency(total)}" if total > 0 else "Hospitality"
+                else:
+                    label = f"Donated {format_currency(total)}" if total > 0 else "Payment"
                 summaries.append(f"{label} ({count}x)" if count > 1 else label)
-            elif schema_name == "Event":
+            elif schema_name in {"Event", "Meeting"}:
+                if schema_name == "Meeting":
+                    label = "Meeting"
+                    summaries.append(f"{label} ({count}x)" if count > 1 else label)
+                    continue
                 meeting_count = sum(1 for r in schema_rels if any("Meeting" in k for k in r.get("keywords")))
                 evidence_count = sum(1 for r in schema_rels if any("Evidence" in k for k in r.get("keywords")))
                 other_count = count - meeting_count - evidence_count

@@ -36,6 +36,13 @@ const PROFILES: Record<string, PropertyProfile> = {
 			programme: 'Type'
 		}
 	},
+	Hospitality: {
+		primaryKeys: ['purpose', 'involved'],
+		secondaryKeys: ['description', 'sourceUrl', 'recordId'],
+		labels: {
+			programme: 'Type'
+		}
+	},
 	Meeting: {
 		primaryKeys: ['summary', 'involved']
 	},

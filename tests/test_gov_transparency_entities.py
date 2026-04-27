@@ -58,7 +58,7 @@ def make_provenance(collection_type: str, url: str) -> Provenance:
     )
 
 
-def test_emit_meeting_entities_creates_person_public_body_employment_legal_entity_and_event():
+def test_emit_meeting_entities_creates_person_public_body_employment_legal_entity_and_meeting():
     dataset = DummyDataset()
     schema = schema_from_dict(
         {
@@ -86,7 +86,7 @@ def test_emit_meeting_entities_creates_person_public_body_employment_legal_entit
     public_body = next(entity for entity in dataset.emitted if entity.schema.name == "PublicBody")
     employment = next(entity for entity in dataset.emitted if entity.schema.name == "Employment")
     participant = next(entity for entity in dataset.emitted if entity.schema.name == "LegalEntity")
-    event = next(entity for entity in dataset.emitted if entity.schema.name == "Event")
+    event = next(entity for entity in dataset.emitted if entity.schema.name == "Meeting")
 
     assert person.first("name") == "Jane Doe"
     assert person.first("topics") == "role.pep"
@@ -99,7 +99,7 @@ def test_emit_meeting_entities_creates_person_public_body_employment_legal_entit
     assert event.first("involved") == participant.id
 
 
-def test_emit_hospitality_entities_creates_event_with_participant():
+def test_emit_hospitality_entities_creates_hospitality_payment_with_participant():
     dataset = DummyDataset()
     schema = schema_from_dict(
         {
@@ -124,13 +124,15 @@ def test_emit_hospitality_entities_creates_event_with_participant():
     count = emit_entities(dataset, row, provenance, schema)
 
     assert count == 5
-    event = next(entity for entity in dataset.emitted if entity.schema.name == "Event")
+    event = next(entity for entity in dataset.emitted if entity.schema.name == "Hospitality")
     assert event.first("summary") == "Dinner"
     assert event.first("involved")
+    assert event.first("payer")
+    assert event.first("beneficiary")
     assert event.first("keywords") == "Hospitality"
 
 
-def test_emit_gift_entities_creates_payment_with_person_and_public_body_as_beneficiaries():
+def test_emit_gift_entities_creates_gift_with_person_and_public_body_as_beneficiaries():
     dataset = DummyDataset()
     schema = schema_from_dict(
         {
@@ -159,7 +161,7 @@ def test_emit_gift_entities_creates_payment_with_person_and_public_body_as_benef
     person = next(entity for entity in dataset.emitted if entity.schema.name == "Person")
     public_body = next(entity for entity in dataset.emitted if entity.schema.name == "PublicBody")
     participant = next(entity for entity in dataset.emitted if entity.schema.name == "LegalEntity")
-    payment = next(entity for entity in dataset.emitted if entity.schema.name == "Payment")
+    payment = next(entity for entity in dataset.emitted if entity.schema.name == "Gift")
 
     assert payment.first("payer") == participant.id
     assert sorted(payment.get("beneficiary")) == sorted([person.id, public_body.id])
@@ -204,7 +206,7 @@ def test_emit_entities_deduplicates_context_entities_across_rows():
     people = [entity for entity in dataset.emitted if entity.schema.name == "Person"]
     public_bodies = [entity for entity in dataset.emitted if entity.schema.name == "PublicBody"]
     employments = [entity for entity in dataset.emitted if entity.schema.name == "Employment"]
-    events = [entity for entity in dataset.emitted if entity.schema.name == "Event"]
+    events = [entity for entity in dataset.emitted if entity.schema.name == "Meeting"]
     participants = [entity for entity in dataset.emitted if entity.schema.name == "LegalEntity"]
 
     assert len(people) == 1

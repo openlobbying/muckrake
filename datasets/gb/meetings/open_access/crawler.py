@@ -56,8 +56,8 @@ def crawl_row(dataset: Dataset, row):
         employment.add("employer", dept)
         dataset.emit(employment)
 
-    # Meeting (Event)
-    meeting = dataset.make("Event")
+    # Meeting
+    meeting = dataset.make("Meeting")
     meeting.id = dataset.make_id("meeting", record_id)
     meeting.add("recordId", record_id)
 

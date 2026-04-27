@@ -1,0 +1,19 @@
+Meeting:
+  label: "Meeting"
+  plural: "Meetings"
+  description: "A meeting or other scheduled exchange between parties."
+  extends:
+    - Event
+  matchable: false
+  caption:
+    - name
+    - summary
+    - date
+  required:
+    - name
+  featured:
+    - name
+    - summary
+    - date
+    - organizer
+    - involved

@@ -1,0 +1,31 @@
+Hospitality:
+  label: "Hospitality"
+  plural: "Hospitality"
+  description: "A hospitality benefit, often involving attendance at an event and sometimes an associated monetary value."
+  extends:
+    - Payment
+    - Event
+  matchable: false
+  caption:
+    - name
+    - summary
+    - amount
+    - date
+  featured:
+    - name
+    - summary
+    - date
+    - amount
+    - payer
+    - beneficiary
+    - organizer
+    - involved
+  edge:
+    source: payer
+    label: "provided hospitality to"
+    target: beneficiary
+    directed: true
+    caption:
+      - amount
+      - date
+      - purpose

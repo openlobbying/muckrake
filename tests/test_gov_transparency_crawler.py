@@ -141,7 +141,7 @@ def test_crawl_emits_entities_for_known_schema(tmp_path):
     finally:
         MODULE.load_schema = original_load_schema
 
-    assert any(entity.schema.name == "Event" for entity in dataset.emitted)
+    assert any(entity.schema.name == "Meeting" for entity in dataset.emitted)
     assert any(entity.schema.name == "Person" for entity in dataset.emitted)
     assert any(entity.schema.name == "PublicBody" for entity in dataset.emitted)
     assert any(entity.schema.name == "Employment" for entity in dataset.emitted)
