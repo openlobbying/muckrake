@@ -1,28 +1,28 @@
-# dataset:
-#   name: gb_gov_transparency
-#   prefix: gb-gov
-#   title: UK Government Transparency data
-#   summary: UK government meetings, gifts, hospitality and overseas travel for ministers, special advisers and senior officials.
-#   data:
-#     url: https://www.gov.uk/government/government-efficiency-transparency-and-accountability
-#   tags:
-#     - lobbying
-#     - meetings
-#     - government
-#     - transparency
-#   licence:
-#     name: Open Government Licence v3.0
-#     url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
-# coverage:
-#   countries:
-#     - gb
-#   frequency: quarterly
-# publisher:
-#   name: UK Government
-#   url: https://www.gov.uk/government/organisations
-#   country: gb
-#   country_label: United Kingdom
-#   official: true
+dataset:
+  name: gb_gov_transparency
+  prefix: gb-gov
+  title: UK Government transparency releases
+  summary: UK government meetings, gifts, hospitality and overseas travel for ministers, special advisers and senior officials.
+  data:
+    url: https://www.gov.uk/government/government-efficiency-transparency-and-accountability
+  tags:
+    - lobbying
+    - meetings
+    - government
+    - transparency
+  licence:
+    name: Open Government Licence v3.0
+    url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+coverage:
+  countries:
+    - gb
+  frequency: quarterly
+publisher:
+  name: UK Government
+  url: https://www.gov.uk/government/organisations
+  country: gb
+  country_label: United Kingdom
+  official: true
 departments:
   - name: Attorney General's Office
     collection_urls:

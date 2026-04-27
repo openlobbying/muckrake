@@ -1,0 +1,18 @@
+{
+  "fingerprint": "58a4996c0fe66d4e",
+  "sheet_type": "data",
+  "activity_type": "travel",
+  "data_start_offset": 1,
+  "fill_down_columns": [],
+  "nil_return_markers": ["Nil Return", "Nil Return "],
+  "date_source": "column",
+  "date_column": 1,
+  "date_format": "%Y-%m-%d",
+  "date_precision": "day",
+  "columns": {
+    "minister_name": 0,
+    "destination": 3,
+    "purpose": 4,
+    "cost": 9
+  }
+}

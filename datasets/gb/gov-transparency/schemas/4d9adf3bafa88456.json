@@ -1,0 +1,15 @@
+{
+  "fingerprint": "4d9adf3bafa88456",
+  "sheet_type": "data",
+  "activity_type": "meetings",
+  "data_start_offset": 1,
+  "fill_down_columns": [],
+  "nil_return_markers": ["Nil return", "Nil Return"],
+  "date_source": "none",
+  "date_precision": "quarter",
+  "columns": {
+    "minister_name": 0,
+    "counterpart_raw": 2,
+    "purpose": 4
+  }
+}

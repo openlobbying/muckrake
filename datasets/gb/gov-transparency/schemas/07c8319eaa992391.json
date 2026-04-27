@@ -1,0 +1,19 @@
+{
+  "fingerprint": "07c8319eaa992391",
+  "sheet_type": "data",
+  "activity_type": "gifts",
+  "data_start_offset": 1,
+  "fill_down_columns": [],
+  "nil_return_markers": ["Nil Return", "Nil Return "],
+  "date_source": "column",
+  "date_column": 1,
+  "date_format": "%Y-%m-%d",
+  "date_precision": "day",
+  "columns": {
+    "minister_name": 0,
+    "gift_description": 2,
+    "counterpart_raw": 4,
+    "gift_value": 5,
+    "outcome": 6
+  }
+}
