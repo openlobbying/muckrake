@@ -1,10 +1,8 @@
 {
   "fingerprint": "24cd6fcfe9fcdc0e",
   "sheet_type": "ignore",
-  "activity_type": null,
   "data_start_offset": 1,
   "fill_down_columns": [],
-  "nil_return_markers": [],
   "date_source": "none",
   "date_precision": "quarter",
   "columns": {}

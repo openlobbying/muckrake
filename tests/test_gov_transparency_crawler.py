@@ -129,13 +129,13 @@ def test_crawl_emits_entities_for_known_schema(tmp_path):
             "date_column": 1,
             "date_format": "%Y-%m-%d",
             "date_precision": "day",
-            "columns": {
-                "minister_name": 0,
-                "counterpart_raw": 2,
-                "purpose": 3,
-            },
-        }
-    )
+                "columns": {
+                    "subject_name": 0,
+                    "counterpart_name": 2,
+                    "activity_description": 3,
+                },
+            }
+        )
     try:
         MODULE.crawl(dataset)
     finally:

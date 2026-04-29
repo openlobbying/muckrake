@@ -42,7 +42,7 @@ def test_load_schema_reads_json_from_schemas_dir(tmp_path, monkeypatch):
                 "date_column": 1,
                 "date_format": "%d/%m/%Y",
                 "date_precision": "day",
-                "columns": {"minister_name": 0, "purpose": 2},
+                "columns": {"subject_name": 0, "activity_description": 2},
             }
         ),
         encoding="utf-8",
@@ -53,7 +53,7 @@ def test_load_schema_reads_json_from_schemas_dir(tmp_path, monkeypatch):
 
     assert schema is not None
     assert schema.fingerprint == "abc123"
-    assert schema.columns["minister_name"] == 0
+    assert schema.columns["subject_name"] == 0
 
 
 def test_validate_schema_accepts_valid_sheet():
@@ -69,7 +69,7 @@ def test_validate_schema_accepts_valid_sheet():
             "date_column": 1,
             "date_format": "%d/%m/%Y",
             "date_precision": "day",
-            "columns": {"minister_name": 0, "purpose": 2},
+            "columns": {"subject_name": 0, "activity_description": 2},
         }
     )
     sheet = NormalisedSheet(
@@ -96,7 +96,7 @@ def test_validate_schema_rejects_missing_parseable_dates():
             "date_column": 1,
             "date_format": "%d/%m/%Y",
             "date_precision": "day",
-            "columns": {"minister_name": 0, "purpose": 2},
+            "columns": {"subject_name": 0, "activity_description": 2},
         }
     )
     sheet = NormalisedSheet(
@@ -127,7 +127,7 @@ def test_validate_schema_accepts_mixed_day_or_month_dates():
             "date_source": "column",
             "date_column": 1,
             "date_precision": "day_or_month",
-            "columns": {"minister_name": 0, "gift_description": 2},
+            "columns": {"subject_name": 0, "activity_description": 2},
         }
     )
     sheet = NormalisedSheet(
@@ -149,10 +149,9 @@ def test_validate_schema_accepts_nil_only_rows_when_layout_is_valid():
             "activity_type": "gifts",
             "data_start_offset": 1,
             "fill_down_columns": [],
-            "nil_return_markers": ["Nil Return", "Nil return", "None in this period"],
             "date_source": "none",
             "date_precision": "quarter",
-            "columns": {"minister_name": 0, "gift_description": 1},
+            "columns": {"subject_name": 0, "activity_description": 1},
         }
     )
     sheet = NormalisedSheet(
@@ -178,7 +177,7 @@ def test_validate_schema_rejects_missing_data_rows():
             "nil_return_markers": ["Nil Return"],
             "date_source": "none",
             "date_precision": "quarter",
-            "columns": {"minister_name": 0, "purpose": 2},
+            "columns": {"subject_name": 0, "activity_description": 2},
         }
     )
     sheet = NormalisedSheet(
@@ -206,11 +205,10 @@ def test_validate_schema_accepts_nil_only_rows_with_blank_date_column():
             "activity_type": "gifts",
             "data_start_offset": 1,
             "fill_down_columns": [],
-            "nil_return_markers": ["Nil Return", "Nil return", "None in this period"],
             "date_source": "column",
             "date_column": 3,
             "date_precision": "month",
-            "columns": {"minister_name": 0, "gift_description": 1, "outcome": 6},
+            "columns": {"subject_name": 0, "activity_description": 1, "outcome": 6},
         }
     )
     sheet = NormalisedSheet(
@@ -222,3 +220,80 @@ def test_validate_schema_accepts_nil_only_rows_with_blank_date_column():
     )
 
     validate_schema(schema, sheet)
+
+
+def test_validate_schema_accepts_nil_only_rows_when_nil_marker_is_only_in_date_column():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc123",
+            "sheet_type": "data",
+            "activity_type": "travel",
+            "data_start_offset": 1,
+            "fill_down_columns": [],
+            "nil_return_markers": ["nil return"],
+            "date_source": "column",
+            "date_column": 1,
+            "date_precision": "day",
+            "columns": {"subject_name": 0, "location": 2, "activity_description": 3},
+        }
+    )
+    sheet = NormalisedSheet(
+        name="Travel",
+        rows=[
+            ["Minister", "Date(s) of trip", "Destination", "Purpose of trip"],
+            ["Jane Doe", "nil return", "", ""],
+        ],
+    )
+
+    validate_schema(schema, sheet)
+
+
+def test_schema_from_dict_adds_default_nil_markers_for_data_sheets():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc123",
+            "sheet_type": "data",
+            "activity_type": "gifts",
+            "date_source": "none",
+            "date_precision": "quarter",
+            "columns": {"subject_name": 0, "activity_description": 1},
+        }
+    )
+
+    assert "Nil Return" in schema.nil_return_markers
+    assert "None in this period" in schema.nil_return_markers
+
+
+def test_schema_from_dict_requires_activity_type_for_data_sheets():
+    try:
+        schema_from_dict(
+            {
+                "fingerprint": "abc123",
+                "sheet_type": "data",
+                "date_source": "none",
+                "date_precision": "quarter",
+                "columns": {"subject_name": 0},
+            }
+        )
+    except ValueError as exc:
+        assert "activity_type" in str(exc)
+    else:
+        raise AssertionError("Expected schema_from_dict to reject data schemas without activity_type")
+
+
+def test_schema_from_dict_rejects_activity_type_for_notes_sheets():
+    try:
+        schema_from_dict(
+            {
+                "fingerprint": "abc123",
+                "sheet_type": "notes",
+                "activity_type": "meetings",
+                "date_source": "none",
+                "date_precision": "quarter",
+                "columns": {},
+            }
+        )
+    except ValueError as exc:
+        assert "activity_type" in str(exc)
+    else:
+        raise AssertionError("Expected schema_from_dict to reject non-data schemas with activity_type")

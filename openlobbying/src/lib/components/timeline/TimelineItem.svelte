@@ -2,7 +2,7 @@
 	import { ChevronDown, ExternalLink, Users, PencilLine } from "@lucide/svelte";
 	import { getEntityRoute } from "$lib/util/routes";
 	import { getTypeInfo } from "./registry";
-	import { formatQuarterRange, formatFullDate } from "$lib/util/dates";
+	import { formatQuarterRange, formatFullDate, formatDateRange } from "$lib/util/dates";
 	import TimelineDetails from './TimelineDetails.svelte';
 	import { getPropertyLabel, getTimelinePrimaryRows } from '$lib/presentation/property-profile';
 import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/util/detail';
@@ -25,6 +25,11 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 
 	const formattedDate = $derived.by(() => {
 		const props = activity.properties || {};
+		if (props.startDate?.[0] || props.endDate?.[0]) {
+			return activity.type === "Representation"
+				? formatQuarterRange(props.startDate?.[0], props.endDate?.[0])
+				: formatDateRange(props.startDate?.[0], props.endDate?.[0]);
+		}
 		return activity.type === "Representation"
 			? formatQuarterRange(
 					props.startDate?.[0] || activity.date,
@@ -106,7 +111,7 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 
 		{#if payers.some((p: any) => p.id === currentEntityId) && beneficiaries.length > 0}
 			{#if activity.type === "Gift"}
-				Gave
+				{purpose || 'Gave gift'}
 			{:else if activity.type === "Donation"}
 				Donated
 			{:else if programme === "Loan"}
@@ -121,14 +126,18 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 			{#if amount}
 				<strong>{formatCurrency(amount, currency)}</strong>
 			{/if}
-			to
+			{#if amount && activity.type === "Gift" && purpose}
+				to
+			{:else if activity.type !== "Gift"}
+				to
+			{/if}
 			{@render renderEntityList(beneficiaries)}
-			{#if purpose && purpose !== "Loan" && purpose !== "Donation"}
+			{#if purpose && purpose !== "Loan" && purpose !== "Donation" && activity.type !== "Gift"}
 				for {purpose}{/if}
 		{:else if beneficiaries.some((b: any) => b.id === currentEntityId) && payers.length > 0}
 			Received
 			{#if activity.type === "Gift"}
-				gift of
+				{purpose || 'gift'}
 			{:else if activity.type === "Hospitality"}
 				hospitality from
 			{:else if activity.type === "Donation"}
@@ -301,23 +310,10 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 
 		{#if isVisitLike && activity.properties}
 			{@const purpose = activity.properties.summary?.[0]}
-			{@const sponsors = activity.properties.organizer || []}
-			{#if purpose}
+		{#if purpose}
 				<p class="text-sm text-gray-700 mt-2">
 					<span class="text-gray-500">Purpose:</span>
 					{purpose}
-				</p>
-			{/if}
-			{#if sponsors.length > 0}
-				<p class="text-sm text-gray-700 mt-2">
-					<span class="text-gray-500">Sponsored by:</span>
-					{#each sponsors as sponsor, i}
-						<a
-							href={getEntityRoute(sponsor.id, sponsor.schema)}
-							class="text-blue-600 hover:underline"
-							>{sponsor.caption}</a
-						>{i < sponsors.length - 1 ? ", " : ""}
-					{/each}
 				</p>
 			{/if}
 		{/if}

@@ -343,17 +343,21 @@ def process_source(dataset: Dataset, filename: str, provenance: Provenance, stat
     sheets = normalise(data, filename)
     stats["sources_processed"] += 1
     stats["sheets_processed"] += len(sheets)
-    dataset.log.info(
-        "Normalised %s (%s) into %d sheet(s)",
-        provenance.publication_title,
-        provenance.url,
-        len(sheets),
-    )
+    parsed_sheets: list[str] = []
     for sheet in sheets:
-        process_sheet(dataset, sheet, provenance, stats)
+        summary = process_sheet(dataset, sheet, provenance, stats)
+        if summary is not None:
+            parsed_sheets.append(summary)
+    if sheets:
+        dataset.log.info(
+            "Processed %s sheets=%d parsed=%s",
+            provenance.attachment_title,
+            len(sheets),
+            ", ".join(parsed_sheets) or "none",
+        )
 
 
-def process_sheet(dataset: Dataset, sheet, provenance: Provenance, stats: dict[str, int]) -> None:
+def process_sheet(dataset: Dataset, sheet, provenance: Provenance, stats: dict[str, int]) -> str | None:
     sheet_fingerprint = fingerprint(sheet)
     schema = load_schema(sheet_fingerprint)
     if schema is None:
@@ -361,8 +365,9 @@ def process_sheet(dataset: Dataset, sheet, provenance: Provenance, stats: dict[s
         report_unknown_fingerprint(dataset, provenance, sheet, sheet_fingerprint)
         if should_fail_on_unknown(dataset):
             raise ValueError(f"UNKNOWN FINGERPRINT: {sheet_fingerprint}")
-        return
+        return None
     validate_schema(schema, sheet)
     stats["validated_sheets"] += 1
     for record in extract(sheet, schema, provenance):
         stats["entities_emitted"] += emit_entities(dataset, record, provenance, schema)
+    return f"{sheet.name}:{sheet_fingerprint}"

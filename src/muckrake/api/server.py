@@ -63,6 +63,24 @@ def _schema_filter_values(schema_name: str) -> set[str]:
     return {child.name for child in schema_obj.descendants} | {schema_obj.name}
 
 
+def _adjacent_prop_rank(ent, prop_name: str) -> tuple[int, str]:
+    if ent.schema.is_a("Payment"):
+        payment_ranks = {
+            "paymentPayer": 0,
+            "paymentBeneficiary": 1,
+        }
+        if prop_name in payment_ranks:
+            return payment_ranks[prop_name], prop_name
+    if ent.schema.is_a("Event"):
+        event_ranks = {
+            "eventsInvolved": 10,
+            "eventsOrganized": 11,
+        }
+        if prop_name in event_ranks:
+            return event_ranks[prop_name], prop_name
+    return 100, prop_name
+
+
 @app.on_event("startup")
 def ensure_admin_dedupe_schema() -> None:
     get_lock_engine()
@@ -154,7 +172,8 @@ TOP_ACTOR_SQL = text(
     """
     WITH resolved_refs AS (
         SELECT
-            COALESCE(r.target, s.value) AS actor_id
+            COALESCE(r.target, s.value) AS actor_id,
+            COALESCE(s.canonical_id, s.entity_id) AS relation_id
         FROM statement s
         LEFT JOIN resolver r
             ON r.source = s.value
@@ -162,9 +181,9 @@ TOP_ACTOR_SQL = text(
         WHERE s.prop_type = 'entity'
     ),
     counts AS (
-        SELECT actor_id, COUNT(*) AS connections
+        SELECT actor_id, COUNT(DISTINCT relation_id) AS connections
         FROM resolved_refs
-        WHERE actor_id IS NOT NULL
+        WHERE actor_id IS NOT NULL AND relation_id IS NOT NULL
         GROUP BY actor_id
     ),
     actor_base AS (
@@ -506,11 +525,19 @@ def get_profile(id: str) -> Dict[str, Any]:
 
     data = serialize_view_entity(ent)
     adjacent = {}
+    unique_adjacent: dict[str, tuple[str, dict[str, Any], tuple[int, str]]] = {}
     for prop, adj_ent in view.get_adjacent(ent):
-        if prop.name not in adjacent:
-            adjacent[prop.name] = {"results": [], "total": 0}
-        adjacent[prop.name]["results"].append(serialize_view_entity(adj_ent))
-        adjacent[prop.name]["total"] += 1
+        serialized = serialize_view_entity(adj_ent)
+        rank = _adjacent_prop_rank(adj_ent, prop.name)
+        existing = unique_adjacent.get(adj_ent.id)
+        if existing is None or rank < existing[2]:
+            unique_adjacent[adj_ent.id] = (prop.name, serialized, rank)
+
+    for prop_name, serialized, _ in unique_adjacent.values():
+        if prop_name not in adjacent:
+            adjacent[prop_name] = {"results": [], "total": 0}
+        adjacent[prop_name]["results"].append(serialized)
+        adjacent[prop_name]["total"] += 1
 
     data["adjacent"] = adjacent
     return data

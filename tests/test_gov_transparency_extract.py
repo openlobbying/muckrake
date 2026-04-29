@@ -39,9 +39,9 @@ def test_extract_applies_fill_down_and_skips_nil_rows():
             "date_column": 1,
             "date_precision": "month",
             "columns": {
-                "minister_name": 0,
-                "counterpart_raw": 2,
-                "purpose": 3,
+                "subject_name": 0,
+                "counterpart_name": 2,
+                "activity_description": 3,
             },
         }
     )
@@ -67,9 +67,8 @@ def test_extract_applies_fill_down_and_skips_nil_rows():
     rows = extract(sheet, schema, provenance)
 
     assert len(rows) == 2
-    assert rows[1]["minister_name"] == "Rt Hon Theresa May"
-    assert rows[0]["date_from"] == date(2016, 7, 1)
-    assert rows[0]["date_to"] == date(2016, 7, 31)
+    assert rows[1]["subject_name"] == "Rt Hon Theresa May"
+    assert rows[0]["date"] == "2016-07"
 
 
 def test_extract_resolves_quarter_dates_from_provenance():
@@ -83,7 +82,7 @@ def test_extract_resolves_quarter_dates_from_provenance():
             "nil_return_markers": ["Nil Return"],
             "date_source": "none",
             "date_precision": "quarter",
-            "columns": {"minister_name": 0, "gift_description": 2},
+            "columns": {"subject_name": 0, "activity_description": 2},
         }
     )
     provenance = Provenance(
@@ -105,8 +104,8 @@ def test_extract_resolves_quarter_dates_from_provenance():
 
     rows = extract(sheet, schema, provenance)
 
-    assert rows[0]["date_from"] == date(2015, 10, 1)
-    assert rows[0]["date_to"] == date(2015, 12, 31)
+    assert rows[0]["start_date"] == "2015-10-01"
+    assert rows[0]["end_date"] == "2015-12-31"
 
 
 def test_extract_parses_month_year_values():
@@ -121,7 +120,7 @@ def test_extract_parses_month_year_values():
             "date_source": "column",
             "date_column": 1,
             "date_precision": "month",
-            "columns": {"minister_name": 0, "gift_description": 2},
+            "columns": {"subject_name": 0, "activity_description": 2},
         }
     )
     provenance = Provenance(
@@ -143,8 +142,7 @@ def test_extract_parses_month_year_values():
 
     rows = extract(sheet, schema, provenance)
 
-    assert rows[0]["date_from"] == date(2015, 12, 1)
-    assert rows[0]["date_to"] == date(2015, 12, 31)
+    assert rows[0]["date"] == "2015-12"
 
 
 def test_extract_parses_ordinal_day_dates_and_day_ranges():
@@ -160,7 +158,7 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
             "date_column": 1,
             "date_format": "%d %B %Y",
             "date_precision": "day",
-            "columns": {"minister_name": 0, "destination": 2},
+            "columns": {"subject_name": 0, "location": 2},
         }
     )
     provenance = Provenance(
@@ -178,14 +176,26 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
             ["Minister", "Date(s) of trip", "Destination"],
             ["Jane Doe", "14th October 2015", "Rome"],
             ["Jane Doe", "02-06 September", "Beijing"],
+            ["Jane Doe", "4 to 11 May", "Auckland"],
+            ["Jane Doe", "13 June - 16th June", "Ottawa"],
+            ["Jane Doe", "12 - 17 July 11", "Sydney"],
+            ["Jane Doe", "27 June - 2 July 2011", "Seoul"],
         ],
     )
 
     rows = extract(sheet, schema, provenance)
 
-    assert rows[0]["date"] == date(2015, 10, 14)
-    assert rows[1]["date_from"] == date(2016, 9, 2)
-    assert rows[1]["date_to"] == date(2016, 9, 6)
+    assert rows[0]["date"] == "2015-10-14"
+    assert rows[1]["start_date"] == "2016-09-02"
+    assert rows[1]["end_date"] == "2016-09-06"
+    assert rows[2]["start_date"] == "2016-05-04"
+    assert rows[2]["end_date"] == "2016-05-11"
+    assert rows[3]["start_date"] == "2016-06-13"
+    assert rows[3]["end_date"] == "2016-06-16"
+    assert rows[4]["start_date"] == "2011-07-12"
+    assert rows[4]["end_date"] == "2011-07-17"
+    assert rows[5]["start_date"] == "2011-06-27"
+    assert rows[5]["end_date"] == "2011-07-02"
 
 
 def test_extract_parses_mixed_day_or_month_dates():
@@ -201,9 +211,9 @@ def test_extract_parses_mixed_day_or_month_dates():
             "date_column": 1,
             "date_precision": "day_or_month",
             "columns": {
-                "minister_name": 0,
-                "counterpart_raw": 2,
-                "gift_description": 3,
+                "subject_name": 0,
+                "counterpart_name": 2,
+                "activity_description": 3,
             },
         }
     )
@@ -227,8 +237,47 @@ def test_extract_parses_mixed_day_or_month_dates():
 
     rows = extract(sheet, schema, provenance)
 
-    assert rows[0]["date_from"] == date(2011, 2, 1)
-    assert rows[0]["date_to"] == date(2011, 2, 28)
+    assert rows[0]["date"] == "2011-02"
     assert rows[0]["date_precision"] == "month"
-    assert rows[1]["date"] == date(2011, 3, 19)
+    assert rows[1]["date"] == "2011-03-19"
     assert rows[1]["date_precision"] == "day"
+
+
+def test_extract_skips_nil_only_sparse_hospitality_rows():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "53ec96c8875a4269",
+            "sheet_type": "data",
+            "activity_type": "hospitality",
+            "data_start_offset": 0,
+            "fill_down_columns": [],
+            "date_source": "none",
+            "date_precision": "quarter",
+            "columns": {
+                "subject_name": 0,
+                "activity_description": 1,
+            },
+        }
+    )
+    provenance = Provenance(
+        department="ago",
+        collection_type="hospitality",
+        publication_title="AGO hospitality, April to June 2012",
+        attachment_title="Hospitality",
+        url="https://example.test/source.csv",
+        period_start=date(2012, 4, 1),
+        period_end=date(2012, 6, 30),
+    )
+    sheet = NormalisedSheet(
+        name="default",
+        rows=[
+            ["Minister", "", ""],
+            ["Attorney General Dominic Grieve QC MP", "Nil return", "Nil return"],
+            ["", "", ""],
+            ["Solicitor General Edward Garnier QC MP", "Nil return", "Nil return"],
+        ],
+    )
+
+    rows = extract(sheet, schema, provenance)
+
+    assert rows == []

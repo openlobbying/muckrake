@@ -181,17 +181,45 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
     text = normalize_date_text(value)
     if text is None:
         return None
-    match = re.fullmatch(r"(\d{1,2})-(\d{1,2})\s+([A-Za-z]+)", text)
+    match = re.fullmatch(r"(\d{1,2})(?:-|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
+    if match is not None:
+        month = month_number(match.group(3))
+        if month is None:
+            return None
+        year_text = match.group(4)
+        if year_text is None:
+            year = infer_year(month, start, end)
+        elif len(year_text) == 2:
+            year = 2000 + int(year_text)
+        else:
+            year = int(year_text)
+        if year is None:
+            return None
+        start_date = safe_iso_date(year, month, int(match.group(1)))
+        end_date = safe_iso_date(year, month, int(match.group(2)))
+        if start_date is None or end_date is None:
+            return None
+        return start_date, end_date
+
+    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)(?:-|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
     if match is None:
         return None
-    month = month_number(match.group(3))
-    if month is None:
+    start_month = month_number(match.group(2))
+    end_month = month_number(match.group(4))
+    if start_month is None or end_month is None:
         return None
-    year = infer_year(month, start, end)
-    if year is None:
+    year_text = match.group(5)
+    if year_text is None:
+        end_year = infer_year(end_month, start, end)
+    elif len(year_text) == 2:
+        end_year = 2000 + int(year_text)
+    else:
+        end_year = int(year_text)
+    if end_year is None:
         return None
-    start_date = safe_iso_date(year, month, int(match.group(1)))
-    end_date = safe_iso_date(year, month, int(match.group(2)))
+    start_year = end_year - 1 if start_month > end_month else end_year
+    start_date = safe_iso_date(start_year, start_month, int(match.group(1)))
+    end_date = safe_iso_date(end_year, end_month, int(match.group(3)))
     if start_date is None or end_date is None:
         return None
     return start_date, end_date

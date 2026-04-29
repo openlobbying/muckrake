@@ -79,8 +79,8 @@ def resolve_date(row: list[str], schema: Schema, provenance: Provenance) -> dict
         if provenance.period_start is None or provenance.period_end is None:
             raise ValueError("Cannot resolve quarter date without provenance period")
         return {
-            "date_from": provenance.period_start,
-            "date_to": provenance.period_end,
+            "start_date": provenance.period_start.isoformat(),
+            "end_date": provenance.period_end.isoformat(),
             "date_precision": "quarter",
         }
 
@@ -101,10 +101,8 @@ def resolve_date(row: list[str], schema: Schema, provenance: Provenance) -> dict
         precision, value = parsed
         if precision == "day":
             return resolve_day_result(value)
-        date_from, date_to = value
         return {
-            "date_from": date.fromisoformat(date_from),
-            "date_to": date.fromisoformat(date_to),
+            "date": value[0][:7],
             "date_precision": "month",
         }
 
@@ -112,10 +110,8 @@ def resolve_date(row: list[str], schema: Schema, provenance: Provenance) -> dict
         parsed = parse_month_value(raw, provenance.period_start, provenance.period_end)
         if parsed is None:
             raise ValueError(f"Unrecognised month value: {raw!r}")
-        date_from, date_to = parsed
         return {
-            "date_from": date.fromisoformat(date_from),
-            "date_to": date.fromisoformat(date_to),
+            "date": parsed[0][:7],
             "date_precision": "month",
         }
 
@@ -137,8 +133,8 @@ def get_row_value(row: list[str], index: int | None) -> str:
 def resolve_day_result(parsed: str | tuple[str, str]) -> dict:
     if isinstance(parsed, tuple):
         return {
-            "date_from": date.fromisoformat(parsed[0]),
-            "date_to": date.fromisoformat(parsed[1]),
+            "start_date": parsed[0],
+            "end_date": parsed[1],
             "date_precision": "day",
         }
-    return {"date": date.fromisoformat(parsed), "date_precision": "day"}
+    return {"date": parsed, "date_precision": "day"}

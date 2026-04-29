@@ -4,15 +4,14 @@
   "activity_type": "gifts",
   "data_start_offset": 1,
   "fill_down_columns": [],
-  "nil_return_markers": ["Nil Return", "Nil return", "None in this period"],
   "date_source": "column",
   "date_column": 3,
   "date_precision": "month",
   "columns": {
-    "minister_name": 0,
-    "gift_description": 1,
-    "counterpart_raw": 4,
-    "gift_value": 5,
+    "subject_name": 0,
+    "activity_description": 1,
+    "counterpart_name": 4,
+    "amount": 5,
     "outcome": 6
   }
 }

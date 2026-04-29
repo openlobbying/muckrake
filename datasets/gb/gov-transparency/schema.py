@@ -29,6 +29,14 @@ except ImportError:
     NormalisedSheet = common_module.load_sibling_module(__file__, __name__, "normalise").NormalisedSheet
 
 SCHEMAS_DIR = Path(__file__).with_name("schemas")
+DEFAULT_NIL_RETURN_MARKERS = [
+    "Nil Return",
+    "Nil return",
+    "Nil Return ",
+    "Nil return all other ministers",
+    "None in this period",
+]
+VALID_SHEET_TYPES = {"data", "notes", "ignore"}
 
 
 @dataclass(frozen=True)
@@ -62,16 +70,30 @@ def load_schema(fingerprint: str) -> Schema | None:
 def schema_from_dict(data: dict[str, Any]) -> Schema:
     if not isinstance(data, dict):
         raise ValueError("Schema file must contain a JSON object")
+    sheet_type = require_string(data, "sheet_type")
+    if sheet_type not in VALID_SHEET_TYPES:
+        raise ValueError(f"Unsupported sheet_type: {sheet_type}")
+
+    activity_type = optional_string(data, "activity_type")
+    if sheet_type == "data" and activity_type is None:
+        raise ValueError("Data schemas must define activity_type")
+    if sheet_type != "data" and activity_type is not None:
+        raise ValueError("Only data schemas may define activity_type")
+
     columns = data.get("columns", {})
     if not isinstance(columns, dict):
         raise ValueError("Schema 'columns' must be an object")
+    nil_return_markers = require_string_list(data, "nil_return_markers")
+    if sheet_type == "data":
+        nil_return_markers = merge_nil_return_markers(nil_return_markers)
+
     return Schema(
         fingerprint=require_string(data, "fingerprint"),
-        sheet_type=require_string(data, "sheet_type"),
-        activity_type=optional_string(data, "activity_type"),
+        sheet_type=sheet_type,
+        activity_type=activity_type,
         data_start_offset=require_int(data, "data_start_offset", default=1),
         fill_down_columns=require_int_list(data, "fill_down_columns"),
-        nil_return_markers=require_string_list(data, "nil_return_markers"),
+        nil_return_markers=nil_return_markers,
         date_source=require_string(data, "date_source", default="none"),
         date_column=optional_int(data, "date_column"),
         date_format=optional_string(data, "date_format"),
@@ -94,8 +116,8 @@ def validate_schema(schema: Schema, sheet: NormalisedSheet) -> None:
             f"Schema data_start_offset {schema.data_start_offset} exceeds sheet rows for {sheet.name!r}"
         )
 
-    if schema.sheet_type == "data" and "minister_name" not in schema.columns:
-        raise ValueError("Data schemas must define a minister_name column")
+    if schema.sheet_type == "data" and "subject_name" not in schema.columns:
+        raise ValueError("Data schemas must define a subject_name column")
 
     mapped_columns = list(schema.columns.values())
     nil_only_rows = False
@@ -122,9 +144,12 @@ def has_non_nil_data_row(
     nil_markers = {normalise_marker(marker) for marker in schema.nil_return_markers}
     for row in sheet.rows[data_start_row:]:
         values = [get_row_value(row, index).strip() for index in mapped_columns]
+        nil_check_values = list(values)
+        if schema.date_source == "column":
+            nil_check_values.append(get_row_value(row, schema.date_column).strip())
         if not any(values):
             continue
-        if nil_markers and any(normalise_marker(value) in nil_markers for value in values):
+        if nil_markers and any(normalise_marker(value) in nil_markers for value in nil_check_values):
             continue
         return True
     return False
@@ -186,6 +211,18 @@ def parse_month_value(raw: str) -> tuple[int, int] | None:
         return None
     date_from = date.fromisoformat(parsed[0])
     return date_from.year, date_from.month
+
+
+def merge_nil_return_markers(markers: list[str]) -> list[str]:
+    combined: list[str] = []
+    seen: set[str] = set()
+    for marker in [*DEFAULT_NIL_RETURN_MARKERS, *markers]:
+        normalised = normalise_marker(marker)
+        if normalised in seen:
+            continue
+        seen.add(normalised)
+        combined.append(marker)
+    return combined
 
 
 def require_string(data: dict[str, Any], key: str, default: str | None = None) -> str:

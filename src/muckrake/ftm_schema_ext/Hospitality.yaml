@@ -7,13 +7,11 @@ Hospitality:
     - Event
   matchable: false
   caption:
-    - name
-    - summary
+    - purpose
     - amount
     - date
   featured:
-    - name
-    - summary
+    - purpose
     - date
     - amount
     - payer

@@ -1,17 +1,17 @@
 {
-  "fingerprint": "7f6dd9c8dc1e2398",
+  "fingerprint": "f9ef044821b4ed0f",
   "sheet_type": "data",
   "activity_type": "travel",
   "data_start_offset": 1,
   "fill_down_columns": [0],
+  "nil_return_markers": ["None during this period", "nil return"],
   "date_source": "column",
   "date_column": 1,
-  "date_format": "%Y-%m-%dT%H:%M:%S",
-  "date_precision": "day",
+  "date_precision": "day_or_month",
   "columns": {
     "subject_name": 0,
     "location": 2,
     "activity_description": 3,
-    "amount": 8
+    "amount": 7
   }
 }

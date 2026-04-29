@@ -466,3 +466,9 @@ Any robust parser for this corpus needs to handle:
 - Extra columns that only appear in certain departments or topics
 
 These examples are a strong argument for a parser architecture that first detects table structure and context, and only then maps rows into a shared event schema.
+
+## Current schema conventions
+
+- `activity_type` is required for `data` sheets and should be omitted for `notes` and `ignore` sheets.
+- `nil_return_markers` is optional for `data` sheets because common markers are applied by default in code.
+- Only include `nil_return_markers` in a schema file when a source uses extra source-specific text beyond those defaults.

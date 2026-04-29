@@ -65,15 +65,15 @@ def test_emit_meeting_entities_creates_person_public_body_employment_legal_entit
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "meetings",
-            "columns": {"minister_name": 0},
+            "columns": {"subject_name": 0},
         }
     )
     provenance = make_provenance("meetings", "https://example.test/meetings.csv")
     row = {
-        "minister_name": "Jane Doe",
-        "counterpart_raw": "Example Org",
-        "purpose": "Policy discussion",
-        "date": date(2024, 1, 10),
+        "subject_name": "Jane Doe",
+        "counterpart_name": "Example Org",
+        "activity_description": "Policy discussion",
+        "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Meetings",
         "row_index": 2,
@@ -106,16 +106,16 @@ def test_emit_hospitality_entities_creates_hospitality_payment_with_participant(
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "hospitality",
-            "columns": {"minister_name": 0},
+            "columns": {"subject_name": 0},
         }
     )
     provenance = make_provenance("hospitality", "https://example.test/hospitality.csv")
     row = {
-        "minister_name": "Jane Doe",
-        "counterpart_raw": "Example Org",
-        "gift_description": "Dinner",
+        "subject_name": "Jane Doe",
+        "counterpart_name": "Example Org",
+        "activity_description": "Dinner",
         "outcome": "Accompanied by guest",
-        "date": date(2024, 1, 10),
+        "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Hospitality",
         "row_index": 4,
@@ -125,11 +125,48 @@ def test_emit_hospitality_entities_creates_hospitality_payment_with_participant(
 
     assert count == 5
     event = next(entity for entity in dataset.emitted if entity.schema.name == "Hospitality")
-    assert event.first("summary") == "Dinner"
+    assert event.first("purpose") == "Dinner"
     assert event.first("involved")
     assert event.first("payer")
+    assert event.first("organizer") == event.first("payer")
     assert event.first("beneficiary")
-    assert event.first("keywords") == "Hospitality"
+
+
+def test_emit_travel_entities_creates_trip():
+    dataset = DummyDataset()
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "travel",
+            "columns": {"subject_name": 0},
+        }
+    )
+    provenance = make_provenance("travel", "https://example.test/travel.csv")
+    row = {
+        "subject_name": "Jane Doe",
+        "location": "Paris",
+        "activity_description": "Trade mission",
+        "amount": "1234",
+        "start_date": "2024-01-10",
+        "end_date": "2024-01-10",
+        "date_precision": "day",
+        "sheet_name": "Travel",
+        "row_index": 6,
+    }
+
+    count = emit_entities(dataset, row, provenance, schema)
+
+    assert count == 4
+    trip = next(entity for entity in dataset.emitted if entity.schema.name == "Trip")
+    assert trip.first("summary") == "Trade mission"
+    assert trip.first("location") == "Paris"
+    assert trip.first("notes") == "1234"
+    assert trip.get("date") == []
+    assert trip.first("startDate") == "2024-01-10"
+    assert trip.first("endDate") == "2024-01-10"
+    assert sorted(trip.get("involved")) == sorted([person.id for person in dataset.emitted if person.schema.name in {"Person", "PublicBody"}])
+    assert trip.get("organizer") == []
 
 
 def test_emit_gift_entities_creates_gift_with_person_and_public_body_as_beneficiaries():
@@ -139,17 +176,17 @@ def test_emit_gift_entities_creates_gift_with_person_and_public_body_as_benefici
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "gifts",
-            "columns": {"minister_name": 0},
+            "columns": {"subject_name": 0},
         }
     )
     provenance = make_provenance("gifts", "https://example.test/gifts.csv")
     row = {
-        "minister_name": "Jane Doe",
-        "counterpart_raw": "Example Org",
-        "gift_description": "Bottle of wine",
-        "gift_value": "150",
+        "subject_name": "Jane Doe",
+        "counterpart_name": "Example Org",
+        "activity_description": "Bottle of wine",
+        "amount": "150",
         "outcome": "Retained by department",
-        "date": date(2024, 1, 10),
+        "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Gifts",
         "row_index": 3,
@@ -177,24 +214,24 @@ def test_emit_entities_deduplicates_context_entities_across_rows():
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "meetings",
-            "columns": {"minister_name": 0},
+            "columns": {"subject_name": 0},
         }
     )
     provenance = make_provenance("meetings", "https://example.test/meetings.csv")
     first = {
-        "minister_name": "Jane Doe",
-        "counterpart_raw": "Example Org",
-        "purpose": "Policy discussion",
-        "date": date(2024, 1, 10),
+        "subject_name": "Jane Doe",
+        "counterpart_name": "Example Org",
+        "activity_description": "Policy discussion",
+        "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Meetings",
         "row_index": 2,
     }
     second = {
-        "minister_name": "Jane Doe",
-        "counterpart_raw": "Another Org",
-        "purpose": "Second discussion",
-        "date": date(2024, 1, 11),
+        "subject_name": "Jane Doe",
+        "counterpart_name": "Another Org",
+        "activity_description": "Second discussion",
+        "date": "2024-01-11",
         "date_precision": "day",
         "sheet_name": "Meetings",
         "row_index": 3,

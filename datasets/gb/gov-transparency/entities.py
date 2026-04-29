@@ -37,9 +37,9 @@ def emit_entities(dataset, row: dict, provenance: Provenance, schema: Schema) ->
 
 
 def ensure_pep_context(dataset, row: dict, provenance: Provenance):
-    person_name = row.get("minister_name", "").strip()
+    person_name = row.get("subject_name", "").strip()
     if not person_name:
-        raise ValueError("Cannot emit activity without minister_name")
+        raise ValueError("Cannot emit activity without subject_name")
 
     public_body_name = get_public_body_name(provenance)
     person = make_person(dataset, person_name, provenance)
@@ -57,13 +57,12 @@ def ensure_pep_context(dataset, row: dict, provenance: Provenance):
 
 
 def emit_meeting(dataset, row: dict, provenance: Provenance, person, public_body) -> int:
-    counterpart = row.get("counterpart_raw", "").strip()
+    counterpart = row.get("counterpart_name", "").strip()
     event = dataset.make("Meeting")
     event.id = make_row_entity_id(dataset, "meeting", provenance, row)
-    event.add("name", build_event_name("Meeting", person.first("name"), counterpart))
     add_row_date(event, row)
-    if row.get("purpose"):
-        event.add("summary", row["purpose"])
+    if row.get("activity_description"):
+        event.add("summary", row["activity_description"])
     event.add("organizer", public_body.id)
     event.add("organizer", person.id)
     emitted = 0
@@ -72,8 +71,6 @@ def emit_meeting(dataset, row: dict, provenance: Provenance, person, public_body
         if emit_once(dataset, participant):
             emitted += 1
         event.add("involved", participant.id)
-        event.add("description", counterpart)
-    event.add("keywords", "Meeting")
     event.add("topics", "gov.transparency")
     apply_source(event, provenance)
     dataset.emit(event)
@@ -81,17 +78,14 @@ def emit_meeting(dataset, row: dict, provenance: Provenance, person, public_body
 
 
 def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_body) -> int:
-    hospitality_type = (row.get("gift_description") or row.get("purpose") or "").strip()
-    counterpart = row.get("counterpart_raw", "").strip()
+    hospitality_type = (row.get("activity_description") or "").strip()
+    counterpart = row.get("counterpart_name", "").strip()
 
     event = dataset.make("Hospitality")
     event.id = make_row_entity_id(dataset, "hospitality", provenance, row)
-    event.add("name", build_event_name("Hospitality", person.first("name"), counterpart))
     add_row_date(event, row)
     if hospitality_type:
-        event.add("summary", hospitality_type)
-    event.add("organizer", public_body.id)
-    event.add("organizer", person.id)
+        event.add("purpose", hospitality_type)
     event.add("beneficiary", person.id)
     event.add("beneficiary", public_body.id)
 
@@ -102,11 +96,10 @@ def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_
             emitted += 1
         event.add("involved", participant.id)
         event.add("payer", participant.id)
-        event.add("description", counterpart)
+        event.add("organizer", participant.id)
     if row.get("outcome"):
         event.add("notes", row["outcome"])
     add_amount(event, row)
-    event.add("keywords", "Hospitality")
     event.add("topics", "gov.transparency")
     apply_source(event, provenance)
     dataset.emit(event)
@@ -114,15 +107,14 @@ def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_
 
 
 def emit_gift(dataset, row: dict, provenance: Provenance, person, public_body) -> int:
-    counterpart = row.get("counterpart_raw", "").strip()
-    gift_name = (row.get("gift_description") or row.get("purpose") or "").strip()
+    counterpart = row.get("counterpart_name", "").strip()
+    gift_name = (row.get("activity_description") or "").strip()
 
     payment = dataset.make("Gift")
     payment.id = make_row_entity_id(dataset, "gift", provenance, row)
     add_row_date(payment, row)
     if gift_name:
         payment.add("purpose", gift_name)
-    payment.add("summary", f"Gift involving {person.first('name')}")
     payment.add("beneficiary", person.id)
     payment.add("beneficiary", public_body.id)
 
@@ -134,30 +126,27 @@ def emit_gift(dataset, row: dict, provenance: Provenance, person, public_body) -
         payment.add("payer", participant.id)
 
     add_amount(payment, row)
-    description = build_gift_description(row, counterpart)
-    if description is not None:
-        payment.add("description", description)
+    if row.get("outcome"):
+        payment.add("description", row["outcome"])
     apply_source(payment, provenance)
     dataset.emit(payment)
     return emitted + 1
 
 
 def emit_travel(dataset, row: dict, provenance: Provenance, person, public_body) -> int:
-    destination = row.get("destination", "").strip()
+    destination = row.get("location", "").strip()
 
-    event = dataset.make("Event")
+    event = dataset.make("Trip")
     event.id = make_row_entity_id(dataset, "travel", provenance, row)
-    event.add("name", build_event_name("Travel", person.first("name"), destination))
     add_row_date(event, row)
-    if row.get("purpose"):
-        event.add("summary", row["purpose"])
+    if row.get("activity_description"):
+        event.add("summary", row["activity_description"])
     if destination:
         event.add("location", destination)
-    event.add("organizer", public_body.id)
-    event.add("organizer", person.id)
-    if row.get("cost"):
-        event.add("notes", row["cost"])
-    event.add("keywords", "Travel")
+    event.add("involved", public_body.id)
+    event.add("involved", person.id)
+    if row.get("amount"):
+        event.add("notes", row["amount"])
     event.add("topics", "gov.transparency")
     apply_source(event, provenance)
     dataset.emit(event)
@@ -165,7 +154,7 @@ def emit_travel(dataset, row: dict, provenance: Provenance, person, public_body)
 
 
 def emit_outside_employment(dataset, row: dict, provenance: Provenance, person) -> int:
-    employer_name = row.get("counterpart_raw", "").strip() or row.get("purpose", "").strip()
+    employer_name = row.get("counterpart_name", "").strip() or row.get("activity_description", "").strip()
     if not employer_name:
         raise ValueError("Outside employment rows require employer details")
 
@@ -174,8 +163,8 @@ def emit_outside_employment(dataset, row: dict, provenance: Provenance, person) 
     employment.id = make_row_entity_id(dataset, "outside-employment", provenance, row)
     employment.add("employee", person.id)
     employment.add("employer", employer.id)
-    if row.get("purpose"):
-        employment.add("description", row["purpose"])
+    if row.get("activity_description"):
+        employment.add("description", row["activity_description"])
     add_row_date(employment, row)
     apply_source(employment, provenance)
 
@@ -192,7 +181,6 @@ def make_person(dataset, name: str, provenance: Provenance):
     person.add("name", name)
     person.add("topics", "role.pep")
     person.add("jurisdiction", "gb")
-    person.add("sourceUrl", provenance.url)
     return person
 
 
@@ -202,7 +190,6 @@ def make_public_body(dataset, name: str, provenance: Provenance):
     public_body.add("name", name)
     public_body.add("jurisdiction", "gb")
     public_body.add("topics", "gov")
-    public_body.add("sourceUrl", provenance.url)
     return public_body
 
 
@@ -211,7 +198,6 @@ def make_department_employment(dataset, person, public_body, provenance: Provena
     employment.id = dataset.make_id("employment", person.id, public_body.id)
     employment.add("employee", person.id)
     employment.add("employer", public_body.id)
-    employment.add("sourceUrl", provenance.url)
     return employment
 
 
@@ -219,7 +205,6 @@ def make_legal_entity(dataset, name: str, provenance: Provenance):
     participant = dataset.make("LegalEntity")
     participant.id = dataset.make_id("participant", name)
     participant.add("name", name)
-    participant.add("sourceUrl", provenance.url)
     return participant
 
 
@@ -260,39 +245,22 @@ def make_row_entity_id(dataset, prefix: str, provenance: Provenance, row: dict) 
     return dataset.make_id(prefix, provenance.url, row.get("sheet_name"), row.get("row_index"))
 
 
-def build_event_name(prefix: str, person_name: str, counterpart_raw: str | None) -> str:
-    counterpart = (counterpart_raw or "").strip()
-    if counterpart:
-        return f"{prefix}: {person_name} with {counterpart[:50]}"
-    return f"{prefix}: {person_name}"
-
-
-def build_gift_description(row: dict, counterpart: str) -> str | None:
-    parts = []
-    if counterpart:
-        parts.append(f"Counterparty: {counterpart}")
-    outcome = row.get("outcome", "").strip()
-    if outcome:
-        parts.append(f"Outcome: {outcome}")
-    value = row.get("gift_value", "").strip()
-    if value:
-        parts.append(f"Value: {value}")
-    if not parts:
-        return None
-    return ". ".join(parts)
-
-
-def add_amount(payment, row: dict) -> None:
-    raw = row.get("gift_value", "").strip()
-    if not raw:
+def add_amount(entity, row: dict, *field_names: str) -> None:
+    for field_name in field_names or ("amount",):
+        raw = row.get(field_name, "")
+        if not isinstance(raw, str):
+            continue
+        cleaned = raw.strip()
+        if not cleaned:
+            continue
+        cleaned = cleaned.replace(",", "")
+        cleaned = cleaned.replace("GBP", "").replace("gbp", "")
+        cleaned = cleaned.replace("£", "").strip()
+        if not re.fullmatch(r"[+-]?\d+(?:\.\d+)?", cleaned):
+            continue
+        entity.add("amount", float(cleaned))
+        entity.add("currency", "GBP")
         return
-    cleaned = raw.replace(",", "")
-    cleaned = cleaned.replace("GBP", "").replace("gbp", "")
-    cleaned = cleaned.replace("£", "").strip()
-    if not re.fullmatch(r"[+-]?\d+(?:\.\d+)?", cleaned):
-        return
-    payment.add("amount", float(cleaned))
-    payment.add("currency", "GBP")
 
 
 def apply_source(entity, provenance: Provenance) -> None:
@@ -303,10 +271,8 @@ def apply_source(entity, provenance: Provenance) -> None:
 def add_row_date(entity, row: dict) -> None:
     if row.get("date") is not None:
         entity.add("date", row["date"])
-        entity.add("startDate", row["date"])
         return
-    if row.get("date_from") is not None:
-        entity.add("date", row["date_from"])
-        entity.add("startDate", row["date_from"])
-    if row.get("date_to") is not None:
-        entity.add("endDate", row["date_to"])
+    if row.get("start_date") is not None:
+        entity.add("startDate", row["start_date"])
+    if row.get("end_date") is not None:
+        entity.add("endDate", row["end_date"])

@@ -183,7 +183,7 @@ function buildRelationshipItems(item: Entity, refs: EntityRef[]): RelationshipIt
 export function transformActivities(entity: Entity): TimelineItem[] {
     if (!entity.adjacent) return [];
 
-    const items = new Map<string, TimelineItem>();
+    const items: TimelineItem[] = [];
     for (const [_, group] of Object.entries(entity.adjacent)) {
         for (const item of group.results) {
 			const type = getActivityType(item);
@@ -191,22 +191,20 @@ export function transformActivities(entity: Entity): TimelineItem[] {
 				continue;
 			}
 
-			if (!items.has(item.id)) {
-				items.set(item.id, {
-					id: item.id,
-					type,
-					title: getActivityTitle(item),
-					description: getStringProp(item, 'description') || '',
-					date: getBestDate(item.properties) || '',
-					amount: getStringProp(item, 'amount'),
-					properties: item.properties,
-					schema: item.schema,
-					datasets: item.datasets,
-				});
-			}
+			items.push({
+				id: item.id,
+				type,
+				title: getActivityTitle(item),
+				description: getStringProp(item, 'description') || '',
+				date: getBestDate(item.properties) || '',
+				amount: getStringProp(item, 'amount'),
+				properties: item.properties,
+				schema: item.schema,
+				datasets: item.datasets,
+			});
         }
     }
-    return Array.from(items.values()).sort((a, b) => b.date.localeCompare(a.date));
+    return items.sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export function transformRelationships(entity: Entity): RelationshipGroup[] {

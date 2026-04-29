@@ -11,11 +11,10 @@ Gift:
     - date
     - amount
     - purpose
-  required:
-    - payer
-    - beneficiary
   caption:
+    - purpose
     - amount
+    - date
   edge:
     source: payer
     label: "gave"

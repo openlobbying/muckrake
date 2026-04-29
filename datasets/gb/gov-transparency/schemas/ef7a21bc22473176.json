@@ -4,13 +4,12 @@
   "activity_type": "hospitality",
   "data_start_offset": 1,
   "fill_down_columns": [0],
-  "nil_return_markers": ["Nil Return", "Nil return"],
   "date_source": "column",
   "date_column": 1,
   "date_precision": "day",
   "columns": {
-    "minister_name": 0,
-    "counterpart_raw": 2,
-    "gift_description": 3
+    "subject_name": 0,
+    "counterpart_name": 2,
+    "activity_description": 3
   }
 }

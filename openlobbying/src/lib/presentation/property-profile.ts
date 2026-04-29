@@ -50,7 +50,7 @@ const PROFILES: Record<string, PropertyProfile> = {
 		primaryKeys: ['name', 'involved']
 	},
 	Trip: {
-		primaryKeys: ['summary']
+		primaryKeys: ['summary', 'involved']
 	},
 	Visit: {
 		primaryKeys: ['summary']

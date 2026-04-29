@@ -45,7 +45,7 @@ export function formatDateToken(value?: string): string | undefined {
 	if (!date) return value;
 
 	if (MONTH_TOKEN.test(value)) {
-		return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+		return date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 	}
 
 	return date.toLocaleDateString('en-GB', {
@@ -107,11 +107,24 @@ export function formatFullDate(dateStr: string): string {
 	try {
 		const date = toDateBoundary(dateStr) || new Date(dateStr);
 		if (Number.isNaN(date.getTime())) return dateStr;
+		if (MONTH_TOKEN.test(dateStr)) {
+			return date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+		}
 		const day = date.getDate();
-		const month = date.toLocaleDateString('en-GB', { month: 'long' });
+		const month = date.toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' });
 		const year = date.getFullYear();
 		return `${day} ${month} ${year}`;
 	} catch {
 		return dateStr;
 	}
+}
+
+export function formatDateRange(startDate?: string, endDate?: string): string {
+	const start = formatDateToken(startDate);
+	const end = formatDateToken(endDate);
+	if (start && end && start === end) return start;
+	if (start && end) return `${start} - ${end}`;
+	if (start) return start;
+	if (end) return end;
+	return 'Unknown Date';
 }

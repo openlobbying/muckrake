@@ -54,9 +54,11 @@ Important fields:
   - `travel`
   - `outside_employment`
   - `other`
+  - required for `data` sheets only; omit it for `notes` and `ignore`
 - `data_start_offset`: usually `1`
 - `fill_down_columns`: columns where blanks mean “same as row above”
 - `nil_return_markers`: markers that mean the row is not a real activity
+  - optional for `data` sheets because common nil-return markers are applied automatically
 - `date_source`:
   - `column`
   - `none`
@@ -71,8 +73,8 @@ Important fields:
 
 Canonical fields currently supported:
 
-- required for `data`: `minister_name`
-- optional: `counterpart_raw`, `purpose`, `gift_description`, `gift_value`, `outcome`, `destination`, `cost`
+- required for `data`: `subject_name`
+- optional: `counterpart_name`, `activity_description`, `amount`, `outcome`, `location`
 
 ## How To Decide Schema Fields
 
@@ -101,6 +103,10 @@ Common examples:
 ### `nil_return_markers`
 
 Be explicit and copy the actual text seen in the file.
+
+Data sheets already inherit common nil-return markers such as `Nil Return`, `Nil return`, `Nil Return `, `Nil return all other ministers`, and `None in this period`.
+
+Only add `nil_return_markers` in the schema when a source uses extra text beyond those defaults.
 
 Common examples:
 
