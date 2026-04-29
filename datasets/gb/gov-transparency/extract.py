@@ -55,11 +55,15 @@ def extract(sheet: NormalisedSheet, schema: Schema, provenance: Provenance) -> l
         nil_check_values = list(mapped_values)
         if schema.date_source == "column":
             nil_check_values.append(get_row_value(current, schema.date_column).strip())
+            if schema.end_date_column is not None:
+                nil_check_values.append(get_row_value(current, schema.end_date_column).strip())
         if nil_markers and any(normalise_marker(value) in nil_markers for value in nil_check_values):
             continue
         if not any(mapped_values):
             continue
         if schema.date_source == "column" and get_row_value(current, schema.date_column).strip() == "":
+            continue
+        if schema.end_date_column is not None and get_row_value(current, schema.end_date_column).strip() == "":
             continue
 
         record = {
@@ -87,6 +91,22 @@ def resolve_date(row: list[str], schema: Schema, provenance: Provenance) -> dict
     raw = get_row_value(row, schema.date_column).strip()
     if raw == "":
         raise ValueError("Cannot resolve blank date value")
+
+    if schema.end_date_column is not None:
+        end_raw = get_row_value(row, schema.end_date_column).strip()
+        if end_raw == "":
+            raise ValueError("Cannot resolve blank end date value")
+        start_parsed = parse_day_value(raw, provenance.period_start, provenance.period_end, schema.date_format)
+        end_parsed = parse_day_value(end_raw, provenance.period_start, provenance.period_end, schema.date_format)
+        if not isinstance(start_parsed, str) or not isinstance(end_parsed, str):
+            raise ValueError(f"Cannot parse date range {raw!r} to {end_raw!r} with format {schema.date_format!r}")
+        if start_parsed == end_parsed:
+            return {"date": start_parsed, "date_precision": "day"}
+        return {
+            "start_date": start_parsed,
+            "end_date": end_parsed,
+            "date_precision": "day",
+        }
 
     if schema.date_precision == "day":
         parsed = parse_day_value(raw, provenance.period_start, provenance.period_end, schema.date_format)

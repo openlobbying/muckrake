@@ -47,8 +47,10 @@ class Schema:
     data_start_offset: int = 1
     fill_down_columns: list[int] = field(default_factory=list)
     nil_return_markers: list[str] = field(default_factory=list)
+    reverse_roles: bool = False
     date_source: str = "none"
     date_column: int | None = None
+    end_date_column: int | None = None
     date_format: str | None = None
     date_precision: str = "quarter"
     columns: dict[str, int] = field(default_factory=dict)
@@ -94,8 +96,10 @@ def schema_from_dict(data: dict[str, Any]) -> Schema:
         data_start_offset=require_int(data, "data_start_offset", default=1),
         fill_down_columns=require_int_list(data, "fill_down_columns"),
         nil_return_markers=nil_return_markers,
+        reverse_roles=require_bool(data, "reverse_roles", default=False),
         date_source=require_string(data, "date_source", default="none"),
         date_column=optional_int(data, "date_column"),
+        end_date_column=optional_int(data, "end_date_column"),
         date_format=optional_string(data, "date_format"),
         date_precision=require_string(data, "date_precision", default="quarter"),
         columns={key: require_mapping_int(columns, key) for key in columns},
@@ -131,6 +135,8 @@ def validate_schema(schema: Schema, sheet: NormalisedSheet) -> None:
             raise ValueError("Schema with date_source='column' must define date_column")
         if schema.date_column < 0 or schema.date_column >= max_columns:
             raise ValueError(f"Schema date_column points outside sheet width: {schema.date_column}")
+        if schema.end_date_column is not None and (schema.end_date_column < 0 or schema.end_date_column >= max_columns):
+            raise ValueError(f"Schema end_date_column points outside sheet width: {schema.end_date_column}")
         if not nil_only_rows:
             validate_date_column(schema, sheet, data_start_row)
 
@@ -147,6 +153,8 @@ def has_non_nil_data_row(
         nil_check_values = list(values)
         if schema.date_source == "column":
             nil_check_values.append(get_row_value(row, schema.date_column).strip())
+            if schema.end_date_column is not None:
+                nil_check_values.append(get_row_value(row, schema.end_date_column).strip())
         if not any(values):
             continue
         if nil_markers and any(normalise_marker(value) in nil_markers for value in nil_check_values):
@@ -172,6 +180,13 @@ def validate_date_column(schema: Schema, sheet: NormalisedSheet, data_start_row:
         if normalise_marker(raw) in {normalise_marker(marker) for marker in schema.nil_return_markers}:
             continue
         parse_date_value(raw, schema)
+        if schema.end_date_column is not None:
+            end_raw = get_row_value(row, schema.end_date_column).strip()
+            if not end_raw:
+                raise ValueError(f"Schema {schema.fingerprint} has blank end date values in sheet {sheet.name!r}")
+            if normalise_marker(end_raw) in {normalise_marker(marker) for marker in schema.nil_return_markers}:
+                raise ValueError(f"Schema {schema.fingerprint} has nil end date values in sheet {sheet.name!r}")
+            parse_date_value(end_raw, schema)
         return
     raise ValueError(f"Schema {schema.fingerprint} has no parseable date values in sheet {sheet.name!r}")
 
@@ -245,6 +260,13 @@ def require_int(data: dict[str, Any], key: str, default: int | None = None) -> i
     value = data.get(key, default)
     if not isinstance(value, int):
         raise ValueError(f"Schema field {key!r} must be an integer")
+    return value
+
+
+def require_bool(data: dict[str, Any], key: str, default: bool | None = None) -> bool:
+    value = data.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"Schema field {key!r} must be a boolean")
     return value
 
 

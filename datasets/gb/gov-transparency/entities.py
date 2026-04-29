@@ -26,7 +26,7 @@ def emit_entities(dataset, row: dict, provenance: Provenance, schema: Schema) ->
     if schema.activity_type == "meetings":
         return emitted + emit_meeting(dataset, row, provenance, person, public_body)
     if schema.activity_type == "hospitality":
-        return emitted + emit_hospitality(dataset, row, provenance, person, public_body)
+        return emitted + emit_hospitality(dataset, row, provenance, schema, person, public_body)
     if schema.activity_type == "gifts":
         return emitted + emit_gift(dataset, row, provenance, person, public_body)
     if schema.activity_type == "travel":
@@ -77,17 +77,26 @@ def emit_meeting(dataset, row: dict, provenance: Provenance, person, public_body
     return emitted + 1
 
 
-def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_body) -> int:
+def emit_hospitality(dataset, row: dict, provenance: Provenance, schema: Schema, person, public_body) -> int:
     hospitality_type = (row.get("activity_description") or "").strip()
     counterpart = row.get("counterpart_name", "").strip()
 
     event = dataset.make("Hospitality")
     event.id = make_row_entity_id(dataset, "hospitality", provenance, row)
     add_row_date(event, row)
+    if schema.reverse_roles:
+        if hospitality_type:
+            event.add("name", f"Charity reception: {hospitality_type}")
+        elif counterpart:
+            event.add("name", f"Chequers reception: {counterpart}")
     if hospitality_type:
         event.add("purpose", hospitality_type)
-    event.add("beneficiary", person.id)
-    event.add("beneficiary", public_body.id)
+    if schema.reverse_roles:
+        event.add("organizer", person.id)
+        event.add("organizer", public_body.id)
+    else:
+        event.add("beneficiary", person.id)
+        event.add("beneficiary", public_body.id)
 
     emitted = 0
     if counterpart:
@@ -95,8 +104,9 @@ def emit_hospitality(dataset, row: dict, provenance: Provenance, person, public_
         if emit_once(dataset, participant):
             emitted += 1
         event.add("involved", participant.id)
-        event.add("payer", participant.id)
-        event.add("organizer", participant.id)
+        if not schema.reverse_roles:
+            event.add("payer", participant.id)
+            event.add("organizer", participant.id)
     if row.get("outcome"):
         event.add("notes", row["outcome"])
     add_amount(event, row)

@@ -1,8 +1,7 @@
 {
-  "fingerprint": "2dfa24ad621f81df",
+  "fingerprint": "e2bb8e7eda9e9155",
   "sheet_type": "data",
-  "activity_type": "hospitality",
-  "nil_return_markers": ["Nil Return Return"],
+  "activity_type": "travel",
   "data_start_offset": 1,
   "fill_down_columns": [],
   "date_source": "column",
@@ -11,7 +10,7 @@
   "date_precision": "day",
   "columns": {
     "subject_name": 0,
-    "counterpart_name": 2,
+    "location": 2,
     "activity_description": 3
   }
 }

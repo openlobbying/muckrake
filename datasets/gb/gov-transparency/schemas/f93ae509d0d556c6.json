@@ -1,8 +1,9 @@
 {
-  "fingerprint": "2dfa24ad621f81df",
+  "fingerprint": "f93ae509d0d556c6",
   "sheet_type": "data",
   "activity_type": "hospitality",
-  "nil_return_markers": ["Nil Return Return"],
+  "reverse_roles": true,
+  "nil_return_markers": ["-"],
   "data_start_offset": 1,
   "fill_down_columns": [],
   "date_source": "column",
@@ -11,7 +12,6 @@
   "date_precision": "day",
   "columns": {
     "subject_name": 0,
-    "counterpart_name": 2,
-    "activity_description": 3
+    "counterpart_name": 2
   }
 }

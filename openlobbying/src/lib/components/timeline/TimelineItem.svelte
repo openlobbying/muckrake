@@ -308,16 +308,6 @@ import { formatLabel, isEntity, renderableValue, type DetailRow } from '$lib/uti
 				</span>
 			</div>
 
-		{#if isVisitLike && activity.properties}
-			{@const purpose = activity.properties.summary?.[0]}
-		{#if purpose}
-				<p class="text-sm text-gray-700 mt-2">
-					<span class="text-gray-500">Purpose:</span>
-					{purpose}
-				</p>
-			{/if}
-		{/if}
-
 			{#if primaryRows.length > 0}
 				<div class="space-y-1.5 mt-2">
 					{#each primaryRows as row (row.key)}

@@ -1,4 +1,4 @@
-import { Calendar, Users, Banknote, FileText, Megaphone, MessageCircle, PoundSterling, Mic, MicVocal, Drama, Handshake, Briefcase, Building, UserCheck, MapPin, Plane, Gift, Home, TrendingUp, Info } from '@lucide/svelte';
+import { Calendar, Users, Banknote, FileText, Megaphone, MessageCircle, PoundSterling, Mic, MicVocal, Drama, Handshake, Briefcase, Building, UserCheck, MapPin, Plane, Gift, HandPlatter, Home, TrendingUp, Info } from '@lucide/svelte';
 
 export interface TypeInfo {
   key: string;
@@ -84,7 +84,7 @@ const TYPES: Record<string, TypeInfo> = {
     label: 'Hospitality',
     markerColor: '#14b8a6',
     badgeBg: '#f0fdfa',
-    icon: Gift
+    icon: HandPlatter
   },
   Donation: {
     key: 'Donation',

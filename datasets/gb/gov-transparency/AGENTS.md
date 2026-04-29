@@ -47,6 +47,7 @@ Important fields:
 
 - `fingerprint`: must match the filename and actual computed fingerprint
 - `sheet_type`: `data`, `notes`, or `ignore`
+- `reason`: optional human-readable explanation for `notes` or `ignore` schemas so future work can see why the layout was skipped
 - `activity_type`: one of:
   - `meetings`
   - `gifts`
@@ -59,10 +60,12 @@ Important fields:
 - `fill_down_columns`: columns where blanks mean “same as row above”
 - `nil_return_markers`: markers that mean the row is not a real activity
   - optional for `data` sheets because common nil-return markers are applied automatically
+- `reverse_roles`: optional boolean for data layouts where the official/public body hosts or organizes the activity and the counterpart should be `involved` rather than `payer`/`organizer`
 - `date_source`:
   - `column`
   - `none`
 - `date_column`: required if `date_source == "column"`
+- `end_date_column`: optional second date column for layouts with explicit start/end dates
 - `date_format`: only for day-level column dates when a fixed `strptime` format is valid
 - `date_precision`:
   - `day`
@@ -83,8 +86,10 @@ Canonical fields currently supported:
 Use:
 
 - `notes` for explanatory tabs like `Notes`
-- `ignore` for helper sheets like `Sheet2`
+- `ignore` for helper sheets like `Sheet2` or other non-data layouts with no activity rows
 - `data` only for real activity rows
+
+Do not classify a fingerprint as `notes` or `ignore` just because the sampled file is a nil return. If the layout is a genuine activity table that may contain real rows in another publication, keep it as `data` and use nil markers to skip the nil rows.
 
 ### `data_start_offset`
 
@@ -107,6 +112,8 @@ Be explicit and copy the actual text seen in the file.
 Data sheets already inherit common nil-return markers such as `Nil Return`, `Nil return`, `Nil Return `, `Nil return all other ministers`, and `None in this period`.
 
 Only add `nil_return_markers` in the schema when a source uses extra text beyond those defaults.
+
+A nil-only publication can still use a `data` schema if the underlying layout is a real activity table.
 
 Common examples:
 
@@ -186,6 +193,8 @@ If the fingerprint is different, create a new schema file even if the semantic c
 
 4. Create `schemas/<fingerprint>.json`.
 
+If you classify a schema as `notes` or `ignore`, add a `reason` field that explains why it is being skipped.
+
 5. Validate it.
 
 At minimum, confirm:
@@ -195,6 +204,8 @@ At minimum, confirm:
 - `extract()` returns reasonable rows
 
 6. If the sheet is clearly notes/helper content, prefer `notes` or `ignore` rather than forcing a data schema.
+
+Do not use `notes` or `ignore` for data layouts that only happen to be nil returns in the sampled file.
 
 ## Validation Commands
 

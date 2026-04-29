@@ -1,17 +1,19 @@
 {
-  "fingerprint": "2dfa24ad621f81df",
+  "fingerprint": "2a55616551e86bec",
   "sheet_type": "data",
-  "activity_type": "hospitality",
-  "nil_return_markers": ["Nil Return Return"],
+  "activity_type": "travel",
+  "nil_return_markers": ["RETURN PENDING"],
   "data_start_offset": 1,
   "fill_down_columns": [],
   "date_source": "column",
   "date_column": 1,
+  "end_date_column": 2,
   "date_format": "%Y-%m-%d",
   "date_precision": "day",
   "columns": {
     "subject_name": 0,
-    "counterpart_name": 2,
-    "activity_description": 3
+    "location": 3,
+    "activity_description": 4,
+    "amount": 10
   }
 }
