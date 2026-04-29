@@ -1,5 +1,5 @@
 {
-  "fingerprint": "652f84df6e56b346",
+  "fingerprint": "29c915831fd2e898",
   "sheet_type": "data",
   "activity_type": "hospitality",
   "reverse_roles": true,
@@ -9,6 +9,6 @@
   "date_precision": "quarter",
   "columns": {
     "subject_name": 0,
-    "counterpart_name": 3
+    "counterpart_name": 5
   }
 }

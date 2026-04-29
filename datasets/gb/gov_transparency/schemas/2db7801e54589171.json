@@ -1,0 +1,14 @@
+{
+  "fingerprint": "2db7801e54589171",
+  "sheet_type": "data",
+  "activity_type": "hospitality",
+  "reverse_roles": true,
+  "data_start_offset": -1,
+  "fill_down_columns": [],
+  "date_source": "none",
+  "date_precision": "quarter",
+  "columns": {
+    "subject_name": 0,
+    "counterpart_name": 2
+  }
+}

@@ -3,6 +3,6 @@ import { loadEntity } from '$lib/util/load-entity';
 
 export const load: PageLoad = async ({ params, fetch }) => {
 	return {
-		entity: await loadEntity(fetch, `/api/statements/${params.id}`, 'Could not fetch statement')
+		entity: await loadEntity(fetch, `/api/statement/${params.id}`, 'Could not fetch statement')
 	};
 };

@@ -514,7 +514,7 @@ def list_entities(
     }
 
 
-@app.get("/profiles/{id}")
+@app.get("/profile/{id}")
 def get_profile(id: str) -> Dict[str, Any]:
     """Endpoint for actor profiles, includes adjacency (timeline)."""
     ent = _get_entity_or_404(id, "Profile not found")
@@ -628,7 +628,7 @@ def list_profile_sitemap_entries(
     }
 
 
-@app.get("/statements/{id}")
+@app.get("/statement/{id}")
 def get_statement(id: str) -> Dict[str, Any]:
     """Endpoint for statements/events, simple view."""
     ent = _get_entity_or_404(id, "Statement not found")
