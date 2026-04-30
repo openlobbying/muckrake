@@ -9,15 +9,15 @@ from io import StringIO
 from org_id import make_hashed_id
 
 
-MODULE_PATH = Path("datasets/gb/gov-transparency/crawler.py")
+MODULE_PATH = Path("datasets/gb/gov_transparency/crawler.py")
 SPEC = importlib.util.spec_from_file_location(
-    "muckrake.crawler.gb.gov-transparency.crawler",
+    "muckrake.crawler.gb.gov_transparency.crawler",
     MODULE_PATH,
 )
 assert SPEC is not None
 assert SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
-MODULE.__package__ = "muckrake.crawler.gb.gov-transparency"
+MODULE.__package__ = "muckrake.crawler.gb.gov_transparency"
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
@@ -32,7 +32,7 @@ class DummyDataset:
         self.resources_path = tmp_path / "resources"
         self.resources_path.mkdir(parents=True, exist_ok=True)
         self.output = StringIO()
-        self.log = logging.getLogger(f"gov-transparency-test-{id(self)}")
+        self.log = logging.getLogger(f"gov_transparency_test_{id(self)}")
         self.log.handlers = []
         self.log.setLevel(logging.INFO)
         handler = logging.StreamHandler(self.output)

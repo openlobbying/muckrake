@@ -10,7 +10,7 @@ from typing import Any
 from muckrake.utils.dates import parse_day_or_month_value, parse_day_value, parse_month_value as shared_parse_month_value
 
 try:
-    from .common import MONTH_NAMES, normalise_marker
+    from .common import MONTH_NAMES, normalise_marker, should_skip_row
     from .fingerprint import detect_header_row
     from .normalise import NormalisedSheet
 except ImportError:
@@ -25,6 +25,7 @@ except ImportError:
     common_spec.loader.exec_module(common_module)
     MONTH_NAMES = common_module.MONTH_NAMES
     normalise_marker = common_module.normalise_marker
+    should_skip_row = common_module.should_skip_row
     detect_header_row = common_module.load_sibling_module(__file__, __name__, "fingerprint").detect_header_row
     NormalisedSheet = common_module.load_sibling_module(__file__, __name__, "normalise").NormalisedSheet
 
@@ -33,6 +34,9 @@ DEFAULT_NIL_RETURN_MARKERS = [
     "Nil Return",
     "Nil return",
     "Nil Return ",
+    "NIL",
+    "NIL RETURN",
+    "NIL Return",
     "Nil return all other ministers",
     "None in this period",
 ]
@@ -44,9 +48,12 @@ class Schema:
     fingerprint: str
     sheet_type: str
     activity_type: str | None = None
+    subject_name_source: str = "column"
+    subject_name_value: str | None = None
     data_start_offset: int = 1
     fill_down_columns: list[int] = field(default_factory=list)
     nil_return_markers: list[str] = field(default_factory=list)
+    skip_row_prefixes: list[str] = field(default_factory=list)
     reverse_roles: bool = False
     date_source: str = "none"
     date_column: int | None = None
@@ -93,9 +100,12 @@ def schema_from_dict(data: dict[str, Any]) -> Schema:
         fingerprint=require_string(data, "fingerprint"),
         sheet_type=sheet_type,
         activity_type=activity_type,
+        subject_name_source=require_string(data, "subject_name_source", default="column"),
+        subject_name_value=optional_string(data, "subject_name_value"),
         data_start_offset=require_int(data, "data_start_offset", default=1),
         fill_down_columns=require_int_list(data, "fill_down_columns"),
         nil_return_markers=nil_return_markers,
+        skip_row_prefixes=require_string_list(data, "skip_row_prefixes"),
         reverse_roles=require_bool(data, "reverse_roles", default=False),
         date_source=require_string(data, "date_source", default="none"),
         date_column=optional_int(data, "date_column"),
@@ -120,14 +130,15 @@ def validate_schema(schema: Schema, sheet: NormalisedSheet) -> None:
             f"Schema data_start_offset {schema.data_start_offset} exceeds sheet rows for {sheet.name!r}"
         )
 
-    if schema.sheet_type == "data" and "subject_name" not in schema.columns:
+    if schema.sheet_type == "data" and schema.subject_name_source == "column" and "subject_name" not in schema.columns:
         raise ValueError("Data schemas must define a subject_name column")
 
     mapped_columns = list(schema.columns.values())
     nil_only_rows = False
     if schema.sheet_type == "data" and not has_non_nil_data_row(sheet, schema, data_start_row, mapped_columns):
-        if not has_any_mapped_row(sheet, data_start_row, mapped_columns):
-            raise ValueError(f"Schema {schema.fingerprint} has no data rows in sheet {sheet.name!r}")
+        if not has_any_mapped_row(sheet, schema, data_start_row, mapped_columns):
+            if not has_skipped_row(sheet, schema, data_start_row):
+                raise ValueError(f"Schema {schema.fingerprint} has no data rows in sheet {sheet.name!r}")
         nil_only_rows = True
 
     if schema.date_source == "column":
@@ -149,6 +160,8 @@ def has_non_nil_data_row(
 ) -> bool:
     nil_markers = {normalise_marker(marker) for marker in schema.nil_return_markers}
     for row in sheet.rows[data_start_row:]:
+        if should_skip_row(row, schema.skip_row_prefixes):
+            continue
         values = [get_row_value(row, index).strip() for index in mapped_columns]
         nil_check_values = list(values)
         if schema.date_source == "column":
@@ -159,12 +172,18 @@ def has_non_nil_data_row(
             continue
         if nil_markers and any(normalise_marker(value) in nil_markers for value in nil_check_values):
             continue
+        if schema.date_source == "column" and not get_row_value(row, schema.date_column).strip():
+            continue
+        if schema.end_date_column is not None and not get_row_value(row, schema.end_date_column).strip():
+            continue
         return True
     return False
 
 
-def has_any_mapped_row(sheet: NormalisedSheet, data_start_row: int, mapped_columns: list[int]) -> bool:
+def has_any_mapped_row(sheet: NormalisedSheet, schema: Schema, data_start_row: int, mapped_columns: list[int]) -> bool:
     for row in sheet.rows[data_start_row:]:
+        if should_skip_row(row, schema.skip_row_prefixes):
+            continue
         values = [get_row_value(row, index).strip() for index in mapped_columns]
         if not any(values):
             continue
@@ -172,8 +191,26 @@ def has_any_mapped_row(sheet: NormalisedSheet, data_start_row: int, mapped_colum
     return False
 
 
+def has_only_blank_or_skipped_rows(sheet: NormalisedSheet, schema: Schema, data_start_row: int) -> bool:
+    for row in sheet.rows[data_start_row:]:
+        if should_skip_row(row, schema.skip_row_prefixes):
+            continue
+        if any(value.strip() for value in row):
+            return False
+    return True
+
+
+def has_skipped_row(sheet: NormalisedSheet, schema: Schema, data_start_row: int) -> bool:
+    for row in sheet.rows[data_start_row:]:
+        if should_skip_row(row, schema.skip_row_prefixes):
+            return True
+    return False
+
+
 def validate_date_column(schema: Schema, sheet: NormalisedSheet, data_start_row: int) -> None:
     for row in sheet.rows[data_start_row:]:
+        if should_skip_row(row, schema.skip_row_prefixes):
+            continue
         raw = get_row_value(row, schema.date_column).strip()
         if not raw:
             continue

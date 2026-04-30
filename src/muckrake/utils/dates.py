@@ -17,6 +17,7 @@ DATE_FORMATS = [
     "%d %B %Y",
     "%d %B %y",
     "%B %d, %Y",
+    "%A, %B %d, %Y",
     "%A, %d %B %Y",
     "%A, %d %B %y",
     "%Y/%m/%d",
@@ -89,7 +90,7 @@ def normalize_date_text(value: Any) -> Optional[str]:
     text = normalize_whitespace(text)
     text = text.lstrip(" ?")
     text = text.rstrip("*`")
-    text = text.replace("–", "-").replace("—", "-")
+    text = text.replace("–", "-").replace("—", "-").replace("Ð", "-").replace("�", "-")
     text = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", text, flags=re.IGNORECASE)
     text = re.sub(r"\s*-\s*", "-", text)
     if re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", text):
@@ -157,6 +158,28 @@ def parse_month_value(value: Any, start: Optional[date] = None, end: Optional[da
     text = normalize_date_text(value)
     if text is None:
         return None
+    if len(text) >= 11 and text[4] == "-" and text[7] == "-" and text[10] == "T":
+        text = text.split("T", 1)[0]
+    day_match = re.fullmatch(r"(\d{4})-(\d{1,2})-(\d{1,2})", text)
+    if day_match is not None:
+        year = int(day_match.group(1))
+        month = int(day_match.group(2))
+        if 1 <= month <= 12:
+            return (
+                date(year, month, 1).isoformat(),
+                date(year, month, month_last_day(year, month)).isoformat(),
+            )
+        return None
+    iso_match = re.fullmatch(r"(\d{4})-(\d{1,2})", text)
+    if iso_match is not None:
+        year = int(iso_match.group(1))
+        month = int(iso_match.group(2))
+        if 1 <= month <= 12:
+            return (
+                date(year, month, 1).isoformat(),
+                date(year, month, month_last_day(year, month)).isoformat(),
+            )
+        return None
     match = re.fullmatch(r"([A-Za-z]+)(?:[\s,-]+(\d{2,4}))?", text)
     if match is None:
         return None
@@ -181,6 +204,26 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
     text = normalize_date_text(value)
     if text is None:
         return None
+    match = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{2,4})-(\d{1,2})/(\d{1,2})/(\d{2,4})", text)
+    if match is not None:
+        start_year = int(match.group(3))
+        end_year = int(match.group(6))
+        if start_year < 100:
+            start_year += 2000
+        if end_year < 100:
+            end_year += 2000
+        start_date = safe_iso_date(start_year, int(match.group(2)), int(match.group(1)))
+        end_date = safe_iso_date(end_year, int(match.group(5)), int(match.group(4)))
+        if start_date is None or end_date is None:
+            return None
+        return start_date, end_date
+    match = re.fullmatch(r"(\d{4})[/-](\d{1,2})-(\d{1,2})\D+(\d{4})-(\d{1,2})-(\d{1,2})", text)
+    if match is not None:
+        start_date = safe_iso_date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+        end_date = safe_iso_date(int(match.group(4)), int(match.group(5)), int(match.group(6)))
+        if start_date is None or end_date is None:
+            return None
+        return start_date, end_date
     match = re.fullmatch(r"(\d{1,2})(?:-|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
     if match is not None:
         month = month_number(match.group(3))
@@ -197,6 +240,24 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
             return None
         start_date = safe_iso_date(year, month, int(match.group(1)))
         end_date = safe_iso_date(year, month, int(match.group(2)))
+        if start_date is None or end_date is None:
+            return None
+        return start_date, end_date
+
+    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})-(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})", text)
+    if match is not None:
+        start_month = month_number(match.group(2))
+        end_month = month_number(match.group(5))
+        if start_month is None or end_month is None:
+            return None
+        start_year = int(match.group(3))
+        end_year = int(match.group(6))
+        if start_year < 100:
+            start_year += 2000
+        if end_year < 100:
+            end_year += 2000
+        start_date = safe_iso_date(start_year, start_month, int(match.group(1)))
+        end_date = safe_iso_date(end_year, end_month, int(match.group(4)))
         if start_date is None or end_date is None:
             return None
         return start_date, end_date

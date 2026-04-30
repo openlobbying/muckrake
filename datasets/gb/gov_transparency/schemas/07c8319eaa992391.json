@@ -3,11 +3,16 @@
   "sheet_type": "data",
   "activity_type": "gifts",
   "data_start_offset": 1,
-  "fill_down_columns": [],
+  "fill_down_columns": [0],
+  "skip_row_prefixes": [
+    "*Chloe Smith was taking maternity leave during this period.",
+    "*Julia Lopez was taking maternity leave during this period.",
+    "Gifts Given: Nil return"
+  ],
   "date_source": "column",
   "date_column": 1,
-  "date_format": "%Y-%m-%d",
-  "date_precision": "day",
+  "date_format": "%d/%m/%Y",
+  "date_precision": "day_or_month",
   "columns": {
     "subject_name": 0,
     "activity_description": 2,

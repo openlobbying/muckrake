@@ -41,7 +41,7 @@ def fetch_file(
     """Fetch a file via HTTP to the data path, with local caching."""
     out_path = data_path.joinpath(name)
     if out_path.exists():
-        log.info("Using cached file: %s", out_path)
+        # log.info("Using cached file: %s", out_path)
         return out_path
 
     log.info("Fetching file from %s", url)

@@ -4,7 +4,7 @@ import json
 import sys
 
 
-SCHEMA_PATH = Path("datasets/gb/gov-transparency/schema.py")
+SCHEMA_PATH = Path("datasets/gb/gov_transparency/schema.py")
 SCHEMA_SPEC = importlib.util.spec_from_file_location("gov_transparency_schema", SCHEMA_PATH)
 assert SCHEMA_SPEC is not None
 assert SCHEMA_SPEC.loader is not None
@@ -16,7 +16,7 @@ load_schema = SCHEMA_MODULE.load_schema
 schema_from_dict = SCHEMA_MODULE.schema_from_dict
 validate_schema = SCHEMA_MODULE.validate_schema
 
-NORMALISE_PATH = Path("datasets/gb/gov-transparency/normalise.py")
+NORMALISE_PATH = Path("datasets/gb/gov_transparency/normalise.py")
 NORMALISE_SPEC = importlib.util.spec_from_file_location("gov_transparency_normalise_for_schema", NORMALISE_PATH)
 assert NORMALISE_SPEC is not None
 assert NORMALISE_SPEC.loader is not None

@@ -2,11 +2,12 @@ import importlib.util
 import sys
 from datetime import date
 from pathlib import Path
+import re
 
 from muckrake.utils.dates import parse_day_or_month_value, parse_day_value, parse_month_value
 
 try:
-    from .common import normalise_marker
+    from .common import normalise_marker, should_skip_row
     from .fingerprint import detect_header_row
     from .normalise import NormalisedSheet
     from .schema import Schema
@@ -22,6 +23,7 @@ except ImportError:
     sys.modules[common_spec.name] = common_module
     common_spec.loader.exec_module(common_module)
     normalise_marker = common_module.normalise_marker
+    should_skip_row = common_module.should_skip_row
     detect_header_row = common_module.load_sibling_module(__file__, __name__, "fingerprint").detect_header_row
     NormalisedSheet = common_module.load_sibling_module(__file__, __name__, "normalise").NormalisedSheet
     Schema = common_module.load_sibling_module(__file__, __name__, "schema").Schema
@@ -42,6 +44,8 @@ def extract(sheet: NormalisedSheet, schema: Schema, provenance: Provenance) -> l
 
     for row_index, row in enumerate(rows, start=data_start_row):
         current = list(row)
+        if should_skip_row(current, schema.skip_row_prefixes):
+            continue
         for column_index in schema.fill_down_columns:
             value = get_row_value(current, column_index).strip()
             if value == "":
@@ -70,6 +74,8 @@ def extract(sheet: NormalisedSheet, schema: Schema, provenance: Provenance) -> l
             canonical_name: get_row_value(current, column_index).strip()
             for canonical_name, column_index in schema.columns.items()
         }
+        if schema.subject_name_source != "column":
+            record["subject_name"] = resolve_subject_name(schema, provenance)
         record.update(resolve_date(current, schema, provenance))
         record["row_index"] = row_index
         record["sheet_name"] = sheet.name
@@ -158,3 +164,33 @@ def resolve_day_result(parsed: str | tuple[str, str]) -> dict:
             "date_precision": "day",
         }
     return {"date": parsed, "date_precision": "day"}
+
+
+def resolve_subject_name(schema: Schema, provenance: Provenance) -> str:
+    if schema.subject_name_source == "value":
+        if schema.subject_name_value is None:
+            raise ValueError("Schema subject_name_source='value' requires subject_name_value")
+        return schema.subject_name_value
+    if schema.subject_name_source == "provenance":
+        candidate = (provenance.attachment_title or provenance.publication_title).strip()
+        lowered = candidate.lower()
+        cut_markers = [
+            " guests at chequers",
+            " chequers",
+            " ministerial gifts, hospitality, travel and meetings",
+            " ministerial gifts",
+            " ministerial hospitality",
+            " ministerial meetings",
+            " ministerial overseas travel",
+        ]
+        for marker in cut_markers:
+            index = lowered.find(marker)
+            if index != -1:
+                candidate = candidate[:index]
+                break
+        candidate = re.sub(r"[_,-]+", " ", candidate)
+        candidate = re.sub(r"\s+", " ", candidate).strip(" ,")
+        if not candidate:
+            raise ValueError("Could not derive subject_name from provenance")
+        return candidate
+    raise ValueError(f"Unsupported subject_name_source: {schema.subject_name_source}")

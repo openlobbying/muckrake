@@ -3,7 +3,7 @@ import importlib.util
 import sys
 
 
-MODULE_PATH = Path("datasets/gb/gov-transparency/normalise.py")
+MODULE_PATH = Path("datasets/gb/gov_transparency/normalise.py")
 SPEC = importlib.util.spec_from_file_location("gov_transparency_normalise", MODULE_PATH)
 assert SPEC is not None
 assert SPEC.loader is not None
@@ -166,3 +166,13 @@ def test_detect_file_format_prefers_magic_bytes_over_wrong_extension():
     data = load_fixture(relative_path)
 
     assert detect_file_format(data, "wrong-name.xls") == "csv"
+
+
+def test_normalise_skips_fake_ods_fixture():
+    relative_path = (
+        "cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/"
+        "Whips_Lords_Minister_Quarterly_Transparency_July_-_Sept_16.ods"
+    )
+    data = load_fixture(relative_path)
+
+    assert normalise(data, relative_path) == []

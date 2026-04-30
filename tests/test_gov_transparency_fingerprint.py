@@ -3,7 +3,7 @@ import importlib.util
 import sys
 
 
-MODULE_PATH = Path("datasets/gb/gov-transparency/fingerprint.py")
+MODULE_PATH = Path("datasets/gb/gov_transparency/fingerprint.py")
 SPEC = importlib.util.spec_from_file_location("gov_transparency_fingerprint", MODULE_PATH)
 assert SPEC is not None
 assert SPEC.loader is not None
@@ -14,7 +14,7 @@ SPEC.loader.exec_module(MODULE)
 detect_header_row = MODULE.detect_header_row
 fingerprint = MODULE.fingerprint
 
-NORMALISE_PATH = Path("datasets/gb/gov-transparency/normalise.py")
+NORMALISE_PATH = Path("datasets/gb/gov_transparency/normalise.py")
 NORMALISE_SPEC = importlib.util.spec_from_file_location("gov_transparency_normalise_for_fp", NORMALISE_PATH)
 assert NORMALISE_SPEC is not None
 assert NORMALISE_SPEC.loader is not None

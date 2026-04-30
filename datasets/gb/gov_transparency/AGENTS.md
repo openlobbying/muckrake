@@ -1,43 +1,27 @@
-## Purpose
+This directory contains code that crawls and processes UK government transparency publications from GOV.UK, covering ministerial meetings, gifts, hospitality, travel, and more. See the README.md for more details.
 
-This dataset crawls UK government transparency publications from GOV.UK and processes them in these stages:
+The code covers several stages:
 
-1. Discovery via the GOV.UK Content API
-2. Normalisation into `NormalisedSheet`
-3. Fingerprinting of each sheet layout
-4. Schema lookup and validation
-5. Row extraction
-6. Entity emission
-
-If you are working on this dataset as an agent, your most common task is to create a new schema file for an unknown fingerprint.
-
-## Files
-
-Key files in this dataset:
-
-- `crawler.py`: orchestrates discovery, normalisation, fingerprinting, schema lookup, extraction, emission
-- `normalise.py`: file bytes to `list[NormalisedSheet]`
-- `fingerprint.py`: detects a stable header row and computes a structural fingerprint
-- `schema.py`: loads and validates schema JSON files from `schemas/`
-- `extract.py`: applies a schema to a sheet and produces canonical row dicts
-- `entities.py`: emits FTM entities from extracted rows
-- `types.py`: shared dataclasses like `Provenance`
-- `schemas/*.json`: one schema per known fingerprint
+- Discovery via the GOV.UK Content API
+- Normalisation into `NormalisedSheet`. This ensures we have a consistent internal representation of sheets across CSV, XLSX, ODS, and HTML sources.
+- Each sheet gets a stable structural fingerprint based on its header row and column structure.
+- We look up the fingerprint in our known schemas. If it's unknown, we log a preview and provenance for manual inspection.
+- You job as an AI agent is to create new schema JSON files for unknown fingerprints in `schemas/`.
 
 ## Your Job
 
-When the crawler reports `UNKNOWN FINGERPRINT: <fingerprint>`, your job is usually:
+When the crawler reports `UNKNOWN FINGERPRINT: <fingerprint>`, you are to:
 
-1. Inspect the logged sheet preview and provenance.
+1. Run `uv run muckrake crawl gb_gov_transparency` to crawl the dataset. It will likely produce an "UNKNOWN FINGERPRINT" error with a preview of the sheet and its provenance.
 2. Find the matching cached source file in `data/datasets/gb_gov_transparency/resources/`.
 3. Confirm the actual header row and data rows.
 4. Decide whether the sheet is:
    - `data`
    - `notes`
-   - `ignore`
-5. If it is `data`, create `schemas/<fingerprint>.json`.
-6. Validate the schema against the cached file.
-7. Prefer the smallest correct schema.
+   - `ignore` (explain why you are ignoring it to the user)
+5. Create a `schemas/<fingerprint>.json`.
+6. Run the crawler (`uv run crawl gb_gov_transparency`) again to validate the schema.
+7. If you encounter a new unknown fingerprint, repeat the process. Do not stop this loop until the user tells you to stop or focus on something else.
 
 ## Schema Format
 
@@ -60,6 +44,7 @@ Important fields:
 - `fill_down_columns`: columns where blanks mean “same as row above”
 - `nil_return_markers`: markers that mean the row is not a real activity
   - optional for `data` sheets because common nil-return markers are applied automatically
+- `skip_row_prefixes`: optional leading-text markers for explanatory rows embedded inside data sheets that should always be skipped
 - `reverse_roles`: optional boolean for data layouts where the official/public body hosts or organizes the activity and the counterpart should be `involved` rather than `payer`/`organizer`
 - `date_source`:
   - `column`
@@ -104,6 +89,7 @@ Use this when a workbook lists a minister/adviser once and leaves following rows
 Common examples:
 
 - ODS ministerial sheets from older Cabinet Office workbooks often need `fill_down_columns: [0]`
+- Some CSV transparency returns also list the minister only on the first row of a block and leave later rows blank; if the data clearly continues under the same person, use `fill_down_columns: [0]`
 
 ### `nil_return_markers`
 
@@ -123,6 +109,18 @@ Common examples:
 - `Nil return all other ministers`
 
 Rows are skipped if any mapped field or the date field contains one of these markers.
+
+### `skip_row_prefixes`
+
+Use this when a sheet contains explanatory or disclaimer rows inside the data area and those rows would otherwise look non-empty enough to be treated as activities.
+
+Be explicit and copy the actual opening text seen in the file.
+
+Common example:
+
+- Chequers hospitality sheets often append a note row beginning `This return includes guests who have received official hospitality at Chequers`
+
+Prefer `skip_row_prefixes` in the schema over dataset-specific code when the rule is a recurring row-text pattern.
 
 ### `date_source` and `date_precision`
 
@@ -154,6 +152,13 @@ Current extractor supports these common patterns:
 - day ranges like `02-06 September`
 
 If a date pattern is not yet supported and is clearly recurring, update code only if needed. Otherwise prefer a schema that reflects the current supported behavior.
+
+Edge case tips:
+
+- Some fingerprints are shared by files where the same logical date column alternates between exact days and month-level values. Prefer `date_precision: "day_or_month"` if the same layout is used for both.
+- Some travel rows use a single date column with day ranges like `3-4 April 2017`. Treat these as a single `date_column` with `date_precision: "day"`; extraction can emit a start/end date range.
+- Nil-only sheets sometimes leave the date and other fields blank and put the nil marker only in one mapped field. In those cases keep the sheet as `data`, add the exact `nil_return_markers` text seen in the file, and use `date_source: "none"` if there is no usable date cell.
+- A few malformed wide CSVs cause header detection to land on the first nil-return row instead of the actual header line. If the real data rows are still unambiguous, it is acceptable to use a non-default `data_start_offset`, including a negative offset, to recover the true data region for that fingerprint.
 
 ## Common Layout Patterns
 
@@ -203,6 +208,8 @@ At minimum, confirm:
 - `validate_schema()` passes on the cached file
 - `extract()` returns reasonable rows
 
+If extraction includes embedded explanatory text as a fake record, add `skip_row_prefixes` to the schema and revalidate.
+
 6. If the sheet is clearly notes/helper content, prefer `notes` or `ignore` rather than forcing a data schema.
 
 Do not use `notes` or `ignore` for data layouts that only happen to be nil returns in the sampled file.
@@ -240,25 +247,6 @@ and prints:
 - a few rows around the header
 - extracted row count
 
-## Current Known Fingerprints
-
-Some common ones already covered:
-
-- `773032b19673f830`: modern ministerial meetings CSV
-- `07c8319eaa992391`: modern ministerial gifts CSV
-- `2dfa24ad621f81df`: modern ministerial hospitality CSV
-- `58a4996c0fe66d4e`: modern ministerial travel CSV
-- `528536782065945f`: special adviser gifts workbook sheet
-- `69b6327f9b441d84`: special adviser hospitality workbook sheet
-- `4d9adf3bafa88456`: special adviser meetings workbook sheet
-- `c798eb99d71af58f`: older ODS gifts sheet
-- `94e4bd3d1d76f6ea`: older ODS hospitality sheet
-- `7f6dd9c8dc1e2398`: older ODS travel sheet
-- `3ba667a4f2110b46`: older ODS meetings sheet
-- `e8dae50b9c72457c`: notes sheet
-- `24cd6fcfe9fcdc0e`: helper `Sheet2`
-- `3f9d5a3e0d18a6c4`: helper `Sheet2` variant
-
 ## Constraints
 
 - Crash loudly on ambiguity. Do not guess.
@@ -267,14 +255,3 @@ Some common ones already covered:
 - Do not edit unrelated datasets.
 - Do not commit, push, or open PRs unless explicitly asked.
 - Do not emit entities directly when your task is only to add schemas.
-
-## What Good Looks Like
-
-A good schema:
-
-- uses the correct fingerprint
-- validates cleanly
-- captures real data rows without false positives
-- skips nil returns correctly
-- uses the narrowest correct date behavior
-- does not treat notes/helper sheets as data

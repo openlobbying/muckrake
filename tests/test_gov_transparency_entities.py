@@ -17,9 +17,9 @@ def load_module(name: str, relative_path: str):
     return module
 
 
-entities_module = load_module("gov_transparency_entities", "datasets/gb/gov-transparency/entities.py")
-schema_module = load_module("gov_transparency_schema_for_entities", "datasets/gb/gov-transparency/schema.py")
-types_module = load_module("gov_transparency_types_for_entities", "datasets/gb/gov-transparency/types.py")
+entities_module = load_module("gov_transparency_entities", "datasets/gb/gov_transparency/entities.py")
+schema_module = load_module("gov_transparency_schema_for_entities", "datasets/gb/gov_transparency/schema.py")
+types_module = load_module("gov_transparency_types_for_entities", "datasets/gb/gov_transparency/types.py")
 
 emit_entities = entities_module.emit_entities
 schema_from_dict = schema_module.schema_from_dict

@@ -348,13 +348,13 @@ def process_source(dataset: Dataset, filename: str, provenance: Provenance, stat
         summary = process_sheet(dataset, sheet, provenance, stats)
         if summary is not None:
             parsed_sheets.append(summary)
-    if sheets:
-        dataset.log.info(
-            "Processed %s sheets=%d parsed=%s",
-            provenance.attachment_title,
-            len(sheets),
-            ", ".join(parsed_sheets) or "none",
-        )
+    # if sheets:
+    #     dataset.log.info(
+    #         "Processed %s sheets=%d parsed=%s",
+    #         provenance.attachment_title,
+    #         len(sheets),
+    #         ", ".join(parsed_sheets) or "none",
+    #     )
 
 
 def process_sheet(dataset: Dataset, sheet, provenance: Provenance, stats: dict[str, int]) -> str | None:

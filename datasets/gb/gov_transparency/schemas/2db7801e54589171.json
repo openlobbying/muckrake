@@ -5,6 +5,9 @@
   "reverse_roles": true,
   "data_start_offset": -1,
   "fill_down_columns": [],
+  "skip_row_prefixes": [
+    "This return includes guests who have received official hospitality at Chequers"
+  ],
   "date_source": "none",
   "date_precision": "quarter",
   "columns": {

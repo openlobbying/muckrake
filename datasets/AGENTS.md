@@ -20,7 +20,7 @@ Before creating a new entity type, check [its documentation](https://followthemo
 
 You can then add properties like `entity.add('name', 'John Doe')`.
 
-All entries in the `gb` directory will have the property `jurisdiction` set to `gb`, if applicable.
+All entries in the `gb` directory will have the property `jurisdiction` set to `gb`. For Scottish datasets, it should be ``gb-sct``.
 
 An important property is `topics`, which is used for categorisation. For example, you might add `entity.add('topics', 'role.lobby')` for lobbyists, `entity.add('topics', 'role.pep')` for politicians, `entity.add('topics', 'gov')` for government departments, etc.
 

@@ -1,0 +1,18 @@
+{
+  "fingerprint": "bced272e52c22a30",
+  "sheet_type": "data",
+  "activity_type": "gifts",
+  "data_start_offset": 1,
+  "fill_down_columns": [0],
+  "date_source": "column",
+  "date_column": 1,
+  "date_format": "%d/%m/%Y",
+  "date_precision": "day_or_month",
+  "columns": {
+    "subject_name": 0,
+    "activity_description": 2,
+    "counterpart_name": 4,
+    "amount": 5,
+    "outcome": 6
+  }
+}

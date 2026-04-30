@@ -1,0 +1,20 @@
+{
+  "fingerprint": "6166945b82405efc",
+  "sheet_type": "data",
+  "activity_type": "hospitality",
+  "subject_name_source": "provenance",
+  "reverse_roles": true,
+  "data_start_offset": 2,
+  "fill_down_columns": [],
+  "skip_row_prefixes": [
+    "Total Cost:",
+    "This return includes guests who have received official hospitality at Chequers"
+  ],
+  "date_source": "column",
+  "date_column": 0,
+  "date_format": "%Y-%m-%dT%H:%M:%S",
+  "date_precision": "day",
+  "columns": {
+    "counterpart_name": 1
+  }
+}

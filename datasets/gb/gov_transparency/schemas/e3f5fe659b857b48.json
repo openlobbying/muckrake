@@ -1,0 +1,15 @@
+{
+  "fingerprint": "e3f5fe659b857b48",
+  "sheet_type": "data",
+  "activity_type": "meetings",
+  "data_start_offset": 0,
+  "fill_down_columns": [],
+  "nil_return_markers": ["Nil"],
+  "date_source": "none",
+  "date_precision": "quarter",
+  "columns": {
+    "subject_name": 0,
+    "counterpart_name": 2,
+    "activity_description": 3
+  }
+}

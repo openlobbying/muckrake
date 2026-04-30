@@ -1,0 +1,18 @@
+{
+  "fingerprint": "e46c329f7a869f62",
+  "sheet_type": "data",
+  "activity_type": "travel",
+  "data_start_offset": 1,
+  "fill_down_columns": [0],
+  "skip_row_prefixes": [
+    "This return excludes political visits."
+  ],
+  "date_source": "column",
+  "date_column": 1,
+  "date_format": "%Y-%m-%d",
+  "date_precision": "day",
+  "columns": {
+    "subject_name": 0,
+    "location": 2
+  }
+}

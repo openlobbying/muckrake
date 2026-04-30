@@ -2,6 +2,8 @@
 
 Muckrake crawls various [datasets](/datasets/), creates [FollowTheMoney](https://followthemoney.tech/) entities and relationships, servese them via a [FastAPI backend](/src/muckrake/api/server.py) and a [SvelteKit frontend](/openlobbying/). It is used for OpenLobbying.org, a public website for exploring UK lobbying data (donations, meetings, lobbying representation, etc.).
 
+Note that the `openlobbying` directory is called "openlobbying", not "openlake", "openlallying" or anything else. Be careful to use the correct name when running commands.
+
 ## FollowTheMoney
 
 Always prefer using existing FollowTheMoney functions and schemata throughout the codebase. We also heavily rely on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library for entity resolution, as well as data storage. Check the documentation and codebase to see if you can use existing functions before writing new ones, chances are they exist.

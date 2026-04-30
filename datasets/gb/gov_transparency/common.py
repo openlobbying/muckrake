@@ -37,6 +37,16 @@ def normalise_marker(value: str) -> str:
     return value.strip().casefold()
 
 
+def should_skip_row(values: list[str], skip_row_prefixes: list[str]) -> bool:
+    if not skip_row_prefixes:
+        return False
+    normalised_values = [normalise_marker(value) for value in values if value.strip()]
+    if not normalised_values:
+        return False
+    normalised_prefixes = [normalise_marker(prefix) for prefix in skip_row_prefixes if prefix.strip()]
+    return any(value.startswith(prefix) for value in normalised_values for prefix in normalised_prefixes)
+
+
 def slugify(value: str) -> str:
     value = value.strip().lower()
     value = re.sub(r"[^a-z0-9]+", "-", value)

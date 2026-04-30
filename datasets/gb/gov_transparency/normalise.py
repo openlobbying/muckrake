@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Literal
+import zipfile
 
 from bs4 import BeautifulSoup
 from odf.opendocument import load as load_odf
@@ -37,11 +38,20 @@ def normalise(data: bytes, filename: str) -> list[NormalisedSheet]:
     if file_format == "html":
         return read_html_sheets(data)
     if file_format == "xls":
-        return read_xls_sheets(data)
+        try:
+            return read_xls_sheets(data)
+        except Exception:
+            return []
     if file_format in {"xlsx", "xlsm"}:
-        return read_openxml_sheets(data)
+        try:
+            return read_openxml_sheets(data)
+        except zipfile.BadZipFile:
+            return []
     if file_format == "ods":
-        return read_ods_sheets(data)
+        try:
+            return read_ods_sheets(data)
+        except zipfile.BadZipFile:
+            return []
     return []
 
 
@@ -164,7 +174,7 @@ def read_csv_rows(data: bytes) -> list[list[str]]:
         else:
             return []
 
-    reader = csv.reader(StringIO(text))
+    reader = csv.reader(StringIO(text, newline=""))
     return [normalise_row(row) for row in reader]
 
 

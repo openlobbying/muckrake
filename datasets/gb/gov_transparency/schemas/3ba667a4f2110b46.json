@@ -6,7 +6,7 @@
   "fill_down_columns": [0],
   "date_source": "column",
   "date_column": 1,
-  "date_precision": "month",
+  "date_precision": "day_or_month",
   "columns": {
     "subject_name": 0,
     "counterpart_name": 2,

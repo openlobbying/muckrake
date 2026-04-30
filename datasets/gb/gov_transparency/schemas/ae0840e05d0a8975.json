@@ -1,0 +1,21 @@
+{
+  "fingerprint": "ae0840e05d0a8975",
+  "sheet_type": "data",
+  "activity_type": "travel",
+  "data_start_offset": 1,
+  "fill_down_columns": [0],
+  "skip_row_prefixes": [
+    "*Chloe Smith was taking maternity leave during this period.",
+    "*Julia Lopez was taking maternity leave during this period."
+  ],
+  "date_source": "column",
+  "date_column": 1,
+  "date_format": "%d/%m/%Y",
+  "date_precision": "day",
+  "columns": {
+    "subject_name": 0,
+    "location": 2,
+    "activity_description": 3,
+    "amount": 8
+  }
+}
