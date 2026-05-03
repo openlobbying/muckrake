@@ -1,0 +1,39 @@
+{
+  "activity_type": "travel",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "precision": "day",
+        "type": "day_range"
+      },
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      }
+    ]
+  },
+  "fingerprint": "edca75a39ba482d3",
+  "layout": {
+    "fill_down_columns": [
+      0
+    ],
+    "skip_row_prefixes": [
+      "*This does not include party political visits"
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "location": 2
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

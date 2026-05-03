@@ -1,0 +1,2696 @@
+{
+  "0193bd9c4a14036b": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_CO_Ministers_Quarterly_Return_HOSPITALITY_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c94d855ed915d07a80a3472/2019-03-22_CO_Ministers_Quarterly_Return_HOSPITALITY_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "02df734ec826bda4": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Rt_Hon_Rishi_Sunak_MP_hospitality__1st_-_4th_July_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dbt-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/dbt-ministers-hospitality-1-to-4-july-2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/DEFRA_s_hospitality__1-4_July_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/desnz-ministerial-gifts-hospitality-travel-meetings-july-to-september-2024/DESNZ_-_1-4_July_2024_-_Ministers_Hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dft-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/dft-ministerial-hospitality-july-to-september-2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dhsc-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/dhsc-q2-1-to-4-july-2024-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dsit-ministerial-gifts-hospitality-travel-meetings-july-to-september-2024/dsit-ministerial-hospitality-july-september-2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fcdo-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/FCDO_ministerial_hospitality_1_to_4_July_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/home-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/Ministerial+Hospitality+1st+-+4th+July+2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/mhclg-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2024/MHCLG_ministerial_hospitality_Jul-Sep_2024.csv",
+      "sheet": "default"
+    }
+  ],
+  "0736527f40406bb9": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Commons_Ministers_Overseas_travel_Oct_-_Dec_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a821acaed915d74e6235cf0/Whips_Commons_Ministers_Overseas_travel_Oct_-_Dec_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "07c8319eaa992391": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/beis-ministerial-gifts-april-june-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/beis-ministerial-gifts-april-june-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/april-june-2019-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/april-june-2020-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/april-june-2021-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/beis-ministerial-gifts-january-march-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/beis-ministerial-gifts-january-march-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/january-march-2020-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/january-march-2021-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/beis-ministerial-gifts-july-september-2017.csv",
+      "sheet": "default"
+    }
+  ],
+  "07d551398e70fcc1": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-12_HoC_Leader_Minister_s_MEETINGS_Quarterly_Return_April_-_June_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82d895e5274a2e87dc345f/2017-10-12_HoC_Leader_Minister_s_MEETINGS_Quarterly_Return_April_-_June_2017.csv",
+      "sheet": "default"
+    }
+  ],
+  "0863058eb7e704da": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-10_CO_Ministerial_MEETINGS_Returns_-_Q1_Apr_-June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5bc756cb40f0b61c8eaf9eca/2018-10-10_CO_Ministerial_MEETINGS_Returns_-_Q1_Apr_-June_2018.csv",
+      "sheet": "default"
+    }
+  ],
+  "096be8457c1fc5e0": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-meetings-january-to-march-2022/january-march-2022-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_hospitality_returns_april_june_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-07-11_-_HoL_Whips_HOSPITALITY_Apr_2017_-_June_2017_-_Ministerial_Quarterly_Transparency_Return__1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-10_CO_Ministerial_HOSPITALITY_Returns_-_Q1_Apr_-June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_HoL_Ministers_Whips_Quarterly_HOSPITALITY_Transparency_Return_-_Jan-Mar_2018_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Minister_Lords_Whips_Hospitality_july_-_sept_16.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Whips_Commons_Ministers_Returns_hospitality_July_September.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Leader_of_the_Lords_and_Lords_Whips_Hospitality_Oct_2015_-_Dec_2015.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Commons_Ministers_hospitality_Oct_-_Dec_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Minister_Lords_Ministerial_hospitality_oct_-_dec_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "0db33a4f71d18e0a": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Rt_Hon_Rishi_Sunak_MP_receptions__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Rt_Hon_Rishi_Sunak_MP_official_charity_receptions__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP___Rt_Hon_Rishi_Sunak_MP_official_charity_receptions__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/Rt_Hon_Boris_Johnson_MP_official_charity_receptions__April_to_June_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2022/Rt_Hon_Boris_Johnson_MP_official_charity_receptions__April_to_June_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2023/Rt_Hon_Rishi_Sunak_MP_official_charity_receptions__April_to_June_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2022/Rt_Hon_Boris_Johnson_MP_official_charity_receptions__January_to_March_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2023/Rt_Hon_Rishi_Sunak_MP_official_charity_receptions__January_to_March_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2021/Rt_Hon_Boris_Johnson_MP_official_charity_receptions__July_to_September_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2022/Rt_Hon_Boris_Johnson_MP_and_Rt_Hon_Liz_Truss_MP_official_charity_receptions__July_to_September_2022.csv",
+      "sheet": "default"
+    }
+  ],
+  "152d3b879008eace": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-11-15_HoL_Ministers_MEETINGS_Quarterly_Return_July-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a05d340f0b60baf5f5476/2018-11-15_HoL_Ministers_MEETINGS_Quarterly_Return_July-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "1595c3fe116f8481": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_HoC_Whips_Ministers_Q3_2018_Quarterly_Transparency_TRAVEL_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_HoL_Ministers_Quarterly_Return_TRAVEL_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2018/2018_DfE_Ministers_Quarterly_Return_Jan_-_Mar_International_Travel_1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2019/Ministerial_Overseas_Jan_Mar_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/home-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/Overseas_Travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-gifts-hospitality-travel-and-external-meetings-2017/DHSC_Ministers_Overseas_Travel_Q3_Oct_to_Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c94c0cee5274a48f4f7489a/2019-03-22_HoC_Whips_Ministers_Q3_2018_Quarterly_Transparency_TRAVEL_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c94d951ed915d07a7e61347/2019-03-22_HoL_Ministers_Quarterly_Return_TRAVEL_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "21b8f96c4df88b16": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/beis-ministerial-travel-april-june-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/beis-ministerial-travel-january-march-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/july_septministerialoverseas.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/october-december-2016-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2015/bis-ministerial-overseas-travel-april-june-2015.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/bis-ministerial-travel-april-june-2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/bis-ministerial-travel-january-march-2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2015/bis-ministerial-overseas-travel-july-september-2015.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/october-december-2015-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_overseas_travel.csv",
+      "sheet": "default"
+    }
+  ],
+  "235898be65719cdf": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a74f532e5274a59fa716489/AGO_Hospitality_1_April_-_30_June__2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a78b2e740f0b63247699774/AGO_Hospitality_July_-_Sept_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a79bfd4e5274a18ba50e8b7/AGO_Hospitality_1_January_-_31_March_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a79c6e840f0b670a80255a6/AGO_Hospitality_Jan_-_March_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a79df94ed915d6b1deb3f78/AGO_Hospitality_Oct_-_Dec_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a79e104ed915d042206bb1b/Hospitality_1_October_-_31_December_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-april-to-june-2011/AGO_Hospitality_1_April_-_30_June__2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-january-to-march-2011/AGO_Hospitality_1_January_-_31_March_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-january-to-march-2012/AGO_Hospitality_Jan_-_March_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-july-to-september-2011/AGO_Hospitality_July_-_Sept_11.csv",
+      "sheet": "default"
+    }
+  ],
+  "24cd6fcfe9fcdc0e": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Leader_of_the_Lords_and_Lords_Whips_Oct_2015_-_Dec_2015.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-october-to-december-2015/CO_Special_Adviser_Oct_-_Dec_2015_xls.xlsx",
+      "sheet": "Sheet2"
+    }
+  ],
+  "29c915831fd2e898": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/Rt_Hon_Boris_Johnson_MP_Chequers__April_to_June_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2022/Rt_Hon_Boris_Johnson_MP_Chequers__April_to_June_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2022/Rt_Hon_Boris_Johnson_MP_and_Rt_Hon_Liz_Truss_MP_Chequers__July_to_September_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/61717748d3bf7f55fbc3ab77/Rt_Hon_Boris_Johnson_MP_Chequers__April_to_June_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/63356b138fa8f5064d855a2f/Rt_Hon_Boris_Johnson_MP_Chequers__April_to_June_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/639ae262d3bf7f7b71d920dd/Rt_Hon_Boris_Johnson_MP_and_Rt_Hon_Liz_Truss_MP_Chequers__July_to_September_2022.csv",
+      "sheet": "default"
+    }
+  ],
+  "2a55616551e86bec": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Cabinet_Office_ministerial_overseas_travel__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_overseas_travel__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Leader_of_the_House_of_Lords_ministerial_overseas_travel__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Rt_Hon_Rishi_Sunak_MP_overseas_travel__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Cabinet_Office_ministerial_overseas_travel__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_overseas_travel__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Leader_of_the_House_of_Lords_ministerial_overseas_travel__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Rt_Hon_Rishi_Sunak_MP_overseas_travel__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Cabinet_Office_ministerial_overseas_travel__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_overseas_travel__July_to_September_2024.csv",
+      "sheet": "default"
+    }
+  ],
+  "2b134a46e519bf68": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_guests_at_chequers_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a759deced915d6faf2b45da/prime_minister_guests_at_chequers_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "2db7801e54589171": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2023/Rt_Hon_Rishi_Sunak_MP_Chequers__January_to_March_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/64b7fad32059dc000d5d25eb/Rt_Hon_Rishi_Sunak_MP_Chequers__January_to_March_2023.csv",
+      "sheet": "default"
+    }
+  ],
+  "2dc3eca7a22bb23e": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Cabinet_Office_ministerial_meetings__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_meetings__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Leader_of_the_House_of_Lords_ministerial_meetings__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Rt_Hon_Rishi_Sunak_MP_meetings__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Cabinet_Office_ministerial_meetings__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_meetings__January_to_March_2024_-_Leader_of_the_House_of_Commons_and_Whips__ministerial_meetings__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Leader_of_the_House_of_Lords_ministerial_meetings__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Rt_Hon_Rishi_Sunak_MP_meetings__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Cabinet_Office_ministerial_meetings__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_meetings__July_to_September_2024.csv",
+      "sheet": "default"
+    }
+  ],
+  "2dfa24ad621f81df": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/beis-ministerial-hospitality-april-june-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/april-june-2019-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/april-june-2020-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/april-june-2021-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/beis-ministerial-hospitality-january-march-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/january-march-2019-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/january-march-2020-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/january-march-2021-disclosure-ministerial-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/beis-ministerial-hospitality-july-september-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/beis-ministerial-hospitality-july-september-2018.csv",
+      "sheet": "default"
+    }
+  ],
+  "32a910310f5765ed": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Rt_Hon_Rishi_Sunak_MP_Chequers__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2023/Rt_Hon_Rishi_Sunak_MP_Chequers__October_to_December_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/65f9c1709316f5001164c35b/Rt_Hon_Rishi_Sunak_MP_Chequers__October_to_December_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/66b62b4fce1fd0da7b5935d3/Rt_Hon_Rishi_Sunak_MP_Chequers__January_to_March_2024.csv",
+      "sheet": "default"
+    }
+  ],
+  "385f0685de390c18": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Cabinet_Office_Ministerial_travel__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82322f40f0b6230269b599/Cabinet_Office_Ministerial_travel__January_to_March_2017.csv",
+      "sheet": "default"
+    }
+  ],
+  "3a1a77812b5605a3": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_overseas_travel_returns_april_june_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_overseas_travel_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dft-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/dft-overseas-return-q2-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dft-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/dft-overseas-return-q1-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a816907e5274a2e8ab53d68/prime_minister_overseas_travel_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "3ba667a4f2110b46": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/cabinet_office_ministers_april_june_2016.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/lords_whips_ministerial_quarterly_transparency_return_april_june_2016.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_ministeral_returns_april_june_2016.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-september-2015/commons_leader_and_commons_whips_july_sept_2015.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-september-2015/prime_minister_july_to_september_2015.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_Transparency_Returns_January_to_March_2016.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/jan_mar_2016_whips_ministerial_quarterly_transparency_return.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/whips_lords_ministerial_quarterly_returns.ods",
+      "sheet": "Meetings"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Cabinet_Office_Minister_Quarterly_returns_July_September.ods",
+      "sheet": "Meetings"
+    }
+  ],
+  "3f9d5a3e0d18a6c4": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/beis-ministerial-disclosure-april-june-2017.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/beis-ministerial-disclosure-january-march-2017.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/july_september_2016_bis_publications_ministers_BEIS_final__1_.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Copy_of_october_december_2016_bis_publications_ministers_final.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-april-to-june-2017/beis-special-advisers-disclosure-april-june-2017.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-january-to-march-2017/beis-special-advisers-disclosure-january-march-2017.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-july-to-september-2016/july_september_2016_bis_publications_special_adviser_BEIS_final.xlsm",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-october-to-december-2016/october_december_2016_bis_publications_special_adviser_final.xlsm",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2015/bis-ministers-april-june-2015.xlsx",
+      "sheet": "Sheet2"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/bis-ministerial-disclosure-april-june-2016.xlsx",
+      "sheet": "Sheet2"
+    }
+  ],
+  "45f381d2221d329c": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_HoL_Ministers_Whips_Quarterly_MEETINGS_Transparency_Return_-_Jan-Mar_2018_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-06_HoL_MEETINGS_Quarterly_Return_July_-_Sept.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a8227b1e5274a2e87dc16d7/2017-12-06_HoL_MEETINGS_Quarterly_Return_July_-_Sept.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5b338136e5274a55da87f014/2018-06-26_HoL_Ministers_Whips_Quarterly_MEETINGS_Transparency_Return_-_Jan-Mar_2018_FINAL.csv",
+      "sheet": "default"
+    }
+  ],
+  "477f438c3db92200": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2020/Rt-Hon-Boris-Johnson-MP-hospitality-July-to-September-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2020/Rt-Hon-Boris-Johnson-MP-hospitality-October-to-December-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/601bbdc28fa8f53fbf42be35/Rt-Hon-Boris-Johnson-MP-hospitality-July-to-September-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/60955000e90e073578a67cfd/Rt-Hon-Boris-Johnson-MP-hospitality-October-to-December-2020.csv",
+      "sheet": "default"
+    }
+  ],
+  "48111509ccc2f1e5": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-11-15_HoL_Ministers_GIFTS_Quarterly_Return_July-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-11-25_CO_Ministers_GIFTS_Quarterly_Returns_July-_Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Sir_Eric_Pickles_transparency_return_-_Gifts_-__Oct_-_Dec_2016__.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81bf89ed915d74e6233e69/Sir_Eric_Pickles_transparency_return_-_Gifts_-__Oct_-_Dec_2016__.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a034540f0b60c82ef08fc/2018-11-25_CO_Ministers_GIFTS_Quarterly_Returns_July-_Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a0580ed915d0c3d63f6b4/2018-11-15_HoL_Ministers_GIFTS_Quarterly_Return_July-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "4d9adf3bafa88456": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-october-to-december-2015/CO_Special_Adviser_Oct_-_Dec_2015_xls.xlsx",
+      "sheet": "Meetings"
+    }
+  ],
+  "4e02e6dd9cf60ff4": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_PM_MEETINGS_Returns_Q1_Apr-Jun_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-september-2015/Commons_leader_and_Commons_Whips_Meetings_with_external_orgs_April_-_Sept_2015.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_CO_Ministerial_MEETINGS_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Prime_Minister_Transparency_Returns_October_to_December_2015_ODS.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/PM_returns_Oct_-_Dec_2016_meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2017/2018-03-21_PM_MEETINGS_Return_Oct-Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2022/Cabinet_Office_ministerial_meetings__October_to_December_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dclg-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2015/2015-Ministerial_Returns_meetings_-__MAY_to_JUNE_2015_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dclg-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2015/2015_-_Ministerial_Returns_meetings_-_JULY_to_SEPTEMBER_2015_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dclg-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/2015_-_Ministerial_Returns_meetings_-_OCTOBER_to_DECEMBER_2015_FINAL.csv",
+      "sheet": "default"
+    }
+  ],
+  "528536782065945f": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-october-to-december-2015/CO_Special_Adviser_Oct_-_Dec_2015_xls.xlsx",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ukef-special-advisers-gifts-hospitality-and-meetings-october-to-december-2024/2024-25_Q3_Special_Advisers_Transparency.xlsx",
+      "sheet": "Gifts"
+    }
+  ],
+  "53ec96c8875a4269": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a74c496e5274a3f93b48a7a/Nil_return_hospitality_Ap_June_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a758dbfed915d6faf2b3e29/Nil_return_hospitalitymayjuly10.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a78c2fc40f0b62b22cbc97c/Nil_return_hospitalitymayjuly10.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a78dbd2e5274a2acd18a55b/Nil_return_hospitality_Ap_June_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a7cbd6aed915d682236241b/Nil_return_hospitality_-_Jan_-_march_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-gifts-given-and-received-13-may-to-31-july-2010/Nil_return_hospitalitymayjuly10.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-gifts-given-and-received-april-to-june-2012/Nil_return_hospitality_Ap_June_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-13-may-to-31-july-2010/Nil_return_hospitalitymayjuly10.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-april-to-june-2012/Nil_return_hospitality_Ap_June_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-january-to-march-2013/Nil_return_hospitality_-_Jan_-_march_13.csv",
+      "sheet": "default"
+    }
+  ],
+  "5837559e4681a631": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-15_HoL_Ministers_MEETINGS_Quarterly_Return_Apr_-_June_2018_-_FINAL_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_MEETINGS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-23_HoC_and_Whips_Ministers_Quarterly_MEETINGS_Return_Apr_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-25_HoC_Ministers_MEETINGS_TRAVEL_Quarterly_Return_Jan-Mar_2018_-_FINAL__1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-11-27_HoC_Ministers_MEETINGS_Quarterly_Return_July_-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2017/2018-02-16_CO_HoL_MEETINGS_Oct_-_Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2017/2018-02-16_CO_MEETINGS_Ministers_Return_Oct-Dec_2017_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2017/2018-03-21_HoC_and_Whips_MEETINGS_Oct-Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2018/Ministerial_Meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2019/DfE_ministerial_meetings_April_to_June_2019.csv",
+      "sheet": "default"
+    }
+  ],
+  "58a4996c0fe66d4e": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/beis-ministerial-travel-april-june-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/april-june-2019-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/april-june-2020-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/april-june-2021-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/beis-ministerial-travel-january-march-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/january-march-2019-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/january-march-2020-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/january-march-2021-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/beis-ministerial-travel-july-september-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/july-september-2019-disclosure-ministerial-overseas-travel.csv",
+      "sheet": "default"
+    }
+  ],
+  "5e12a2c8a09c3773": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2022/Rt_Hon_Boris_Johnson_MP_Chequers__January_to_March_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/62cee03fd3bf7f28583b00af/Rt_Hon_Boris_Johnson_MP_Chequers__January_to_March_2022.csv",
+      "sheet": "default"
+    }
+  ],
+  "5e3714627d8694b0": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_PM_OVERSEAS_TRAVEL_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c93c044e5274a48f05ff731/2019-03-22_PM_OVERSEAS_TRAVEL_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "6166945b82405efc": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Guests_at_Chequers"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_Transparency_Returns_January_to_March_2016.ods",
+      "sheet": "Guests_at_Chequers"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Prime_Minister_Transparency_Returns_October_to_December_2015_ODS.ods",
+      "sheet": "Guests_at_Chequers"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82bfa040f0b62305b9423e/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Guests_at_Chequers"
+    }
+  ],
+  "61d0762112194446": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_PM_MEETINGS_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dluhc-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2022/DLUHC_ministers_meetings_Jul_to_Sep_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dluhc-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2022/DLUHC_ministers_meetings_Oct_to_Dec_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c93c00e40f0b633f6c529fb/2019-03-22_PM_MEETINGS_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "62bebb31fa926a3f": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a789aabe5274a277e68e04b/AGO_meetings_April_-_June_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a78af26ed915d042206488d/Ministers__meetings_1_October_-_31_December_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a797255e5274a3864fd7106/Ministers_meetings__1_August_-_30_September_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a798d56ed915d07d35b6644/Meetings_1_January__31_March_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a79c2a8ed915d042206ad61/Ministers__meetings_13_May_-_31_July_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-13-may-to-31-july-2010/Ministers__meetings_13_May_-_31_July_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-april-to-june-2011/AGO_meetings_April_-_June_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-august-to-september-2010/Ministers_meetings__1_August_-_30_September_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-january-to-march-2011/Meetings_1_January__31_March_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-october-to-december-2010/Ministers__meetings_1_October_-_31_December_2010.csv",
+      "sheet": "default"
+    }
+  ],
+  "62ed3145dc280d2e": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_gifts_returns_april_june_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-07-11_-_HoL_Whips_GIFTSApr_2017_-_June_2017_-_Ministerial_Quarterly_Transparency_Return__1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-10_CO_Ministerial_GIFTS_Returns_-_Q1_Apr_-June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_HoL_Ministers_Whips_Quarterly_GIFTS_Transparency_Return_-_Jan-Mar_2018_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Minister_Lords_Whips_gifts_july_-_sept_16.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Whips_Commons_Ministers_Returns_gifts_July___September_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2022/Leader_of_the_House_of_Commons_and_Whips__ministerial_gifts__October_to_December_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/Defra_mins_trans_gifts_Apr_June_2021_Q1202122.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2023/Defra_mins_trans_gifts_Q1_Apr_Jun_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/defra_mins_trans_gifts_Jan_Mar_2020_Q4_201920.csv",
+      "sheet": "default"
+    }
+  ],
+  "6512250b5fedc2b8": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_HOSPITALITY_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/jan_mar_2016_lords_whips_ministerial_quarterly_transparency_hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-12-12_PM_HOSPITALITY_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/PM_returns_Oct_-_Dec_2016_Hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dclg-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/Ministerial_hospitality_April_to_June_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2018/Ministerial_Hospitality2.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfid-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/hospitality-July-Sept-19.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfid-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2019/Hospitality-Oct-Dec-19.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dhsc-ministerial-gifts-hospitality-travel-and-meetings-2018-to-2019/ministers-transparency-returns-october-december-2018-hospitality.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dhsc-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/Q2_July_-_September_DHSC_Ministerial_HOSPITALITY.csv",
+      "sheet": "default"
+    }
+  ],
+  "652f84df6e56b346": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2023/Rt_Hon_Rishi_Sunak_MP_Chequers__July_to_September_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/65788652095987000d95df1f/Rt_Hon_Rishi_Sunak_MP_Chequers__July_to_September_2023.csv",
+      "sheet": "default"
+    }
+  ],
+  "66f048032719e2c2": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Commons_Ministers_gifts_Oct_-_Dec_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82c33940f0b62305b94364/Whips_Commons_Ministers_gifts_Oct_-_Dec_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "67ef42963f240c12": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_meetings_returns_april_june_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-07-11_-_HoL_Whips_MEETINGS_Apr_2017_-_June_2017_-_Ministerial_Quarterly_Transparency_Return__1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-09-08_Cabinet_Office_Ministers_MEETINGS_April_-_June_2017_-_Final.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Minister_Lords_Whips_meetings_july_-_sept_16.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Whips_Commons_Ministers_Returns_meetings_July_September.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_meetings_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2023/Rt_Hon_Rishi_Sunak_MP_meetings__July_to_September_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2023/Defra_mins_trans_mtgs_Q1_Apr_Jun_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2020/Defra_mins_trans_oct_dec_2020_Q3_meetingsv2.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/defra-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2021/Defra_mins_trans_mtgs_Q3_Oct_Dec_2021.csv",
+      "sheet": "default"
+    }
+  ],
+  "69b6327f9b441d84": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-october-to-december-2015/CO_Special_Adviser_Oct_-_Dec_2015_xls.xlsx",
+      "sheet": "Hospitality"
+    }
+  ],
+  "6d26c4872c602824": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a78d59040f0b6324769a859/Gifts_Jan_-_March_2012.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-gifts-given-and-received-january-to-march-2012/Gifts_Jan_-_March_2012.csv",
+      "sheet": "default"
+    }
+  ],
+  "6f5cad9bf14b1f39": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-07-11_-_HoL_Whips_OVERSEAS_TRAVEL_Apr_2017_-_June_2017_-_Ministerial_Quarterly_Transparency_Return__1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Minister_Lords_Whips_overseas_travel_july_-_sept_16.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Whips_Commons_Ministers_Returns_overseas_July_September.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a7f391aed915d74e6229238/Whips_Commons_Ministers_Returns_overseas_July_September.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80171040f0b62302691735/Minister_Lords_Whips_overseas_travel_july_-_sept_16.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81faf840f0b62305b91d6b/2017-07-11_-_HoL_Whips_OVERSEAS_TRAVEL_Apr_2017_-_June_2017_-_Ministerial_Quarterly_Transparency_Return__1_.csv",
+      "sheet": "default"
+    }
+  ],
+  "712d92c41f57cf10": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Cabinet_Office_Ministerial_meetings__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-11-25_CO_Ministers_MEETINGS_Qrtly_Returns_July-_Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81f53540f0b62305b91b73/Cabinet_Office_Ministerial_meetings__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c9a460f40f0b633fe11d2d5/2018-11-25_CO_Ministers_MEETINGS_Qrtly_Returns_July-_Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "71713eaa01ad62f4": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_PM_Quarterly_MEETINGS_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5b3377cae5274a55da87f013/2018-06-26_PM_Quarterly_MEETINGS_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    }
+  ],
+  "769d41656cc637d6": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP___Rt_Hon_Rishi_Sunak_MP_Chequers__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-overseas-travel-and-meetings-october-to-december-2024/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP_Chequers__October_to_December_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/6798faa09a6dc0352ab3416f/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP___Rt_Hon_Rishi_Sunak_MP_Chequers__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/67e51648baa1bd4c764668c7/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP_Chequers__October_to_December_2024.csv",
+      "sheet": "default"
+    }
+  ],
+  "773032b19673f830": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/beis-ministerial-meetings-april-june-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/beis-ministerial-meetings-april-june-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/april-june-2019-disclosure-ministerial-meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/april-june-2020-disclosure-ministerial-meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/april-june-2021-disclosure-ministerial-meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/beis-ministerial-meetings-january-march-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/beis-ministerial-meetings-january-march-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/january-march-2019-disclosure-ministerial-meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/january-march-2020-disclosure-ministerial-meetings.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/january-march-2021-disclosure-ministerial-meetings.csv",
+      "sheet": "default"
+    }
+  ],
+  "77580685c0f546ac": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Rt_Hon_Rishi_Sunak_MP_guests_at_Chequers__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2021/Rt_Hon_Boris_Johnson_MP_Chequers__July_to_September_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2021/Rt_Hon_Boris_Johnson_MP_Chequers__October_to_December_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-overseas-travel-and-meetings-april-to-june-2025/No10_Sir_Keir_Starmer_KCB_KC_MP_-_Guests_at_Chequers__April_to_June_2025.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-overseas-travel-and-meetings-january-to-march-2025/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP__Chequers_January_to_March_2025.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/61f28f798fa8f5388a7ccc7d/Rt_Hon_Boris_Johnson_MP_Chequers__July_to_September_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/62458d43d3bf7f32b2e525a6/Rt_Hon_Boris_Johnson_MP_Chequers__October_to_December_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/66f6693730536cb92748286c/Rt_Hon_Rishi_Sunak_MP_guests_at_Chequers__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/685bae4b454906840a44d65f/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP__Chequers_January_to_March_2025.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/68d54fc78c739d679fb1dddb/No10_Sir_Keir_Starmer_KCB_KC_MP_-_Guests_at_Chequers__April_to_June_2025.csv",
+      "sheet": "default"
+    }
+  ],
+  "7a0669a7a51bdf57": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_HoL_Ministers_Quarterly_Return_GIFTS_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c94d911ed915d07a61be050/2019-03-22_HoL_Ministers_Quarterly_Return_GIFTS_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "7a60bc383a47173d": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/lords_whips_ministerial_quarterly_transparency_return_april_june_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_Transparency_Returns_January_to_March_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/jan_mar_2016_whips_ministerial_quarterly_transparency_return.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/whips_lords_ministerial_quarterly_returns.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Whips_Commons_Ministers_Returns_July___September_.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Minister_Lords_Ministerial_data_oct_-_dec_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a8075dfe5274a2e87db9f09/Whips_Commons_Ministers_Returns_July___September_.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81f1eeed915d74e6234f4d/Whips_Minister_Lords_Ministerial_data_oct_-_dec_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82bfa040f0b62305b9423e/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Overseas_travel"
+    }
+  ],
+  "7abaa9a6d0f2b66d": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/Rt_Hon_Boris_Johnson_MP_Chequers__January_to_March_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/60f0269ee90e0764cd98a04c/Rt_Hon_Boris_Johnson_MP_Chequers__January_to_March_2021.csv",
+      "sheet": "default"
+    }
+  ],
+  "7d321acb001d3dc2": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-10_CO_Ministerial_OVERSEAS_TRAVEL_Returns_-_Q1_Apr_-June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_HoL_Ministers_Whips_Quarterly_OVERSEAS_TRAVEL_Transparency_Return_-_Jan-Mar_2018_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dhsc-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/dhsc-ministers-travel-jan-to-march-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5b33811a40f0b67f6dea2bfe/2018-06-26_HoL_Ministers_Whips_Quarterly_OVERSEAS_TRAVEL_Transparency_Return_-_Jan-Mar_2018_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5bc756a1ed915d64c2c87e1d/2018-10-10_CO_Ministerial_OVERSEAS_TRAVEL_Returns_-_Q1_Apr_-June_2018.csv",
+      "sheet": "default"
+    }
+  ],
+  "7f6dd9c8dc1e2398": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/cabinet_office_ministers_april_june_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_ministeral_returns_april_june_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Cabinet_Office_Minister_Quarterly_returns_July_September.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Cabinet_Office_Ministers_Oct_-_Dec_2015__1_.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Commons_ministerial_data_Oct_-_Dec_2016.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/home-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2015/Ministerial_gifts_hospitality_travel_and_meetings_April_to_June.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/home-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2015/Ministerial_gifts_hospitality_travel_and_meetings_July_to_Sept.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80489d40f0b62305b8a403/Cabinet_Office_Minister_Quarterly_returns_July_September.ods",
+      "sheet": "Overseas_travel"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80d8ebe5274a2e8ab52807/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "Overseas_travel"
+    }
+  ],
+  "8b15a5fa343986fa": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Cabinet_Office_Ministerial_gifts__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82d7fc40f0b62305b94a43/Cabinet_Office_Ministerial_gifts__January_to_March_2017.csv",
+      "sheet": "default"
+    }
+  ],
+  "94e4bd3d1d76f6ea": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/beis-ministerial-disclosure-april-june-2017.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/july_september_2016_bis_publications_ministers_BEIS_final__1_.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/beis-ministerial-disclosure-july-september-2017.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/bis-ministerial-disclosure-april-june-2016.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/bis-ministerial-disclosure-january-march-2016.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2015/bis-ministers-july-september-2015.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/october_december_2015_bis_publications_ministers_final.xlsx",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/cabinet_office_ministers_april_june_2016.ods",
+      "sheet": "Hospitality"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/lords_whips_ministerial_quarterly_transparency_return_april_june_2016.ods",
+      "sheet": "Hospitality"
+    }
+  ],
+  "9713da055c127d3f": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_UK_official_charity_receptions.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_PM_OFFICIAL_CHARITY_RECEPTIONS_Returns_Q1_Apr-Jun_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Rt_Hon_Theresa_May_MP_UK_official_charity_receptions__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_PM_Quarterly_OFFICIAL_CHARITY_RECEPTIONS_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/Rt_Hon_Theresa_May_MP_official_charity_receptions__January_to_March_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-January-to-March-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-11_PM_OFFICIAL_CHARITY_RECEPTIONS_Return_Q2_July_-_Sept.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/Rt_Hon_Boris_Johnson_MP_and_Rt_Hon_Theresa_May_MP_official_charity_receptions__July_to_September_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2017/2018-03-21_PM_CHARITY_Return_Oct-Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_PM_OFFICIAL_CHARITY_RECEPTIONS_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "9718aea28334dc38": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/Rt_Hon_Theresa_May_MP_official_charity_receptions__April_to_June_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-April-to-June-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2020/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-July-to-September-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2019/Rt_Hon_Boris_Johnson_MP_official_charity_receptions_October_to_December_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2020/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-October-to-December-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5d9f38c4e5274a598f7cae26/Rt_Hon_Theresa_May_MP_official_charity_receptions__April_to_June_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5e7cc382d3bf7f134447df6d/Rt_Hon_Boris_Johnson_MP_official_charity_receptions_October_to_December_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5f9960238fa8f5790b9433b7/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-April-to-June-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/601bbd98d3bf7f70b66fb569/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-July-to-September-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/60954fdae90e07356dd0073e/Rt-Hon-Boris-Johnson-MP-official-charity-receptions-October-to-December-2020.csv",
+      "sheet": "default"
+    }
+  ],
+  "9752dc30cd416c61": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/cabinet_office_ministers_april_june_2016.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/lords_whips_ministerial_quarterly_transparency_return_april_june_2016.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Cabinet_Office_Minister_Quarterly_returns_July_September.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Minister_Lords_Ministerial_data_oct_-_dec_2016.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80489d40f0b62305b8a403/Cabinet_Office_Minister_Quarterly_returns_July_September.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81f1eeed915d74e6234f4d/Whips_Minister_Lords_Ministerial_data_oct_-_dec_2016.ods",
+      "sheet": "Gifts"
+    }
+  ],
+  "9a4a6d07e87d7b6d": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a751559e5274a3cb2869857/Nil_return_gifts_ap_june_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a75ae3fe5274a545822d647/AGO_Nil_return_gifts_July_Sept_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a78a673e5274a277e68e634/AGO_gifts_Oct_Dec_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a795d1d40f0b63d72fc52d4/Nil_return_giftsaugsept10.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a7972e9ed915d042206884b/Gifts_July_-_Sept_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a79d17be5274a18ba50f0b9/Gifts_1_October_-_31_December_2010.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a79db2ee5274a18ba50f516/Gifts_1_January_31_March_2011.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a7afec5ed915d429748c08f/AGO_nil_return_gifts_Oct_-_Dec_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a7c025440f0b63f7572ac68/AGO_nil_return_gifts_April_-_June_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data/5a7ca972e5274a2f304ef4d8/AGO_nil_return_gifts_July_Sept_13.csv",
+      "sheet": "default"
+    }
+  ],
+  "9cd8fb6c12333c19": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "GUESTS_AT_CHEQUERS"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80d8ebe5274a2e8ab52807/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "GUESTS_AT_CHEQUERS"
+    }
+  ],
+  "9ec043c11d8b8425": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/Rt_Hon_Boris_Johnson_MP_meetings__January_to_March_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/60f027198fa8f50c78eb5f41/Rt_Hon_Boris_Johnson_MP_meetings__January_to_March_2021.csv",
+      "sheet": "default"
+    }
+  ],
+  "a39326056c6f9f82": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Sir_Eric_Pickles_transparency_return_-_Overseas_travel__Oct_-_Dec_2016_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a820b02e5274a2e87dc0d97/Sir_Eric_Pickles_transparency_return_-_Overseas_travel__Oct_-_Dec_2016_.csv",
+      "sheet": "default"
+    }
+  ],
+  "a9046dec134b8d44": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-09-08_Cabinet_Office_Ministers_OVERSEAS_TRAVEL_April_-_June_2017_-_Final.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_PM_OVERSEAS_TRAVEL_Returns_Q1_Apr-Jun_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Whips_Ministerial_returns_Jan_-_March_2016_Overseas_travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/cabinet_office_ministerial_jan_march_2016_overseas_travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Leader_of_the_House_of_Commons_and_Government_Whips_overseas_travel__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Rt_Hon_Theresa_May_MP_overseas_travel__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Cabinet_Office_Ministerial_Overseas_travel_July_-September.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/PM_returns_Oct_-_Dec_2016_overseas_travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/decc-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/decc-ministerial-travel-april-june-2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2016/July-September_Ministerial_Overseas_Travel.csv",
+      "sheet": "default"
+    }
+  ],
+  "ae0840e05d0a8975": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_OVERSEAS_TRAVEL_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/Rt_Hon_Theresa_May_MP_overseas_travel__April_to_June_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/Rt-Hon-Boris-Johnson-MP-overseas-travel-April-to-June-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/Rt_Hon_Theresa_May_MP_overseas_travel__January_to_March_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-12-12_PM_OVERSEAS_TRAVEL_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/Rt-Hon-Boris-Johnson-MP-and-Rt-Hon-Theresa-May-MP-overseas-travel-July-to-September-2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2020/Rt-Hon-Boris-Johnson-MP-overseas-travel-July-to-September-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2019/Rt-Hon-Boris-Johnson-MP-overseas-travel-October-to-December-2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5bc75629e5274a121fe469c1/2018-10-17_PM_Quarterly_OVERSEAS_TRAVEL_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a02f3ed915d0b7268ef11/2018-12-12_PM_OVERSEAS_TRAVEL_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "af8e0e72d69cdc92": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_CO_Ministers_Quarterly_Return_TRAVEL_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c94d87ced915d07af076e4e/2019-03-22_CO_Ministers_Quarterly_Return_TRAVEL_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "b0049e1560fae8b8": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_UK_OFFICIAL_VISITS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-12-12_PM_UK_OFFICIAL_VISITS_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5bc7563fed915d64c2c87e1c/2018-10-17_PM_Quarterly_UK_OFFICIAL_VISITS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a0316e5274a465b717886/2018-12-12_PM_UK_OFFICIAL_VISITS_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "b0323d62d032f701": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_PM_GIFT_Return_Q1_Apr-Jun_2017_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Cabinet_Office_Ministers_Gifts_Oct_-_Dec_2015.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/PM_returns_Oct_-_Dec_2016_Gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_CO_Ministers_Quarterly_Return_GIFTS_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-quarterly-return-april-to-june-2015/Ministers_Gifts_Given_April_to_June_2015___4_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-quarterly-return-april-to-june-2015/Ministers_Gifts_Received_April_to_June_2015____4_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-quarterly-return-july-to-sept-2015/Ministers_Gifts_Given_July_to_Sept_2015___4_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-quarterly-return-july-to-sept-2015/Ministers_Gifts_Received_July_to_Sept_2015___4_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81c19040f0b62302698fdd/2017-10-11_PM_GIFT_Return_Q1_Apr-Jun_2017_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a821c96ed915d74e3401c97/PM_returns_Oct_-_Dec_2016_Gifts.csv",
+      "sheet": "default"
+    }
+  ],
+  "b324f2152056c6bd": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2023/Leader_of_the_House_of_Lords_ministerial_overseas_travel__October_to_December_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfid-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/travel-july-sept-19.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfid-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2019/travel-oct-dec-19.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/FCO_Ministers_Transparency_Return_Q1_Apr-Jun_2018_-_Overseas_Travel.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/FCO_MINISTERS_Q1_APR-JUN_2019-TRAVEL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/FCO-ministerial-overseas-travel-Apr-June-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/FCO_MINISTERS_Q4_JAN-MAR_2020_OVERSEAS_TRAVEL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/FCO_Ministers__Q2_Jul-Sep_2019_-_TRAVEL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/Ministers_Quarterly_Return_Q3_Oct-Dec_2018_-_OVERSEAS_TRAVEL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/fco-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2019/FCO_MINISTERS_Q3_OCT-DEC_OVERSEAS_TRAVEL.csv",
+      "sheet": "default"
+    }
+  ],
+  "bced272e52c22a30": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/january-march-2019-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/beis-ministerial-gifts-july-september-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2019/july-september-2019-disclosure-ministerial-gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_HoC_Whips_GIFTS_Quarterly_Return_April_-_June_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-12_HoC_Leader_Minister_s_GIFTS_Quarterly_Return_April_-_June_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-15_HoC_and_Whips_Ministers_GIFTS_Quarterly_Return_Apr_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-15_HoL_Ministers_GIFTS_Quarterly_Return_Apr_-_June_2018_-_FINAL_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_GIFTS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_Gifts_January_to_March_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "c0a524e530be9e0b": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_guest_at_Chequers.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_PM_GUESTS_AT_CHEQUERS_Returns_Q1_Apr-Jun_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_GUESTS_AT_CHEQUERS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/Rt_Hon_Theresa_May_MP_chequers__April_to_June_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/Rt-Hon-Boris-Johnson-MP-Chequers-April-to-June-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Rt_Hon_Theresa_May_MP_guests_at_Chequers__January_to_March_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_PM_Quarterly_CHEQUERS_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/Rt_Hon_Theresa_May_MP_chequers__January_to_March_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/Rt-Hon-Boris-Johnson-MP-chequers-January-to-March-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-11_PM_CHEQUERS_GUEST_Return_Q2_July_-_Sept.csv",
+      "sheet": "default"
+    }
+  ],
+  "c3a458e8b83b36d5": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a78b70640f0b62b22cbc365/AGO_meetings_July_Sept_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a79ff28ed915d6eaf15303e/AGO_meetings_Oct_-_Dec__12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a7c0a8ce5274a13acca2f72/AGO_meetings_April_-_June_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a7c26a840f0b61a825d6c61/AGO_meetings_jan_-_March_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a7c58b1e5274a2041cf3660/AGO_meetings_July_-_Sept_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a7e3edbe5274a2e8ab46c58/AGO_meetings_Oct_-_Dec_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-meetings-april-to-june-2013/AGO_meetings_April_-_June_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-meetings-july-to-september-2013/AGO_meetings_July_-_Sept_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-meetings-october-to-december-2013/AGO_meetings_Oct_-_Dec_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-january-to-march-2013/AGO_meetings_jan_-_March_13.csv",
+      "sheet": "default"
+    }
+  ],
+  "c52cfc06d15f937c": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-06_HoC_Whips_MEETING_Quarterly_Return_July_-_Sept__1_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82ec4ded915d74e34043ff/2017-12-06_HoC_Whips_MEETING_Quarterly_Return_July_-_Sept__1_.csv",
+      "sheet": "default"
+    }
+  ],
+  "c53b6795dedc555d": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2021/Rt_Hon_Boris_Johnson_MP_hospitality__October_to_December_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/62458d43e90e075f0f8654d8/Rt_Hon_Boris_Johnson_MP_hospitality__October_to_December_2021.csv",
+      "sheet": "default"
+    }
+  ],
+  "c65d961bb19640b0": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_UK_official_visits.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_PM_UK_OFFICIAL_VISITS_Returns_Q1_Apr-Jun_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_UK_Visits_January_to_March_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/Rt_Hon_Theresa_May_MP_UK_official_visits__January_to_December_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/Rt_Hon_Theresa_May_MP_UK_official_visits__January_to_March_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-11_PM_UK_OFFICIAL_VISITS_Return_Q2_July_-_Sept.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_PM_UK_OFFICIAL_VISITS_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/deputy-prime-minister-official-visits-july-2014-to-march-2015/DPM_UK_Visits_July_2014_-_March_2015.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a74a721e5274a56317a60db/2017-10-11_PM_UK_OFFICIAL_VISITS_Returns_Q1_Apr-Jun_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a820bdbed915d74e3401705/Rt_Hon_Theresa_May_MP_UK_official_visits__January_to_December_2017.csv",
+      "sheet": "default"
+    }
+  ],
+  "c798eb99d71af58f": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2017/beis-ministerial-disclosure-january-march-2017.xlsx",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2015/bis-ministers-april-june-2015.xlsx",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/bis-ministerial-disclosure-january-march-2016.xlsx",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/whips_ministers_ministeral_returns_april_june_2016.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-september-2015/commons_leader_and_commons_whips_april_june_2015.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-september-2015/commons_leader_and_commons_whips_july_sept_2015.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-september-2015/prime_minister_july_to_september_2015.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_Transparency_Returns_January_to_March_2016.ods",
+      "sheet": "Gifts"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/jan_mar_2016_whips_ministerial_quarterly_transparency_return.ods",
+      "sheet": "Gifts"
+    }
+  ],
+  "c966cc7ba5577f0a": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-17_PM_Quarterly_OFFICIAL_CHARITY_RECEPTIONS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-12-12_PM_OFFICIAL_CHARITY_RECEPTIONS_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/PM_returns_Oct_-_Dec_2016_UK_Official_Charity_Receptions.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82bee940f0b62305b94204/PM_returns_Oct_-_Dec_2016_UK_Official_Charity_Receptions.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5bc7561440f0b61c9f595511/2018-10-17_PM_Quarterly_OFFICIAL_CHARITY_RECEPTIONS_Return_April_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a02d7e5274a4685bfbb00/2018-12-12_PM_OFFICIAL_CHARITY_RECEPTIONS_Quarterly_Transparency_Return_Jul_-_Sept_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "d124486e87513ff9": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Cabinet_Office_ministerial_hospitality__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_hospitality__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Leader_of_the_House_of_Lords_ministerial_hospitality__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Rt_Hon_Rishi_Sunak_MP_hospitality__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Cabinet_Office_ministerial_hospitality__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_hospitality__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Leader_of_the_House_of_Lords_ministerial_hospitality__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Rt_Hon_Rishi_Sunak_MP_hospitality__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Cabinet_Office_ministerial_hospitality__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Leader_of_the_House_of_Commons_and_Whips__ministerial_hospitality__July_to_September_2024.csv",
+      "sheet": "default"
+    }
+  ],
+  "d1ad92366c3aaf62": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2023/Rt_Hon_Rishi_Sunak_MP_Chequers__April_to_June_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2022/Rt_Hon_Liz_Truss_MP_and_Rt_Hon_Rishi_Sunak_MP_Chequers__October_to_December_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/6423f36160a35e00120cb016/Rt_Hon_Liz_Truss_MP_and_Rt_Hon_Rishi_Sunak_MP_Chequers__October_to_December_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/6530f9e60b5392000da92982/Rt_Hon_Rishi_Sunak_MP_Chequers__April_to_June_2023.csv",
+      "sheet": "default"
+    }
+  ],
+  "d3a3ee9c9b2753aa": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "OFFICIAL_RECEPTIONS"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80d8ebe5274a2e8ab52807/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "OFFICIAL_RECEPTIONS"
+    }
+  ],
+  "d59706feaa6c1ebe": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Cabinet_Office_Ministerial_Template_October_-December_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81e5c5e5274a2e87dc0100/Cabinet_Office_Ministerial_Template_October_-December_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "d60032dc5775187a": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-06_HoC_Ministers_MEETINGS_Quarterly_Return_July_-_Sept__2_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81caa5e5274a2e8ab55d8c/2017-12-06_HoC_Ministers_MEETINGS_Quarterly_Return_July_-_Sept__2_.csv",
+      "sheet": "default"
+    }
+  ],
+  "d7537245cda2e86f": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2023/Cabinet_Office_ministerial_gifts__July_to_September_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/65788801254aaa000d050b77/Cabinet_Office_ministerial_gifts__July_to_September_2023.csv",
+      "sheet": "default"
+    }
+  ],
+  "d7e048c1677cea02": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_official_receptions_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a7f22f4e5274a2e8ab4a567/prime_minister_official_receptions_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "df342ba994a61c71": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2016/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "UK_Official_Visits"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2016/Prime_Minister_Transparency_Returns_January_to_March_2016.ods",
+      "sheet": "UK_Official_Visits"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "UK_OFFICIAL_VISITS"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2015/Prime_Minister_Transparency_Returns_October_to_December_2015_ODS.ods",
+      "sheet": "UK_Official_Visits"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a80d8ebe5274a2e8ab52807/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet": "UK_OFFICIAL_VISITS"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82bfa040f0b62305b9423e/PM_David_Cameron_Apr-Jun_2016_quarterly_returns_.ods",
+      "sheet": "UK_Official_Visits"
+    }
+  ],
+  "e11b6ff92e2c5f71": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/Rt_Hon_Boris_Johnson_MP_official_charity_receptions__January_to_March_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/60f02727d3bf7f56896128cf/Rt_Hon_Boris_Johnson_MP_official_charity_receptions__January_to_March_2021.csv",
+      "sheet": "default"
+    }
+  ],
+  "e2bb8e7eda9e9155": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-april-to-june-2024/Rt_Hon_Rishi_Sunak_MP_official_visits__April_to_June_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-january-to-march-2024/Rt_Hon_Rishi_Sunak_MP_official_visits__January_to_March_2024_-_Rt_Hon_Rishi_Sunak_MP_official_visits__January_to_March_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-overseas-travel-and-meetings-july-to-september-2024/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP___Rt_Hon_Rishi_Sunak_MP_official_visits__July_to_September_2024.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/Rt_Hon_Theresa_May_MP_UK_official_visits__April_to_June_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2020/Rt-Hon-Boris-Johnson-MP-UK-official-visits-April-to-June-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/Rt_Hon_Boris_Johnson_MP_UK_Official_Visits__April_to_June_2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2022/Rt_Hon_Boris_Johnson_MP_official_visits__April_to_June_2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2023/Rt_Hon_Rishi_Sunak_MP_official_visits__April_to_June_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2020/Rt-Hon-Boris-Johnson-MP-UK-official-visits-January-to-March-2020.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/Rt_Hon_Boris_Johnson_MP_UK_Official_Visits__January_to_March_2021.csv",
+      "sheet": "default"
+    }
+  ],
+  "e3f5fe659b857b48": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2017/2017-10-11_HoC_Whips_MEETINGS_Quarterly_Return_April_-_June_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81f383ed915d74e3400eeb/2017-10-11_HoC_Whips_MEETINGS_Quarterly_Return_April_-_June_2017.csv",
+      "sheet": "default"
+    }
+  ],
+  "e46c329f7a869f62": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_PM_Quarterly_UK_OFFICIAL_VISITS_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/PM_returns_Oct_-_Dec_2016_UK_Official_Visits.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2017/2018-03-21_PM_OFFICIAL_VISITS_Return_Oct-Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81ef47e5274a2e87dc043a/PM_returns_Oct_-_Dec_2016_UK_Official_Visits.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5ab3bd6ced915d4f2d0973c6/2018-03-21_PM_OFFICIAL_VISITS_Return_Oct-Dec_2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5b337f5940f0b67f58ccef0d/2018-06-26_PM_Quarterly_UK_OFFICIAL_VISITS_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    }
+  ],
+  "e8dae50b9c72457c": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-april-to-june-2017/beis-special-advisers-disclosure-april-june-2017.xlsx",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-january-to-march-2017/beis-special-advisers-disclosure-january-march-2017.xlsx",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-july-to-september-2016/july_september_2016_bis_publications_special_adviser_BEIS_final.xlsm",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-special-advisers-gifts-hospitality-and-meetings-october-to-december-2016/october_december_2016_bis_publications_special_adviser_final.xlsm",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-special-advisers-gifts-hospitality-and-meetings-april-to-june-2015/bis-special-advisers-april-june-2015.xlsx",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-special-advisers-gifts-hospitality-and-meetings-january-to-march-2016/special-advisers-disclosure-january-march-2016.xlsm",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-special-advisers-gifts-hospitality-and-meetings-july-to-september-2015/bis-special-advisers-july-september-2015.xlsx",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/bis-special-advisers-gifts-hospitality-and-meetings-october-to-december-2015/october_december_2015_bis_publications_special_adviser_final.xlsm",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-april-june-2016/Special_Adviser_Gifts_and_Hospitality_Apr-Jun_2016__004___Updated_.xls",
+      "sheet": "Notes"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-january-to-march-2016/No_10_Special_Advisers_Jan-March_2016_final.xls",
+      "sheet": "Notes"
+    }
+  ],
+  "eb5c412b7ff0fa0d": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2018/2018-11-15_HoL_Ministers_OVERSEAS_TRAVEL_Quarterly_Return_July-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c1a05be40f0b60c69a28cd7/2018-11-15_HoL_Ministers_OVERSEAS_TRAVEL_Quarterly_Return_July-Sept_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "ed1f4f8de59379de": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-07_Cabinet_Office_Ministers_MEETINGS_Quarterly_Return_July-Sept.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dft-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/dft-meetings-return-q2-2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dhsc-ministerial-gifts-hospitality-travel-and-meetings-2018-to-2019/dhsc-ministerial-transparency-returns-meetings-jan-mar-2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a81f900ed915d74e62351a6/2017-12-07_Cabinet_Office_Ministers_MEETINGS_Quarterly_Return_July-Sept.csv",
+      "sheet": "default"
+    }
+  ],
+  "ef7a21bc22473176": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a74bf41ed915d4d83b5ea0d/AGO_hospitality_July_-_Sept_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a74ee66ed915d3c7d529117/AGO_hospitality_Oct_-_Dec__12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a7b868de5274a7318b8f39a/AGO_hospitality_July_-_Sept_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a7bf8a3ed915d01ba1ca555/AGO_hospitality_April_-_June_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-january-to-march-2012/5a7e2a5940f0b6230268996e/AGO_hospitality_Oct_-_Dec_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-hospitality-april-to-june-2013/AGO_hospitality_April_-_June_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-hospitality-july-to-september-2013/AGO_hospitality_July_-_Sept_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-spend-on-ministerial-hospitality-october-to-december-2013/AGO_hospitality_Oct_-_Dec_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-july-to-september-2013/AGO_hospitality_July_-_Sept_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-hospitality-october-to-december-2012/AGO_hospitality_Oct_-_Dec__12.csv",
+      "sheet": "default"
+    }
+  ],
+  "ef7b129c7bc61840": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a74f1e5ed915d3c7d5292c4/AGO_meetings_April_-_June_2012.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a75109640f0b6360e473120/AGO_media_Jan_-_March_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a78ceade5274a277e68f9dc/AGO_media_July_-_Sept_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-july-to-september-2011/5a7987f6ed915d07d35b63c5/AGO_media_Oct_-_dec_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/agos-ministerial-meetings-april-to-june-2012/AGO_meetings_April_-_June_2012.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-january-to-march-2012/AGO_media_Jan_-_March_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-july-to-september-2011/AGO_media_July_-_Sept_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-meetings-october-to-december-2011/AGO_media_Oct_-_dec_11.csv",
+      "sheet": "default"
+    }
+  ],
+  "f3c1b6c8c4f61035": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_HoC_Whips_Ministers_Q3_2018_Quarterly_Transparency_GIFTS_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2018/2019-03-22_PM_GIFTS_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dfe-ministerial-gifts-hospitality-travel-and-meetings-2019/Ministerial_Gifts_Jan_Mar_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dwp-ministerial-gifts-hospitality-travel-and-meetings-oct-to-dec-2019/dwp-ministers-gifts-oct-dec-2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministerial-gifts-hospitality-travel-and-external-meetings-2017/DHSC_Ministerial_Gifts_Q4.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-quarterly-returns-2015/Ministers-Quarterly-Returns-April-to-June-2015-GIFTS.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c93bfcae5274a48e8e48bff/2019-03-22_PM_GIFTS_Quarterly_Transparency_Return_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5c94c09740f0b633fa716141/2019-03-22_HoC_Whips_Ministers_Q3_2018_Quarterly_Transparency_GIFTS_Oct-Dec_2018_-_PUBLICATION.csv",
+      "sheet": "default"
+    }
+  ],
+  "f5ec0aa0427816d8": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_uk_official_visits_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a800eb640f0b62305b88ea2/prime_minister_uk_official_visits_returns_july_to_september_2016.csv",
+      "sheet": "default"
+    }
+  ],
+  "f93ae509d0d556c6": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-overseas-travel-and-meetings-july-to-september-2025/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP__Chequers_July_to_September_2025.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-overseas-travel-and-meetings-october-to-december-2025/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP__Chequers_October_to_December_2025.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/694022e0adb5707d9f33d7a1/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP__Chequers_July_to_September_2025.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/69c299f0b920af63be1c776e/Rt_Hon_Sir_Keir_Starmer_KCB_KC_MP__Chequers_October_to_December_2025.csv",
+      "sheet": "default"
+    }
+  ],
+  "f9ef044821b4ed0f": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a74fca340f0b6360e472730/travelApril30June11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a750e78e5274a59fa7170ec/Ni_return_travel_jan_-_march_13.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a75a000ed915d6faf2b46ef/Ni_return_travelmayjuly10.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a78a5a840f0b62b22cbbaa4/travelJanMarch12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a78b9a3ed915d07d35b1efe/AGO_travel_July_-_Sept_12.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a78d2e440f0b62b22cbd159/Overseas_travel_Oct_-_Dec_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a79719940f0b63d72fc5dcb/travelAprJune2012.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a7979d6e5274a3864fd755b/travel_JulySept_11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a79a7aeed915d042206a0bc/traveJanuaryMarch11.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ago-ministerial-data-october-to-december-2011/5a79d5beed915d6b1deb3b0c/traveOct_Dec2010.csv",
+      "sheet": "default"
+    }
+  ],
+  "fa1eb665cfa385cd": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2016/Whips_Minister_Lords_Ministerial_gifts_oct_-_dec_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dwp-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2021/dwp-ministers-gifts-july-sept-2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dwp-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2022/dwp-ministers-gifts-july-sept-2022.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/dwp-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2021/dwp-ministers-gifts-oct-dec-2021.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/5a82f25140f0b6230269d861/Whips_Minister_Lords_Ministerial_gifts_oct_-_dec_2016.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ossw-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2021/Gifts_-_SOS_Minister_Transparency_Return_April-June.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ossw-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2021/SOS_Minister_Return_Jan-March_Gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ossw-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2020/Ministerial_Transparency_Return_Q3_July_to_Sept_-_Gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ossw-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2020/Ministers_Transparency_Returns_Oct-Dec_2020_Gifts.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ossw-ministerial-gifts-hospitality-travel-and-meetings-october-to-december-2022/Ministerial_Gifts_Oct_-_Dec_2022_.csv",
+      "sheet": "default"
+    }
+  ],
+  "fdbfe95898c09c4b": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2023/Rt_Hon_Rishi_Sunak_MP_hospitality__April_to_June_2023.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/ministers-transparency-publications/6531026326b9b1000daf1b85/Rt_Hon_Rishi_Sunak_MP_hospitality__April_to_June_2023.csv",
+      "sheet": "default"
+    }
+  ],
+  "fe42e0e6455736a0": [
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/beis-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/beis-ministerial-travel-july-september-2017.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-15_HoC_and_Whips_Ministers_OVERSEAS_TRAVEL_Quarterly_Return_Apr_-_June_2018.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2018/2018-10-15_HoL_Ministers_OVERSEAS_TRAVEL_Quarterly_Return_Apr_-_June_2018_-_FINAL_.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-april-to-june-2019/Cabinet_Office_ministerial_overseas_travel__April_to_June_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-25_HoC_Ministers_OVERSEAS_TRAVEL_Quarterly_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_CO_Ministerial_OVERSEAS_TRAVEL_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2018/2018-06-26_PM_Quarterly_OVERSEAS_TRAVEL_Transparency_Return_Jan-Mar_2018_-_FINAL.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/Cabinet_Office_ministerial_overseas_travel__January_to_March_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-january-to-march-2019/Office_of_the_Leader_of_the_House_of_Lords_ministers__overseas_travel_January_to_March_2019.csv",
+      "sheet": "default"
+    },
+    {
+      "resource": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2017/2017-12-06_HoC_Ministers_OVERSEAS_TRAVEL_Quarterly_Return_July_-_Sept__2_.csv",
+      "sheet": "default"
+    }
+  ]
+}

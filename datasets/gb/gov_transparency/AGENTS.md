@@ -1,4 +1,4 @@
-This directory contains code that crawls and processes UK government transparency publications from GOV.UK, covering ministerial meetings, gifts, hospitality, travel, and more. See the README.md for more details.
+This directory contains code that crawls and processes UK government transparency publications from GOV.UK, covering ministerial meetings, gifts, hospitality, travel, and more. See `README.md` for dataset context and `MAPPING.md` for the canonical crawler model.
 
 The code covers several stages:
 
@@ -25,44 +25,34 @@ When the crawler reports `UNKNOWN FINGERPRINT: <fingerprint>`, you are to:
 
 ## Schema Format
 
-Each schema JSON maps to the `Schema` dataclass in `schema.py`.
+Each schema JSON maps to the structured `Schema` dataclass in `schema.py`.
 
-Important fields:
+Important top-level fields:
 
 - `fingerprint`: must match the filename and actual computed fingerprint
 - `sheet_type`: `data`, `notes`, or `ignore`
-- `reason`: optional human-readable explanation for `notes` or `ignore` schemas so future work can see why the layout was skipped
+- `reason`: required human-readable explanation for `notes` or `ignore` schemas so future work can see why the layout was skipped
 - `activity_type`: one of:
   - `meetings`
   - `gifts`
   - `hospitality`
   - `travel`
   - `outside_employment`
-  - `other`
   - required for `data` sheets only; omit it for `notes` and `ignore`
-- `data_start_offset`: usually `1`
-- `fill_down_columns`: columns where blanks mean “same as row above”
-- `nil_return_markers`: markers that mean the row is not a real activity
-  - optional for `data` sheets because common nil-return markers are applied automatically
-- `skip_row_prefixes`: optional leading-text markers for explanatory rows embedded inside data sheets that should always be skipped
-- `reverse_roles`: optional boolean for data layouts where the official/public body hosts or organizes the activity and the counterpart should be `involved` rather than `payer`/`organizer`
-- `date_source`:
-  - `column`
-  - `none`
-- `date_column`: required if `date_source == "column"`
-- `end_date_column`: optional second date column for layouts with explicit start/end dates
-- `date_format`: only for day-level column dates when a fixed `strptime` format is valid
-- `date_precision`:
-  - `day`
-  - `day_or_month`
-  - `month`
-  - `quarter`
-- `columns`: mapping from canonical field names to source column indexes
+- `subject`: subject resolution config
+- `layout`: row-handling config
+- `date`: date parsing config
+- `mapping`: mapping from canonical intermediate field names to source column indexes
+- `role_mode`: optional explicit role behavior, currently mainly `hosted_by_official`
 
-Canonical fields currently supported:
+Canonical mapping fields currently supported:
 
-- required for `data`: `subject_name`
-- optional: `counterpart_name`, `activity_description`, `amount`, `outcome`, `location`
+- `official_name`
+- `counterparty_name`
+- `summary`
+- `amount`
+- `outcome_text`
+- `location`
 
 ## How To Decide Schema Fields
 
@@ -76,13 +66,15 @@ Use:
 
 Do not classify a fingerprint as `notes` or `ignore` just because the sampled file is a nil return. If the layout is a genuine activity table that may contain real rows in another publication, keep it as `data` and use nil markers to skip the nil rows.
 
-### `data_start_offset`
+### `layout.data_start_offset`
 
 Usually `1` because data starts right after the detected header row.
 
 If the header row is followed by a spacer row or a repeated title row, increase it only if necessary.
 
-### `fill_down_columns`
+Very short early CSVs can still confuse header detection. If a two-row or three-row file clearly has the right semantic header but the computed header row lands on a data row, confirm it with the normaliser/fingerprint tools before deciding whether to use a temporary non-default `data_start_offset` or fix the detector.
+
+### `layout.fill_down_columns`
 
 Use this when a workbook lists a minister/adviser once and leaves following rows blank.
 
@@ -91,7 +83,7 @@ Common examples:
 - ODS ministerial sheets from older Cabinet Office workbooks often need `fill_down_columns: [0]`
 - Some CSV transparency returns also list the minister only on the first row of a block and leave later rows blank; if the data clearly continues under the same person, use `fill_down_columns: [0]`
 
-### `nil_return_markers`
+### `layout.nil_return_markers`
 
 Be explicit and copy the actual text seen in the file.
 
@@ -110,7 +102,7 @@ Common examples:
 
 Rows are skipped if any mapped field or the date field contains one of these markers.
 
-### `skip_row_prefixes`
+### `layout.skip_row_prefixes`
 
 Use this when a sheet contains explanatory or disclaimer rows inside the data area and those rows would otherwise look non-empty enough to be treated as activities.
 
@@ -122,43 +114,31 @@ Common example:
 
 Prefer `skip_row_prefixes` in the schema over dataset-specific code when the rule is a recurring row-text pattern.
 
-### `date_source` and `date_precision`
+### `date`
 
-Use `date_source: "column"` when the sheet has a usable date cell.
+The crawler now uses a rule-based date model.
 
-Use `date_source: "none"` when:
+Supported date modes:
 
-- the sheet is all nil returns,
-- the date column is not meaningful for actual rows,
-- the publication period should define the row date range.
+- `none`
+- `provenance_period`
+- `column`
+- `column_range`
 
-Date precision rules:
+For column-based modes, provide ordered parser rules under `date.parsers`.
 
-- `day` for exact dates or parseable date-time values
-- `day_or_month` for legacy sheets where the same date column mixes exact days and month values
-- `month` for month names or month-year values
-- `quarter` when the row only belongs to the publication period
+Common parser types:
 
-Current extractor supports these common patterns:
+- `strptime`
+- `excel_serial`
+- `iso_datetime`
+- `day_range`
+- `month_name`
+- `month_name_from_period`
 
-- exact ISO dates like `2024-01-10`
-- exact ISO datetimes like `2016-07-20T00:00:00`
-- exact day strings via `date_format`
-- ordinal days like `14th October 2015`
-- month names like `October`
-- month-year like `December 2015`
-- short month-year like `Oct-12`
-- mixed legacy values like `Feb-11` and `19-Mar-11` in the same column
-- day ranges like `02-06 September`
+Rules are tried in order. The first successful parser wins.
 
-If a date pattern is not yet supported and is clearly recurring, update code only if needed. Otherwise prefer a schema that reflects the current supported behavior.
-
-Edge case tips:
-
-- Some fingerprints are shared by files where the same logical date column alternates between exact days and month-level values. Prefer `date_precision: "day_or_month"` if the same layout is used for both.
-- Some travel rows use a single date column with day ranges like `3-4 April 2017`. Treat these as a single `date_column` with `date_precision: "day"`; extraction can emit a start/end date range.
-- Nil-only sheets sometimes leave the date and other fields blank and put the nil marker only in one mapped field. In those cases keep the sheet as `data`, add the exact `nil_return_markers` text seen in the file, and use `date_source: "none"` if there is no usable date cell.
-- A few malformed wide CSVs cause header detection to land on the first nil-return row instead of the actual header line. If the real data rows are still unambiguous, it is acceptable to use a non-default `data_start_offset`, including a negative offset, to recover the true data region for that fingerprint.
+Use `subject.source: "provenance"` for layouts like Chequers guest lists where the official subject is implied by the attachment title rather than present in a source column.
 
 ## Common Layout Patterns
 
@@ -199,6 +179,8 @@ If the fingerprint is different, create a new schema file even if the semantic c
 4. Create `schemas/<fingerprint>.json`.
 
 If you classify a schema as `notes` or `ignore`, add a `reason` field that explains why it is being skipped.
+
+The schema loader is strict: unknown keys and unsupported enum values fail validation.
 
 5. Validate it.
 

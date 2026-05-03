@@ -1,0 +1,322 @@
+{
+  "cases": [
+    {
+      "attachment_title": "Special Adviser Gifts and Hospitality Apr-Jun 2016",
+      "name": "special-advisers-xls-2016-q2",
+      "publication_title": "Cabinet Office: special advisers gifts hospitality and meetings, April to June 2016",
+      "resource_path": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-april-june-2016/Special_Adviser_Gifts_and_Hospitality_Apr-Jun_2016__004___Updated_.xls",
+      "sheet_count": 5,
+      "sheets": [
+        {
+          "activity_type": null,
+          "entity_count": 0,
+          "entity_schemata": {},
+          "fingerprint": "77f20dfaae8fd60b",
+          "record_count": 0,
+          "row_count": 3,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/77f20dfaae8fd60b.json",
+          "sheet_name": "Notes",
+          "sheet_type": "notes",
+          "status": "validated"
+        },
+        {
+          "activity_type": "gifts",
+          "entity_count": 8,
+          "entity_schemata": {
+            "Employment": 2,
+            "Gift": 2,
+            "LegalEntity": 1,
+            "Person": 2,
+            "PublicBody": 1
+          },
+          "fingerprint": "151c543a0fabb02b",
+          "record_count": 2,
+          "row_count": 4,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/151c543a0fabb02b.json",
+          "sheet_name": "Gifts",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": "hospitality",
+          "entity_count": 103,
+          "entity_schemata": {
+            "Employment": 11,
+            "Hospitality": 44,
+            "LegalEntity": 37,
+            "Person": 11
+          },
+          "fingerprint": "373d5e22902b538f",
+          "record_count": 44,
+          "row_count": 49,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/373d5e22902b538f.json",
+          "sheet_name": "Hospitality",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": "meetings",
+          "entity_count": 22,
+          "entity_schemata": {
+            "Employment": 1,
+            "LegalEntity": 9,
+            "Meeting": 11,
+            "Person": 1
+          },
+          "fingerprint": "1cea4303b9eef31d",
+          "record_count": 11,
+          "row_count": 12,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/1cea4303b9eef31d.json",
+          "sheet_name": "Meetings",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": null,
+          "entity_count": 0,
+          "entity_schemata": {},
+          "fingerprint": "4db27abd5eb664ef",
+          "record_count": 0,
+          "row_count": 5,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/4db27abd5eb664ef.json",
+          "sheet_name": "Sheet2",
+          "sheet_type": "ignore",
+          "status": "validated"
+        }
+      ],
+      "total_entity_count": 133,
+      "total_entity_schemata": {
+        "Employment": 14,
+        "Gift": 2,
+        "Hospitality": 44,
+        "LegalEntity": 47,
+        "Meeting": 11,
+        "Person": 14,
+        "PublicBody": 1
+      }
+    },
+    {
+      "attachment_title": "Prime Minister quarterly returns July to September 2016",
+      "name": "prime-minister-ods-2016-q3",
+      "publication_title": "Cabinet Office: ministerial gifts hospitality travel and meetings, July to September 2016",
+      "resource_path": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_quarterly_returns_july_to_september_2016.ods",
+      "sheet_count": 8,
+      "sheets": [
+        {
+          "activity_type": "gifts",
+          "entity_count": 23,
+          "entity_schemata": {
+            "Employment": 1,
+            "Gift": 10,
+            "LegalEntity": 10,
+            "Person": 1,
+            "PublicBody": 1
+          },
+          "fingerprint": "9af24996df8f698f",
+          "record_count": 10,
+          "row_count": 996,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/9af24996df8f698f.json",
+          "sheet_name": "Gifts",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": "hospitality",
+          "entity_count": 6,
+          "entity_schemata": {
+            "Hospitality": 3,
+            "LegalEntity": 3
+          },
+          "fingerprint": "e06e4078bc9eb9f8",
+          "record_count": 3,
+          "row_count": 1001,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/e06e4078bc9eb9f8.json",
+          "sheet_name": "Hospitality",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "fingerprint": "ccf7c39f29b742f3",
+          "row_count": 991,
+          "schema_path": null,
+          "sheet_name": "Overseas_travel",
+          "status": "schema_missing"
+        },
+        {
+          "activity_type": "meetings",
+          "entity_count": 22,
+          "entity_schemata": {
+            "Employment": 1,
+            "LegalEntity": 10,
+            "Meeting": 10,
+            "Person": 1
+          },
+          "fingerprint": "57729b5240fb215e",
+          "record_count": 10,
+          "row_count": 1100,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/57729b5240fb215e.json",
+          "sheet_name": "Meetings",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": null,
+          "entity_count": 0,
+          "entity_schemata": {},
+          "fingerprint": "4db27abd5eb664ef",
+          "record_count": 0,
+          "row_count": 1000,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/4db27abd5eb664ef.json",
+          "sheet_name": "Sheet2",
+          "sheet_type": "ignore",
+          "status": "validated"
+        },
+        {
+          "activity_type": "hospitality",
+          "entity_count": 4,
+          "entity_schemata": {
+            "Employment": 1,
+            "Hospitality": 1,
+            "LegalEntity": 1,
+            "Person": 1
+          },
+          "fingerprint": "090a3c0309d58ae4",
+          "record_count": 1,
+          "row_count": 5,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/090a3c0309d58ae4.json",
+          "sheet_name": "GUESTS_AT_CHEQUERS",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": "travel",
+          "entity_count": 10,
+          "entity_schemata": {
+            "Trip": 10
+          },
+          "fingerprint": "edca75a39ba482d3",
+          "record_count": 10,
+          "row_count": 13,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/edca75a39ba482d3.json",
+          "sheet_name": "UK_OFFICIAL_VISITS",
+          "sheet_type": "data",
+          "status": "validated"
+        },
+        {
+          "activity_type": "hospitality",
+          "entity_count": 10,
+          "entity_schemata": {
+            "Hospitality": 7,
+            "LegalEntity": 3
+          },
+          "fingerprint": "7f9acc0aec5689d4",
+          "record_count": 7,
+          "row_count": 11,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/7f9acc0aec5689d4.json",
+          "sheet_name": "OFFICIAL_RECEPTIONS",
+          "sheet_type": "data",
+          "status": "validated"
+        }
+      ],
+      "total_entity_count": 75,
+      "total_entity_schemata": {
+        "Employment": 3,
+        "Gift": 10,
+        "Hospitality": 11,
+        "LegalEntity": 27,
+        "Meeting": 10,
+        "Person": 3,
+        "PublicBody": 1,
+        "Trip": 10
+      }
+    },
+    {
+      "attachment_title": "Cabinet Office Ministerial hospitality July to September 2016",
+      "name": "cabinet-office-hospitality-csv-2016-q3",
+      "publication_title": "Cabinet Office: ministerial gifts hospitality travel and meetings, July to September 2016",
+      "resource_path": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Cabinet_Office_Ministerial__hospitality_July_-_September.csv",
+      "sheet_count": 1,
+      "sheets": [
+        {
+          "activity_type": "hospitality",
+          "entity_count": 13,
+          "entity_schemata": {
+            "Employment": 3,
+            "Hospitality": 3,
+            "LegalEntity": 3,
+            "Person": 3,
+            "PublicBody": 1
+          },
+          "fingerprint": "e06e4078bc9eb9f8",
+          "record_count": 3,
+          "row_count": 18,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/e06e4078bc9eb9f8.json",
+          "sheet_name": "default",
+          "sheet_type": "data",
+          "status": "validated"
+        }
+      ],
+      "total_entity_count": 13,
+      "total_entity_schemata": {
+        "Employment": 3,
+        "Hospitality": 3,
+        "LegalEntity": 3,
+        "Person": 3,
+        "PublicBody": 1
+      }
+    },
+    {
+      "attachment_title": "Rt Hon David Cameron MP guests at chequers, October to December 2015",
+      "name": "chequers-csv-2015-q4",
+      "publication_title": "Cabinet Office: ministerial gifts hospitality travel and meetings, October to December 2015",
+      "resource_path": "data/datasets/gb_gov_transparency/resources/guests-to-chequers-october-to-december-2015/Guests_to_Chequers_October_to_December_2015.csv",
+      "sheet_count": 1,
+      "sheets": [
+        {
+          "activity_type": "hospitality",
+          "entity_count": 57,
+          "entity_schemata": {
+            "Employment": 1,
+            "Hospitality": 27,
+            "LegalEntity": 27,
+            "Person": 1,
+            "PublicBody": 1
+          },
+          "fingerprint": "f999d4cc7ccf890d",
+          "record_count": 27,
+          "row_count": 68,
+          "schema_path": "/home/nicu/Projects/openlobbying/muckrake/datasets/gb/gov_transparency/schemas/f999d4cc7ccf890d.json",
+          "sheet_name": "default",
+          "sheet_type": "data",
+          "status": "validated"
+        }
+      ],
+      "total_entity_count": 57,
+      "total_entity_schemata": {
+        "Employment": 1,
+        "Hospitality": 27,
+        "LegalEntity": 27,
+        "Person": 1,
+        "PublicBody": 1
+      }
+    },
+    {
+      "attachment_title": "HMRC senior officials outside employment April 2024 to March 2025",
+      "name": "hmrc-outside-employment-2024-2025",
+      "publication_title": "HMRC senior officials outside employment, April 2024 to March 2025",
+      "resource_path": "data/datasets/gb_gov_transparency/resources/hmrc-senior-officials-outside-employment-april-2024-to-march-2025/HMRC_senior_officials_outside_employment_April_2024_to_March_2025.csv",
+      "sheet_count": 1,
+      "sheets": [
+        {
+          "fingerprint": "faa1669b5d30ba7a",
+          "row_count": 15,
+          "schema_path": null,
+          "sheet_name": "default",
+          "status": "schema_missing"
+        }
+      ],
+      "total_entity_count": 0,
+      "total_entity_schemata": {}
+    }
+  ]
+}

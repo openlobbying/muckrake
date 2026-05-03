@@ -1,0 +1,42 @@
+[
+  {
+    "name": "special-advisers-xls-2016-q2",
+    "resource_path": "data/datasets/gb_gov_transparency/resources/cabinet-office-special-advisers-gifts-hospitality-and-meetings-april-june-2016/Special_Adviser_Gifts_and_Hospitality_Apr-Jun_2016__004___Updated_.xls",
+    "department": "cabinet-office",
+    "collection_type": "special-advisers-gifts-hospitality-and-meetings",
+    "publication_title": "Cabinet Office: special advisers gifts hospitality and meetings, April to June 2016",
+    "attachment_title": "Special Adviser Gifts and Hospitality Apr-Jun 2016"
+  },
+  {
+    "name": "prime-minister-ods-2016-q3",
+    "resource_path": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/prime_minister_quarterly_returns_july_to_september_2016.ods",
+    "department": "cabinet-office",
+    "collection_type": "ministerial-gifts-hospitality-travel-and-meetings",
+    "publication_title": "Cabinet Office: ministerial gifts hospitality travel and meetings, July to September 2016",
+    "attachment_title": "Prime Minister quarterly returns July to September 2016"
+  },
+  {
+    "name": "cabinet-office-hospitality-csv-2016-q3",
+    "resource_path": "data/datasets/gb_gov_transparency/resources/cabinet-office-ministerial-gifts-hospitality-travel-and-meetings-july-to-september-2016/Cabinet_Office_Ministerial__hospitality_July_-_September.csv",
+    "department": "cabinet-office",
+    "collection_type": "ministerial-gifts-hospitality-travel-and-meetings",
+    "publication_title": "Cabinet Office: ministerial gifts hospitality travel and meetings, July to September 2016",
+    "attachment_title": "Cabinet Office Ministerial hospitality July to September 2016"
+  },
+  {
+    "name": "chequers-csv-2015-q4",
+    "resource_path": "data/datasets/gb_gov_transparency/resources/guests-to-chequers-october-to-december-2015/Guests_to_Chequers_October_to_December_2015.csv",
+    "department": "cabinet-office",
+    "collection_type": "guests-to-chequers",
+    "publication_title": "Cabinet Office: ministerial gifts hospitality travel and meetings, October to December 2015",
+    "attachment_title": "Rt Hon David Cameron MP guests at chequers, October to December 2015"
+  },
+  {
+    "name": "hmrc-outside-employment-2024-2025",
+    "resource_path": "data/datasets/gb_gov_transparency/resources/hmrc-senior-officials-outside-employment-april-2024-to-march-2025/HMRC_senior_officials_outside_employment_April_2024_to_March_2025.csv",
+    "department": "hmrc",
+    "collection_type": "senior-officials-outside-employment",
+    "publication_title": "HMRC senior officials outside employment, April 2024 to March 2025",
+    "attachment_title": "HMRC senior officials outside employment April 2024 to March 2025"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "activity_type": "gifts",
+  "date": {
+    "mode": "provenance_period"
+  },
+  "fingerprint": "263a6a0e280c0319",
+  "mapping": {
+    "official_name": 0,
+    "summary": 1,
+    "counterparty_name": 4,
+    "amount": 5,
+    "outcome_text": 6
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

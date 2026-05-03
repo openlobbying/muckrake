@@ -1,6 +1,6 @@
 # Government Transparency returns
 
-Government departments in the UK publish regular transparency returns covering ministers, special advisers, and senior officials. `config.yml` includes a list of these publications idenntified so far.
+Government departments in the UK publish regular transparency returns covering ministers, special advisers, and senior officials. `config.yml` includes a list of these publications identified so far.
 
 These returns mainly cover meetings with external organisations, gifts, hospitality, and travel. Additionally, we have some returns on things like receptions, outside employment, etc.
 
@@ -56,3 +56,17 @@ This dataset covers several recurring transparency return types, including:
 - outside employment and similar declaration-style tables in some HTML publications
 
 These can appear as one-file-per-activity CSVs, mixed workbooks with multiple activity tabs, Prime Minister-specific layouts, special adviser returns, senior official returns, and older legacy templates with nil-only publications or explanatory note rows.
+
+## Current crawler model
+
+The current crawler implementation supports these activity types:
+
+- `meetings`
+- `gifts`
+- `hospitality`
+- `travel`
+- `outside_employment`
+
+There is no generic `other` activity type in the current code path.
+
+For schema authoring details, see `AGENTS.md`. For the canonical mapping model, see `MAPPING.md`. For the broader refactor plan and current implementation notes, see `PLAN.md`.

@@ -2,7 +2,7 @@ import csv
 from dataclasses import dataclass
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, cast
 import zipfile
 
 from bs4 import BeautifulSoup
@@ -234,22 +234,22 @@ def expand_openxml_merged_cells(worksheet) -> None:
 
 
 def read_ods_sheets(data: bytes) -> list[NormalisedSheet]:
-    document = load_odf(BytesIO(data))
+    document = cast(Any, load_odf(BytesIO(data)))
     sheets = []
     for table in document.spreadsheet.getElementsByType(Table):
         name = table.getAttribute("name") or "Sheet1"
-        rows = read_ods_table_rows(table)
+        rows = read_ods_table_rows(cast(Any, table))
         sheets.append(NormalisedSheet(name=name, rows=rows))
     return sheets
 
 
-def read_ods_table_rows(table: Table) -> list[list[str]]:
+def read_ods_table_rows(table: Any) -> list[list[str]]:
     rows: list[list[str]] = []
     merge_map: dict[tuple[int, int], str] = {}
     row_index = 0
     for row in table.getElementsByType(TableRow):
         repeated_rows = int(row.getAttribute("numberrowsrepeated") or 1)
-        base_row = build_ods_row(row, row_index, merge_map)
+        base_row = build_ods_row(cast(Any, row), row_index, merge_map)
         if repeated_rows > ODS_TRAILING_ROW_REPEAT_LIMIT and is_blank_row(base_row):
             # Real GOV.UK ODS files often encode sheet padding as a final repeated blank
             # row block extending to the spreadsheet row limit. Materialising that would
@@ -261,16 +261,16 @@ def read_ods_table_rows(table: Table) -> list[list[str]]:
     return rows
 
 
-def build_ods_row(row: TableRow, row_index: int, merge_map: dict[tuple[int, int], str]) -> list[str]:
+def build_ods_row(row: Any, row_index: int, merge_map: dict[tuple[int, int], str]) -> list[str]:
     values: list[str] = []
     col_index = 0
     for cell in row.childNodes:
         if not hasattr(cell, "qname"):
             continue
-        if cell.qname == CoveredTableCell().qname:
+        if cell.qname == cast(Any, CoveredTableCell()).qname:
             col_index += int(cell.getAttribute("numbercolumnsrepeated") or 1)
             continue
-        if cell.qname != TableCell().qname:
+        if cell.qname != cast(Any, TableCell()).qname:
             continue
 
         repeated_columns = int(cell.getAttribute("numbercolumnsrepeated") or 1)
@@ -306,7 +306,7 @@ def is_blank_row(row: list[str]) -> bool:
     return all(cell == "" for cell in row)
 
 
-def ods_cell_to_string(cell: TableCell) -> str:
+def ods_cell_to_string(cell: Any) -> str:
     value = cell.getAttribute("stringvalue")
     if value is not None:
         return str(value)

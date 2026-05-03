@@ -29,6 +29,7 @@ class DummyDataset:
         self._data = {"collections": ["example-collection"], "fail_on_unknown": False}
         self.prefix = "gb-gov"
         self.emitted = []
+        self.data_path = tmp_path
         self.resources_path = tmp_path / "resources"
         self.resources_path.mkdir(parents=True, exist_ok=True)
         self.output = StringIO()
@@ -122,19 +123,18 @@ def test_crawl_emits_entities_for_known_schema(tmp_path):
             "fingerprint": fingerprint,
             "sheet_type": "data",
             "activity_type": "meetings",
-            "data_start_offset": 1,
-            "fill_down_columns": [],
-            "nil_return_markers": [],
-            "date_source": "column",
-            "date_column": 1,
-            "date_format": "%Y-%m-%d",
-            "date_precision": "day",
-                "columns": {
-                    "subject_name": 0,
-                    "counterpart_name": 2,
-                    "activity_description": 3,
-                },
-            }
+            "subject": {"source": "column"},
+            "date": {
+                "mode": "column",
+                "column": 1,
+                "parsers": [{"type": "strptime", "format": "%Y-%m-%d", "precision": "day"}],
+            },
+            "mapping": {
+                "official_name": 0,
+                "counterparty_name": 2,
+                "summary": 3,
+            },
+        }
         )
     try:
         MODULE.crawl(dataset)
@@ -145,6 +145,7 @@ def test_crawl_emits_entities_for_known_schema(tmp_path):
     assert any(entity.schema.name == "Person" for entity in dataset.emitted)
     assert any(entity.schema.name == "PublicBody" for entity in dataset.emitted)
     assert any(entity.schema.name == "Employment" for entity in dataset.emitted)
+    assert (tmp_path / "trace" / "manifest.jsonl").exists()
 
 
 def test_crawl_reports_unknown_fingerprint(tmp_path):
@@ -172,3 +173,4 @@ def test_crawl_reports_unknown_fingerprint(tmp_path):
     MODULE.crawl(dataset)
 
     assert "UNKNOWN FINGERPRINT" in dataset.output.getvalue()
+    assert (tmp_path / "trace" / "manifest.jsonl").exists()

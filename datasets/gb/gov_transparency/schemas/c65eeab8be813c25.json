@@ -1,0 +1,30 @@
+{
+  "activity_type": "travel",
+  "date": {
+    "column": 1,
+    "end_column": 2,
+    "mode": "column_range",
+    "parsers": [
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      }
+    ]
+  },
+  "fingerprint": "c65eeab8be813c25",
+  "layout": {
+    "nil_return_markers": [
+      "RETURN PENDING"
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "location": 3,
+    "summary": 4,
+    "amount": 10
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

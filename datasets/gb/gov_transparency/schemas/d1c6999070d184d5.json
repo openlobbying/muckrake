@@ -1,0 +1,35 @@
+{
+  "activity_type": "travel",
+  "date": {
+    "column": 1,
+    "end_column": 2,
+    "mode": "column_range",
+    "parsers": [
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      }
+    ]
+  },
+  "fingerprint": "d1c6999070d184d5",
+  "layout": {
+    "skip_row_prefixes": [
+      "*Chloe Smith was taking maternity leave during this period."
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "location": 3,
+    "summary": 4,
+    "amount": 9
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

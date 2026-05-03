@@ -1,0 +1,37 @@
+{
+  "activity_type": "travel",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "precision": "day",
+        "type": "day_range"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      },
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      }
+    ]
+  },
+  "fingerprint": "c258ffc708a373cd",
+  "layout": {
+    "fill_down_columns": [
+      0
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "location": 2,
+    "summary": 3,
+    "amount": 8
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

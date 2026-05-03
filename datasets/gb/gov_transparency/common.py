@@ -45,14 +45,6 @@ def should_skip_row(values: list[str], skip_row_prefixes: list[str]) -> bool:
         return False
     normalised_prefixes = [normalise_marker(prefix) for prefix in skip_row_prefixes if prefix.strip()]
     return any(value.startswith(prefix) for value in normalised_values for prefix in normalised_prefixes)
-
-
-def slugify(value: str) -> str:
-    value = value.strip().lower()
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    return value.strip("-")
-
-
 def month_last_day(year: int, month: int) -> int:
     if month == 12:
         return 31

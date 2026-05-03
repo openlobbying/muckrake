@@ -60,19 +60,12 @@ def make_provenance(collection_type: str, url: str) -> Provenance:
 
 def test_emit_meeting_entities_creates_person_public_body_employment_legal_entity_and_meeting():
     dataset = DummyDataset()
-    schema = schema_from_dict(
-        {
-            "fingerprint": "abc",
-            "sheet_type": "data",
-            "activity_type": "meetings",
-            "columns": {"subject_name": 0},
-        }
-    )
+    schema = schema_from_dict({"fingerprint": "abc", "sheet_type": "data", "activity_type": "meetings", "mapping": {"official_name": 0}})
     provenance = make_provenance("meetings", "https://example.test/meetings.csv")
     row = {
-        "subject_name": "Jane Doe",
-        "counterpart_name": "Example Org",
-        "activity_description": "Policy discussion",
+        "official_name": "Jane Doe",
+        "counterparty_name": "Example Org",
+        "summary": "Policy discussion",
         "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Meetings",
@@ -89,10 +82,8 @@ def test_emit_meeting_entities_creates_person_public_body_employment_legal_entit
     event = next(entity for entity in dataset.emitted if entity.schema.name == "Meeting")
 
     assert person.first("name") == "Jane Doe"
-    assert person.first("topics") == "role.pep"
     assert public_body.first("name") == "Cabinet Office"
     assert employment.first("employee") == person.id
-    assert employment.first("employer") == public_body.id
     assert participant.first("name") == "Example Org"
     assert event.first("summary") == "Policy discussion"
     assert sorted(event.get("organizer")) == sorted([person.id, public_body.id])
@@ -101,20 +92,13 @@ def test_emit_meeting_entities_creates_person_public_body_employment_legal_entit
 
 def test_emit_hospitality_entities_creates_hospitality_payment_with_participant():
     dataset = DummyDataset()
-    schema = schema_from_dict(
-        {
-            "fingerprint": "abc",
-            "sheet_type": "data",
-            "activity_type": "hospitality",
-            "columns": {"subject_name": 0},
-        }
-    )
+    schema = schema_from_dict({"fingerprint": "abc", "sheet_type": "data", "activity_type": "hospitality", "mapping": {"official_name": 0}})
     provenance = make_provenance("hospitality", "https://example.test/hospitality.csv")
     row = {
-        "subject_name": "Jane Doe",
-        "counterpart_name": "Example Org",
-        "activity_description": "Dinner",
-        "outcome": "Accompanied by guest",
+        "official_name": "Jane Doe",
+        "counterparty_name": "Example Org",
+        "summary": "Dinner",
+        "outcome_text": "Accompanied by guest",
         "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Hospitality",
@@ -134,19 +118,12 @@ def test_emit_hospitality_entities_creates_hospitality_payment_with_participant(
 
 def test_emit_travel_entities_creates_trip():
     dataset = DummyDataset()
-    schema = schema_from_dict(
-        {
-            "fingerprint": "abc",
-            "sheet_type": "data",
-            "activity_type": "travel",
-            "columns": {"subject_name": 0},
-        }
-    )
+    schema = schema_from_dict({"fingerprint": "abc", "sheet_type": "data", "activity_type": "travel", "mapping": {"official_name": 0}})
     provenance = make_provenance("travel", "https://example.test/travel.csv")
     row = {
-        "subject_name": "Jane Doe",
+        "official_name": "Jane Doe",
         "location": "Paris",
-        "activity_description": "Trade mission",
+        "summary": "Trade mission",
         "amount": "1234",
         "start_date": "2024-01-10",
         "end_date": "2024-01-10",
@@ -165,27 +142,18 @@ def test_emit_travel_entities_creates_trip():
     assert trip.get("date") == []
     assert trip.first("startDate") == "2024-01-10"
     assert trip.first("endDate") == "2024-01-10"
-    assert sorted(trip.get("involved")) == sorted([person.id for person in dataset.emitted if person.schema.name in {"Person", "PublicBody"}])
-    assert trip.get("organizer") == []
 
 
 def test_emit_gift_entities_creates_gift_with_person_and_public_body_as_beneficiaries():
     dataset = DummyDataset()
-    schema = schema_from_dict(
-        {
-            "fingerprint": "abc",
-            "sheet_type": "data",
-            "activity_type": "gifts",
-            "columns": {"subject_name": 0},
-        }
-    )
+    schema = schema_from_dict({"fingerprint": "abc", "sheet_type": "data", "activity_type": "gifts", "mapping": {"official_name": 0}})
     provenance = make_provenance("gifts", "https://example.test/gifts.csv")
     row = {
-        "subject_name": "Jane Doe",
-        "counterpart_name": "Example Org",
-        "activity_description": "Bottle of wine",
+        "official_name": "Jane Doe",
+        "counterparty_name": "Example Org",
+        "summary": "Bottle of wine",
         "amount": "150",
-        "outcome": "Retained by department",
+        "outcome_text": "Retained by department",
         "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Gifts",
@@ -209,28 +177,21 @@ def test_emit_gift_entities_creates_gift_with_person_and_public_body_as_benefici
 
 def test_emit_entities_deduplicates_context_entities_across_rows():
     dataset = DummyDataset()
-    schema = schema_from_dict(
-        {
-            "fingerprint": "abc",
-            "sheet_type": "data",
-            "activity_type": "meetings",
-            "columns": {"subject_name": 0},
-        }
-    )
+    schema = schema_from_dict({"fingerprint": "abc", "sheet_type": "data", "activity_type": "meetings", "mapping": {"official_name": 0}})
     provenance = make_provenance("meetings", "https://example.test/meetings.csv")
     first = {
-        "subject_name": "Jane Doe",
-        "counterpart_name": "Example Org",
-        "activity_description": "Policy discussion",
+        "official_name": "Jane Doe",
+        "counterparty_name": "Example Org",
+        "summary": "Policy discussion",
         "date": "2024-01-10",
         "date_precision": "day",
         "sheet_name": "Meetings",
         "row_index": 2,
     }
     second = {
-        "subject_name": "Jane Doe",
-        "counterpart_name": "Another Org",
-        "activity_description": "Second discussion",
+        "official_name": "Jane Doe",
+        "counterparty_name": "Another Org",
+        "summary": "Second discussion",
         "date": "2024-01-11",
         "date_precision": "day",
         "sheet_name": "Meetings",

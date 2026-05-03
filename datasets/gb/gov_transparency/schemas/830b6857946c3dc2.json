@@ -1,0 +1,21 @@
+{
+  "activity_type": "hospitality",
+  "date": {
+    "mode": "provenance_period"
+  },
+  "fingerprint": "830b6857946c3dc2",
+  "layout": {
+    "skip_row_prefixes": [
+      "Hospitality does not normally include attendance at functions hosted by HM Government"
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "summary": 1,
+    "counterparty_name": 2
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

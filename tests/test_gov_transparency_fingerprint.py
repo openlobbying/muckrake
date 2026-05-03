@@ -57,8 +57,51 @@ def test_fingerprint_is_stable_for_same_headers_with_different_rows():
     assert fingerprint(left) == fingerprint(right)
 
 
+def test_fingerprint_ignores_sheet_name_when_headers_match():
+    left = NormalisedSheet(name="Meetings", rows=[["Minister", "Date", "Purpose of meeting"]])
+    right = NormalisedSheet(name="External meetings", rows=[["Minister", "Date", "Purpose of meeting"]])
+
+    assert fingerprint(left) == fingerprint(right)
+
+
 def test_fingerprint_changes_when_headers_change():
     left = NormalisedSheet(name="Meetings", rows=[["Minister", "Date", "Purpose of meeting"]])
     right = NormalisedSheet(name="Meetings", rows=[["Minister", "Date", "Organisation"]])
 
     assert fingerprint(left) != fingerprint(right)
+
+
+def test_detect_header_row_prefers_real_gifts_header_over_short_data_rows():
+    sheet = NormalisedSheet(
+        name="default",
+        rows=[
+            ["Minister", "Gifts received over £140", "Gifts given over £140", "Date received/given", "From/To", "Value", "Outcome"],
+            ["Attorney General Dominic Grieve QC MP", "Rug", "", "Jan-11", "General Abdul Rahim Wardak", "Over limit", "Retained by Department"],
+            ["Attorney General Dominic Grieve QC MP", "Rug", "", "Jan-11", "President Karzai", "Over limit", "Purchased by Minister"],
+        ],
+    )
+
+    assert detect_header_row(sheet) == 0
+
+
+def test_detect_header_row_prefers_real_travel_header_over_day_range_rows():
+    sheet = NormalisedSheet(
+        name="default",
+        rows=[
+            [
+                "Minister",
+                "Date(s) of trip",
+                "Destination",
+                "Purpose of trip",
+                "No 32 or RAF or Charter or Eurostar",
+                "Number of officials accompanying Minister",
+                "",
+                "Total cost including travel",
+            ],
+            ["Attorney General Dominic Grieve QC MP", "", "", "", "", "", "", ""],
+            ["", "25-27 October", "Marrakech, Morocco", "Arab Forum on Asset Recovery", "Charter", "", "", "£898.01"],
+            ["", "10-16 November", "Falkland Islands", "Overseas Territories Conference of Attorneys General", "RAF", "", "", "£1,949"],
+        ],
+    )
+
+    assert detect_header_row(sheet) == 0

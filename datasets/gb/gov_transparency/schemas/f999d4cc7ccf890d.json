@@ -1,0 +1,20 @@
+{
+  "activity_type": "hospitality",
+  "date": {
+    "mode": "provenance_period"
+  },
+  "fingerprint": "f999d4cc7ccf890d",
+  "layout": {
+    "skip_row_prefixes": [
+      "This return includes guests who have received official hospitality at Chequers"
+    ]
+  },
+  "mapping": {
+    "counterparty_name": 1
+  },
+  "role_mode": "hosted_by_official",
+  "sheet_type": "data",
+  "subject": {
+    "source": "provenance"
+  }
+}

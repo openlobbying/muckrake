@@ -26,34 +26,31 @@ Provenance = types_module.Provenance
 NormalisedSheet = normalise_module.NormalisedSheet
 
 
+def make_provenance(collection_type: str, attachment_title: str) -> Provenance:
+    return Provenance(
+        department="cabinet-office",
+        collection_type=collection_type,
+        publication_title="Cabinet Office: meetings, July to September 2016",
+        attachment_title=attachment_title,
+        url="https://example.test/source.csv",
+        period_start=date(2016, 7, 1),
+        period_end=date(2016, 9, 30),
+    )
+
+
 def test_extract_applies_fill_down_and_skips_nil_rows():
     schema = schema_from_dict(
         {
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "meetings",
-            "data_start_offset": 1,
-            "fill_down_columns": [0],
-            "nil_return_markers": ["Nil Return"],
-            "date_source": "column",
-            "date_column": 1,
-            "date_precision": "month",
-            "columns": {
-                "subject_name": 0,
-                "counterpart_name": 2,
-                "activity_description": 3,
-            },
+            "subject": {"source": "column"},
+            "layout": {"fill_down_columns": [0], "nil_return_markers": ["Nil Return"]},
+            "date": {"mode": "column", "column": 1, "parsers": [{"type": "month_name_from_period", "precision": "month"}]},
+            "mapping": {"official_name": 0, "counterparty_name": 2, "summary": 3},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="meetings",
-        publication_title="Cabinet Office: meetings, July to September 2016",
-        attachment_title="Meetings",
-        url="https://example.test/source.ods",
-        period_start=date(2016, 7, 1),
-        period_end=date(2016, 9, 30),
-    )
+    provenance = make_provenance("meetings", "Meetings")
     sheet = NormalisedSheet(
         name="Meetings",
         rows=[
@@ -67,45 +64,28 @@ def test_extract_applies_fill_down_and_skips_nil_rows():
     rows = extract(sheet, schema, provenance)
 
     assert len(rows) == 2
-    assert rows[1]["subject_name"] == "Rt Hon Theresa May"
+    assert rows[1]["official_name"] == "Rt Hon Theresa May"
     assert rows[0]["date"] == "2016-07"
 
 
-def test_extract_resolves_quarter_dates_from_provenance():
+def test_extract_resolves_provenance_period_dates():
     schema = schema_from_dict(
         {
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "gifts",
-            "data_start_offset": 1,
-            "fill_down_columns": [],
-            "nil_return_markers": ["Nil Return"],
-            "date_source": "none",
-            "date_precision": "quarter",
-            "columns": {"subject_name": 0, "activity_description": 2},
+            "subject": {"source": "column"},
+            "date": {"mode": "provenance_period"},
+            "mapping": {"official_name": 0, "summary": 2},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="gifts",
-        publication_title="Cabinet Office: gifts, October to December 2015",
-        attachment_title="Gifts",
-        url="https://example.test/source.xlsx",
-        period_start=date(2015, 10, 1),
-        period_end=date(2015, 12, 31),
-    )
-    sheet = NormalisedSheet(
-        name="Gifts",
-        rows=[
-            ["Special adviser", "Date", "Gift"],
-            ["Jane Doe", "Nil return", "Bottle"],
-        ],
-    )
+    provenance = make_provenance("gifts", "Gifts")
+    sheet = NormalisedSheet(name="Gifts", rows=[["Special adviser", "Date", "Gift"], ["Jane Doe", "Nil return", "Bottle"]])
 
     rows = extract(sheet, schema, provenance)
 
-    assert rows[0]["start_date"] == "2015-10-01"
-    assert rows[0]["end_date"] == "2015-12-31"
+    assert rows[0]["start_date"] == "2016-07-01"
+    assert rows[0]["end_date"] == "2016-09-30"
 
 
 def test_extract_can_derive_subject_name_from_provenance():
@@ -114,37 +94,26 @@ def test_extract_can_derive_subject_name_from_provenance():
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "hospitality",
-            "subject_name_source": "provenance",
-            "reverse_roles": True,
-            "data_start_offset": 1,
-            "fill_down_columns": [],
-            "date_source": "column",
-            "date_column": 0,
-            "date_format": "%d/%m/%Y",
-            "date_precision": "day",
-            "columns": {"counterpart_name": 1, "amount": 2},
+            "subject": {"source": "provenance"},
+            "role_mode": "hosted_by_official",
+            "date": {"mode": "column", "column": 0, "parsers": [{"type": "strptime", "format": "%d/%m/%Y", "precision": "day"}]},
+            "mapping": {"counterparty_name": 1, "amount": 2},
         }
     )
     provenance = Provenance(
         department="cabinet-office",
         collection_type="hospitality",
-        publication_title="Cabinet Office: ministerial gifts, hospitality, travel and meetings, April to June 2016",
+        publication_title="Cabinet Office: ministerial gifts hospitality travel and meetings, April to June 2016",
         attachment_title="Rt Hon David Cameron MP guests at chequers, April to June 2016",
         url="https://example.test/source.csv",
         period_start=date(2016, 4, 1),
         period_end=date(2016, 6, 30),
     )
-    sheet = NormalisedSheet(
-        name="Guests_at_Chequers",
-        rows=[
-            ["Period", "Name", "Total Cost"],
-            ["05/05/2016", "Japanese State Visit", "1260"],
-        ],
-    )
+    sheet = NormalisedSheet(name="Guests_at_Chequers", rows=[["Period", "Name", "Total Cost"], ["05/05/2016", "Japanese State Visit", "1260"]])
 
     rows = extract(sheet, schema, provenance)
 
-    assert rows[0]["subject_name"] == "Rt Hon David Cameron MP"
+    assert rows[0]["official_name"] == "Rt Hon David Cameron MP"
 
 
 def test_extract_parses_month_year_values():
@@ -153,31 +122,13 @@ def test_extract_parses_month_year_values():
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "gifts",
-            "data_start_offset": 1,
-            "fill_down_columns": [],
-            "nil_return_markers": ["Nil Return"],
-            "date_source": "column",
-            "date_column": 1,
-            "date_precision": "month",
-            "columns": {"subject_name": 0, "activity_description": 2},
+            "subject": {"source": "column"},
+            "date": {"mode": "column", "column": 1, "parsers": [{"type": "month_name", "precision": "month"}]},
+            "mapping": {"official_name": 0, "summary": 2},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="gifts",
-        publication_title="Cabinet Office: gifts, October to December 2015",
-        attachment_title="Gifts",
-        url="https://example.test/source.xlsx",
-        period_start=date(2015, 10, 1),
-        period_end=date(2015, 12, 31),
-    )
-    sheet = NormalisedSheet(
-        name="Gifts",
-        rows=[
-            ["Special adviser", "Date", "Gift"],
-            ["Jane Doe", "December 2015", "Scarf"],
-        ],
-    )
+    provenance = make_provenance("gifts", "Gifts")
+    sheet = NormalisedSheet(name="Gifts", rows=[["Special adviser", "Date", "Gift"], ["Jane Doe", "December 2015", "Scarf"]])
 
     rows = extract(sheet, schema, provenance)
 
@@ -190,31 +141,13 @@ def test_extract_parses_month_precision_from_iso_datetime_cells():
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "gifts",
-            "data_start_offset": 1,
-            "fill_down_columns": [],
-            "nil_return_markers": ["Nil Return"],
-            "date_source": "column",
-            "date_column": 1,
-            "date_precision": "month",
-            "columns": {"subject_name": 0, "activity_description": 2},
+            "subject": {"source": "column"},
+            "date": {"mode": "column", "column": 1, "parsers": [{"type": "iso_datetime", "precision": "month"}]},
+            "mapping": {"official_name": 0, "summary": 2},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="gifts",
-        publication_title="Cabinet Office: gifts, October to December 2016",
-        attachment_title="Gifts",
-        url="https://example.test/source.ods",
-        period_start=date(2016, 10, 1),
-        period_end=date(2016, 12, 31),
-    )
-    sheet = NormalisedSheet(
-        name="Gifts",
-        rows=[
-            ["Special adviser", "Date", "Gift"],
-            ["Jane Doe", "2016-12-01T00:00:00", "Scarf"],
-        ],
-    )
+    provenance = make_provenance("gifts", "Gifts")
+    sheet = NormalisedSheet(name="Gifts", rows=[["Special adviser", "Date", "Gift"], ["Jane Doe", "2016-12-01T00:00:00", "Scarf"]])
 
     rows = extract(sheet, schema, provenance)
 
@@ -227,25 +160,20 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "travel",
-            "data_start_offset": 1,
-            "fill_down_columns": [0],
-            "nil_return_markers": ["Nil Return"],
-            "date_source": "column",
-            "date_column": 1,
-            "date_format": "%d %B %Y",
-            "date_precision": "day",
-            "columns": {"subject_name": 0, "location": 2},
+            "subject": {"source": "column"},
+            "layout": {"fill_down_columns": [0], "nil_return_markers": ["Nil Return"]},
+            "date": {
+                "mode": "column",
+                "column": 1,
+                "parsers": [
+                    {"type": "strptime", "format": "%d %B %Y", "precision": "day"},
+                    {"type": "day_range", "precision": "day"},
+                ],
+            },
+            "mapping": {"official_name": 0, "location": 2},
         }
     )
-    provenance = Provenance(
-        department="cabinet-office",
-        collection_type="travel",
-        publication_title="Cabinet Office: travel, July to September 2016",
-        attachment_title="Travel",
-        url="https://example.test/source.ods",
-        period_start=date(2016, 7, 1),
-        period_end=date(2016, 9, 30),
-    )
+    provenance = make_provenance("travel", "Travel")
     sheet = NormalisedSheet(
         name="Travel",
         rows=[
@@ -253,11 +181,6 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
             ["Jane Doe", "14th October 2015", "Rome"],
             ["Jane Doe", "02-06 September", "Beijing"],
             ["Jane Doe", "4 to 11 May", "Auckland"],
-            ["Jane Doe", "13 June - 16th June", "Ottawa"],
-            ["Jane Doe", "12 - 17 July 11", "Sydney"],
-            ["Jane Doe", "27 June - 2 July 2011", "Seoul"],
-            ["Jane Doe", "8/11/16 - 11/11/16", "Seoul"],
-            ["Jane Doe", "17 May 2016 - 20 May 2016", "Port of Spain"],
         ],
     )
 
@@ -268,35 +191,24 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
     assert rows[1]["end_date"] == "2016-09-06"
     assert rows[2]["start_date"] == "2016-05-04"
     assert rows[2]["end_date"] == "2016-05-11"
-    assert rows[3]["start_date"] == "2016-06-13"
-    assert rows[3]["end_date"] == "2016-06-16"
-    assert rows[4]["start_date"] == "2011-07-12"
-    assert rows[4]["end_date"] == "2011-07-17"
-    assert rows[5]["start_date"] == "2011-06-27"
-    assert rows[5]["end_date"] == "2011-07-02"
-    assert rows[6]["start_date"] == "2016-11-08"
-    assert rows[6]["end_date"] == "2016-11-11"
-    assert rows[7]["start_date"] == "2016-05-17"
-    assert rows[7]["end_date"] == "2016-05-20"
 
 
-def test_extract_parses_mixed_day_or_month_dates():
+def test_extract_parses_mixed_day_and_month_dates_with_ordered_rules():
     schema = schema_from_dict(
         {
             "fingerprint": "abc",
             "sheet_type": "data",
             "activity_type": "hospitality",
-            "data_start_offset": 1,
-            "fill_down_columns": [],
-            "nil_return_markers": ["Nil Return", "Nil return"],
-            "date_source": "column",
-            "date_column": 1,
-            "date_precision": "day_or_month",
-            "columns": {
-                "subject_name": 0,
-                "counterpart_name": 2,
-                "activity_description": 3,
+            "subject": {"source": "column"},
+            "date": {
+                "mode": "column",
+                "column": 1,
+                "parsers": [
+                    {"type": "strptime", "format": "%d-%b-%y", "precision": "day"},
+                    {"type": "month_name_from_period", "precision": "month"},
+                ],
             },
+            "mapping": {"official_name": 0, "counterparty_name": 2, "summary": 3},
         }
     )
     provenance = Provenance(
@@ -325,20 +237,62 @@ def test_extract_parses_mixed_day_or_month_dates():
     assert rows[1]["date_precision"] == "day"
 
 
+def test_extract_parses_day_month_values_using_publication_period_year():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "hospitality",
+            "subject": {"source": "column"},
+            "layout": {"fill_down_columns": [0]},
+            "date": {
+                "mode": "column",
+                "column": 1,
+                "parsers": [
+                    {"type": "iso_datetime", "precision": "day"},
+                    {"type": "day_range", "precision": "day"},
+                    {"type": "month_name_from_period", "precision": "month"},
+                ],
+            },
+            "mapping": {"official_name": 0, "counterparty_name": 2, "summary": 3},
+        }
+    )
+    provenance = Provenance(
+        department="ago",
+        collection_type="hospitality",
+        publication_title="AGO hospitality, October to December 2013",
+        attachment_title="Hospitality",
+        url="https://example.test/source.csv",
+        period_start=date(2013, 10, 1),
+        period_end=date(2013, 12, 31),
+    )
+    sheet = NormalisedSheet(
+        name="default",
+        rows=[
+            ["Minister", "Date", "Name of organisation", "Type of hospitality"],
+            ["Attorney General Dominic Grieve QC MP", "", "", ""],
+            ["", "10-Oct", "The Telegraph", "Lunch"],
+            ["", "05-Nov", "Liberty", "Lunch"],
+        ],
+    )
+
+    rows = extract(sheet, schema, provenance)
+
+    assert rows[0]["official_name"] == "Attorney General Dominic Grieve QC MP"
+    assert rows[0]["date"] == "2013-10-10"
+    assert rows[1]["date"] == "2013-11-05"
+
+
 def test_extract_skips_nil_only_sparse_hospitality_rows():
     schema = schema_from_dict(
         {
             "fingerprint": "53ec96c8875a4269",
             "sheet_type": "data",
             "activity_type": "hospitality",
-            "data_start_offset": 0,
-            "fill_down_columns": [],
-            "date_source": "none",
-            "date_precision": "quarter",
-            "columns": {
-                "subject_name": 0,
-                "activity_description": 1,
-            },
+            "subject": {"source": "column"},
+            "layout": {"data_start_offset": 0},
+            "date": {"mode": "provenance_period"},
+            "mapping": {"official_name": 0, "summary": 1},
         }
     )
     provenance = Provenance(

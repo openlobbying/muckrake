@@ -1,0 +1,35 @@
+{
+  "activity_type": "travel",
+  "date": {
+    "column": 1,
+    "end_column": 2,
+    "mode": "column_range",
+    "parsers": [
+      {
+        "format": "%d/%m/%y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      }
+    ]
+  },
+  "fingerprint": "0803917e2ef06e87",
+  "mapping": {
+    "official_name": 0,
+    "location": 3,
+    "summary": 4,
+    "amount": 9
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}
