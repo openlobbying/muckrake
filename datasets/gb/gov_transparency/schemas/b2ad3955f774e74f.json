@@ -1,0 +1,31 @@
+{
+  "activity_type": "hospitality",
+  "date": {
+    "column": 0,
+    "mode": "column",
+    "parsers": [
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      }
+    ]
+  },
+  "fingerprint": "b2ad3955f774e74f",
+  "layout": {
+    "data_start_offset": 2
+  },
+  "mapping": {
+    "summary": 1,
+    "official_name": 2
+  },
+  "role_mode": "hosted_by_official",
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

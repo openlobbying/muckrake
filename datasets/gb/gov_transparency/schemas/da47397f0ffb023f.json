@@ -1,0 +1,40 @@
+{
+  "activity_type": "gifts",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "format": "%Y-%m-%d",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      },
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      }
+    ]
+  },
+  "fingerprint": "da47397f0ffb023f",
+  "layout": {
+    "data_start_offset": 0,
+    "fill_down_columns": [
+      0
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "summary": 2,
+    "counterparty_name": 4,
+    "amount": 5,
+    "outcome_text": 6
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

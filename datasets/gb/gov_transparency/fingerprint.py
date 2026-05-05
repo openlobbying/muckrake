@@ -53,6 +53,8 @@ MONTH_NAMES = {
     "dec",
 }
 
+_HEADER_ROW_CACHE: dict[tuple[tuple[str, ...], ...], int] = {}
+
 DATE_FORMATS = (
     "%d/%m/%Y",
     "%d-%m-%Y",
@@ -80,6 +82,10 @@ class HeaderMatch:
 
 
 def detect_header_row(sheet: "NormalisedSheetT") -> int:
+    cache_key = tuple(tuple(row) for row in sheet.rows)
+    cached = _HEADER_ROW_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
     if not sheet.rows:
         return 0
 
@@ -100,8 +106,11 @@ def detect_header_row(sheet: "NormalisedSheetT") -> int:
             best = match
 
     if best is not None:
+        _HEADER_ROW_CACHE[cache_key] = best.row_index
         return best.row_index
-    return fallback_row or 0
+    resolved = fallback_row or 0
+    _HEADER_ROW_CACHE[cache_key] = resolved
+    return resolved
 
 
 def fingerprint(sheet: "NormalisedSheetT") -> str:
@@ -131,7 +140,13 @@ def score_header_candidate(sheet: "NormalisedSheetT", row_index: int) -> int | N
     value_like = sum(1 for value in non_empty_cells if looks_like_pure_data(value))
     score += label_like * 4
     score -= value_like * 3
-    score += len(non_empty_cells)
+    if row and row[0].strip() == "" and value_like >= max(label_like, 1):
+        score -= 8
+    if row_index > 5 and any(len(value.strip()) > 80 for value in non_empty_cells):
+        score -= 12
+    # Extremely wide malformed rows can contain thousands of populated cells and
+    # should not outrank a compact header row purely because of width.
+    score += min(len(non_empty_cells), 8)
     if row_index <= 2:
         score += 6
 
@@ -224,6 +239,8 @@ def looks_like_label(value: str) -> bool:
     if not text:
         return False
     if looks_like_pure_data(text):
+        return False
+    if len(text) > 80 and not re.search(r"\b(and|or|from|to|type|transport|accompanied|spouse|family|friend)\b", text):
         return False
     if re.search(
         r"\b(name|names|date|dates|period|purpose|purposes|meeting|meetings|gift|gifts|given|received|hospitality|travel|travels|organization|organizations|minister|ministers|advisor|advisors|value|values|outcome|outcomes|destination|destinations|cost|costs|media|role|roles|employment|outside_employment|official|officials|person|people|guest|guests|from|to|from/to|type|transport|accompanied|spouse|family|friend|start|end)\b",

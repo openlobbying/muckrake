@@ -128,6 +128,17 @@ def emit_hospitality(dataset: Any, row: RowDict, provenance: "ProvenanceT", sche
 def emit_gift(dataset: Any, row: RowDict, provenance: "ProvenanceT", person: Any, public_body: Any) -> int:
     counterpart = str(row.get("counterparty_name", "")).strip()
     summary = str(row.get("summary") or "").strip()
+    outcome_text = str(row.get("outcome_text") or "").strip()
+    amount_text = str(row.get("amount") or "").strip()
+
+    # Some legacy gift CSVs shift the outcome text into the value column when the
+    # source omits a monetary value. Preserve that outcome instead of dropping it.
+    if not outcome_text and amount_text:
+        cleaned_amount = amount_text.replace(",", "")
+        cleaned_amount = cleaned_amount.replace("GBP", "").replace("gbp", "")
+        cleaned_amount = cleaned_amount.replace("£", "").strip()
+        if not re.fullmatch(r"[+-]?\d+(?:\.\d+)?", cleaned_amount):
+            outcome_text = amount_text
 
     payment = dataset.make("Gift")
     payment.id = make_row_entity_id(dataset, "gift", provenance, row)
@@ -145,8 +156,8 @@ def emit_gift(dataset: Any, row: RowDict, provenance: "ProvenanceT", person: Any
         payment.add("payer", participant.id)
 
     add_amount(payment, row)
-    if row.get("outcome_text"):
-        payment.add("description", row["outcome_text"])
+    if outcome_text:
+        payment.add("description", outcome_text)
     apply_source(payment, provenance)
     dataset.emit(payment)
     return emitted + 1

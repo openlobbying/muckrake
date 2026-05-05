@@ -1,0 +1,33 @@
+{
+  "activity_type": "hospitality",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "format": "%Y-%m-%dT%H:%M:%S",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      },
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      }
+    ]
+  },
+  "fingerprint": "090a3c0309d58ae4",
+  "mapping": {
+    "official_name": 0,
+    "counterparty_name": 2,
+    "amount": 3
+  },
+  "role_mode": "hosted_by_official",
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

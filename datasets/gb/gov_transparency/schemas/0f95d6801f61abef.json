@@ -1,0 +1,24 @@
+{
+  "activity_type": "travel",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      }
+    ]
+  },
+  "fingerprint": "0f95d6801f61abef",
+  "mapping": {
+    "official_name": 0,
+    "location": 3,
+    "summary": 4,
+    "amount": 9
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

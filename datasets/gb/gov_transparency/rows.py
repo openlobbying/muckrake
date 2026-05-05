@@ -51,7 +51,27 @@ class RowStats:
     blank_end_date_rows: int = 0
 
 
+_ROW_EVAL_CACHE: dict[tuple[tuple[tuple[str, ...], ...], tuple], tuple[list[RowOutcome], RowStats]] = {}
+
+
 def evaluate_rows(sheet: "NormalisedSheetT", schema: "SchemaT") -> tuple[list[RowOutcome], RowStats]:
+    schema_key = (
+        schema.fingerprint,
+        schema.layout.data_start_offset,
+        tuple(schema.layout.fill_down_columns),
+        tuple(schema.layout.skip_row_prefixes),
+        tuple(schema.layout.nil_return_markers),
+        schema.date.mode,
+        schema.date.column,
+        schema.date.end_column,
+        tuple((rule.type, rule.format, rule.precision) for rule in schema.date.parsers),
+        tuple(sorted(schema.mapping.items())),
+    )
+    cache_key = (tuple(tuple(row) for row in sheet.rows), schema_key)
+    cached = _ROW_EVAL_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
     header_row_index = detect_header_row(sheet)
     data_start_row = header_row_index + schema.layout.data_start_offset
     rows = sheet.rows[data_start_row:]
@@ -118,7 +138,9 @@ def evaluate_rows(sheet: "NormalisedSheetT", schema: "SchemaT") -> tuple[list[Ro
             )
         )
 
-    return outcomes, stats
+    result = (outcomes, stats)
+    _ROW_EVAL_CACHE[cache_key] = result
+    return result
 
 
 def replace_stats(stats: RowStats, **updates) -> RowStats:

@@ -43,7 +43,7 @@ def extract(sheet: "NormalisedSheetT", schema: "SchemaT", provenance: "Provenanc
     for row_outcome in row_outcomes:
         record: dict[str, str | int] = dict(row_outcome.mapped)
         if schema.subject.source != "column":
-            record["official_name"] = resolve_subject_name(schema, provenance)
+            record["official_name"] = resolve_subject_name(schema, provenance, sheet)
         record.update(resolve_date(row_outcome.values, schema, provenance.period_start, provenance.period_end))
         record["row_index"] = row_outcome.row_index
         record["sheet_name"] = sheet.name
@@ -51,11 +51,16 @@ def extract(sheet: "NormalisedSheetT", schema: "SchemaT", provenance: "Provenanc
     return results
 
 
-def resolve_subject_name(schema: "SchemaT", provenance: "ProvenanceT") -> str:
+def resolve_subject_name(schema: "SchemaT", provenance: "ProvenanceT", sheet: "NormalisedSheetT") -> str:
     if schema.subject.source == "value":
         if schema.subject.value is None:
             raise ValueError("Schema subject.source='value' requires a value")
         return schema.subject.value
+    if schema.subject.source == "sheet_name":
+        candidate = sheet.name.strip()
+        if not candidate:
+            raise ValueError("Could not derive official_name from sheet name")
+        return candidate
     if schema.subject.source == "provenance":
         candidate = (provenance.attachment_title or provenance.publication_title).strip()
         lowered = candidate.lower()

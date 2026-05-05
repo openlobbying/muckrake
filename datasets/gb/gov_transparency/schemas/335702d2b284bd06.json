@@ -1,0 +1,5 @@
+{
+  "fingerprint": "335702d2b284bd06",
+  "sheet_type": "ignore",
+  "reason": "Single-column collapsed CSV with meeting records serialized over multiple lines and an inline footnote, not a stable row-and-column activity table for the current extractor model."
+}

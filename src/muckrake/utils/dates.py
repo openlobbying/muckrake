@@ -244,6 +244,20 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
             return None
         return start_date, end_date
 
+    match = re.fullmatch(r"(\d{1,2})/(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})", text)
+    if match is not None:
+        month = month_number(match.group(3))
+        if month is None:
+            return None
+        year = int(match.group(4))
+        if year < 100:
+            year += 2000
+        start_date = safe_iso_date(year, month, int(match.group(1)))
+        end_date = safe_iso_date(year, month, int(match.group(2)))
+        if start_date is None or end_date is None:
+            return None
+        return start_date, end_date
+
     match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})-(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})", text)
     if match is not None:
         start_month = month_number(match.group(2))
@@ -326,6 +340,9 @@ def parse_partial_date(value: Any, start: Optional[date] = None, end: Optional[d
     parsed = parse_date(text)
     if parsed is not None:
         return parsed
+    parsed = parse_year_hint_date(text, start, end)
+    if parsed is not None:
+        return parsed
     match = re.fullmatch(r"(\d{1,2})[\s/-]+([A-Za-z]+)(?:[\s,-]+(\d{2,4}))?", text)
     if match is None:
         return None
@@ -381,14 +398,26 @@ def parse_year_hint_date(value: Any, start: Optional[date] = None, end: Optional
                     return parsed
 
     match = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", text)
+    if match is not None:
+        year = int(match.group(1))
+        if 1900 <= year <= 2100:
+            return None
+        candidate_years = [int(match.group(1)[::-1])]
+        if year >= 1000:
+            candidate_years.append(year - 1000)
+        for candidate_year in candidate_years:
+            if start.year <= candidate_year <= end.year:
+                parsed = safe_iso_date(candidate_year, int(match.group(2)), int(match.group(3)))
+                if parsed is not None:
+                    return parsed
+
+    match = re.fullmatch(r"(\d{3})-(\d{2})-(\d{2})", text)
     if match is None:
         return None
-    year = int(match.group(1))
-    if 1900 <= year <= 2100:
-        return None
-    candidate_years = [int(match.group(1)[::-1])]
-    if year >= 1000:
-        candidate_years.append(year - 1000)
+    candidate_years: list[int] = []
+    if start.year == end.year:
+        candidate_years.append(start.year)
+    candidate_years.append(int(f"{start.year // 1000}{match.group(1)}"))
     for candidate_year in candidate_years:
         if start.year <= candidate_year <= end.year:
             parsed = safe_iso_date(candidate_year, int(match.group(2)), int(match.group(3)))

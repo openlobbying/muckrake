@@ -193,6 +193,33 @@ def test_validate_schema_accepts_provenance_period_rows():
     validate_schema(schema, sheet)
 
 
+def test_validate_schema_accepts_nil_only_data_rows_when_date_column_has_nil_marker():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc123",
+            "sheet_type": "data",
+            "activity_type": "gifts",
+            "subject": {"source": "column"},
+            "layout": {"fill_down_columns": [0], "nil_return_markers": ["-"]},
+            "date": {
+                "mode": "column",
+                "column": 1,
+                "parsers": [{"type": "iso_datetime", "precision": "day"}, {"type": "month_name_from_period", "precision": "month"}],
+            },
+            "mapping": {"official_name": 0, "summary": 2, "counterparty_name": 4, "amount": 5, "outcome_text": 6},
+        }
+    )
+    sheet = NormalisedSheet(
+        name="Gifts",
+        rows=[
+            ["Minister", "Date", "Gift", "Given or received", "Who gift was given to or received from", "Value", "Outcome"],
+            ["Anti-Corruption Champion - Nil return", "-", "-", "-", "-", "-", "-"],
+        ],
+    )
+
+    validate_schema(schema, sheet)
+
+
 def test_validate_schema_rejects_missing_data_rows():
     schema = schema_from_dict(
         {

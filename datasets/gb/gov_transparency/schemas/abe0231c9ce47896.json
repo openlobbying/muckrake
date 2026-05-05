@@ -1,0 +1,5 @@
+{
+  "fingerprint": "abe0231c9ce47896",
+  "sheet_type": "ignore",
+  "reason": "Senior officials travel expense ledger with per-leg transport and hotel booking rows rather than one row per travel activity in the crawler's travel model."
+}

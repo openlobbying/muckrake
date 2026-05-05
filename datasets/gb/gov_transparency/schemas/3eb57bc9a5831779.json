@@ -25,6 +25,11 @@
     ]
   },
   "fingerprint": "3eb57bc9a5831779",
+  "layout": {
+    "fill_down_columns": [
+      0
+    ]
+  },
   "mapping": {
     "official_name": 0,
     "summary": 2,

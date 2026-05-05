@@ -1,0 +1,5 @@
+{
+  "fingerprint": "3b94aeafee1df738",
+  "sheet_type": "ignore",
+  "reason": "Nil returns summary sheet listing officials with no expense returns rather than activity records."
+}

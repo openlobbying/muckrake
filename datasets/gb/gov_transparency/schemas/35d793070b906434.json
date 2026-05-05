@@ -1,0 +1,34 @@
+{
+  "activity_type": "meetings",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      },
+      {
+        "precision": "day",
+        "type": "day_range"
+      },
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      }
+    ]
+  },
+  "fingerprint": "35d793070b906434",
+  "layout": {
+    "fill_down_columns": [0]
+  },
+  "mapping": {
+    "official_name": 0,
+    "counterparty_name": 2,
+    "summary": 3
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

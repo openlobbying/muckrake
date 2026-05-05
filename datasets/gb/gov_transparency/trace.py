@@ -15,3 +15,11 @@ class TraceWriter:
     def close(self) -> None:
         self._fh.flush()
         self._fh.close()
+
+
+class NullTraceWriter:
+    def write(self, record: dict) -> None:
+        return
+
+    def close(self) -> None:
+        return

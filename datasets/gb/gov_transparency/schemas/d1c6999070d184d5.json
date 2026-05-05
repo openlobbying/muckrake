@@ -18,6 +18,7 @@
   },
   "fingerprint": "d1c6999070d184d5",
   "layout": {
+    "fill_down_columns": [0],
     "skip_row_prefixes": [
       "*Chloe Smith was taking maternity leave during this period."
     ]

@@ -11,20 +11,20 @@ from typing import TYPE_CHECKING, Any
 from org_id import make_hashed_id
 
 if TYPE_CHECKING:
-    from .types import Provenance as ProvenanceT
+    from ..types import Provenance as ProvenanceT
 
 try:
-    from .common import load_sibling_module, parse_period
-    from .entities import emit_entities
-    from .extract import extract
-    from .fingerprint import fingerprint
-    from .normalise import normalise
-    from .schema import SCHEMAS_DIR, load_schema, schema_from_dict, validate_schema
-    from .types import Provenance
+    from ..common import load_sibling_module, parse_period
+    from ..entities import emit_entities
+    from ..extract import extract
+    from ..fingerprint import fingerprint
+    from ..normalise import normalise
+    from ..schema import SCHEMAS_DIR, load_schema, schema_from_dict, validate_schema
+    from ..types import Provenance
 except ImportError:
     common_spec = importlib.util.spec_from_file_location(
         f"{__name__}.common",
-        Path(__file__).with_name("common.py"),
+        Path(__file__).resolve().parents[1] / "common.py",
     )
     if common_spec is None or common_spec.loader is None:
         raise RuntimeError("Could not load gov-transparency common module")
@@ -33,16 +33,16 @@ except ImportError:
     common_spec.loader.exec_module(common_module)
     load_sibling_module = common_module.load_sibling_module
     parse_period = common_module.parse_period
-    normalise = load_sibling_module(__file__, __name__, "normalise").normalise
-    fingerprint = load_sibling_module(__file__, __name__, "fingerprint").fingerprint
-    extract = load_sibling_module(__file__, __name__, "extract").extract
-    emit_entities = load_sibling_module(__file__, __name__, "entities").emit_entities
-    schema_module = load_sibling_module(__file__, __name__, "schema")
+    normalise = load_sibling_module(Path(__file__).resolve().parents[1] / "normalise.py", __name__, "normalise").normalise
+    fingerprint = load_sibling_module(Path(__file__).resolve().parents[1] / "fingerprint.py", __name__, "fingerprint").fingerprint
+    extract = load_sibling_module(Path(__file__).resolve().parents[1] / "extract.py", __name__, "extract").extract
+    emit_entities = load_sibling_module(Path(__file__).resolve().parents[1] / "entities.py", __name__, "entities").emit_entities
+    schema_module = load_sibling_module(Path(__file__).resolve().parents[1] / "schema.py", __name__, "schema")
     SCHEMAS_DIR = schema_module.SCHEMAS_DIR
     load_schema = schema_module.load_schema
     schema_from_dict = schema_module.schema_from_dict
     validate_schema = schema_module.validate_schema
-    Provenance = load_sibling_module(__file__, __name__, "types").Provenance
+    Provenance = load_sibling_module(Path(__file__).resolve().parents[1] / "types.py", __name__, "types").Provenance
 
 
 ROOT = Path(__file__).resolve().parents[3]

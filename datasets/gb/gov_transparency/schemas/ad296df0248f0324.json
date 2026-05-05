@@ -1,0 +1,5 @@
+{
+  "fingerprint": "ad296df0248f0324",
+  "sheet_type": "ignore",
+  "reason": "Single CSV contains multiple stacked tables (gifts given, gifts received, hospitality) with different internal headers. Current one-sheet/one-header schema model cannot represent this safely without dropping sections."
+}

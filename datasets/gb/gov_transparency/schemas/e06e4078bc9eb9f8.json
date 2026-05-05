@@ -5,6 +5,21 @@
     "mode": "column",
     "parsers": [
       {
+        "format": "%Y-%m-%d %H:%M:%S",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "format": "%m/%d/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
         "precision": "day",
         "type": "iso_datetime"
       },
@@ -18,6 +33,9 @@
   "layout": {
     "fill_down_columns": [
       0
+    ],
+    "nil_return_markers": [
+      "-"
     ]
   },
   "mapping": {

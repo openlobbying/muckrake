@@ -116,6 +116,31 @@ def test_extract_can_derive_subject_name_from_provenance():
     assert rows[0]["official_name"] == "Rt Hon David Cameron MP"
 
 
+def test_extract_can_derive_subject_name_from_sheet_name():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "hospitality",
+            "subject": {"source": "sheet_name"},
+            "date": {"mode": "column", "column": 0, "parsers": [{"type": "excel_serial", "precision": "day"}]},
+            "mapping": {"counterparty_name": 1, "summary": 2},
+        }
+    )
+    provenance = make_provenance("hospitality", "Hospitality")
+    sheet = NormalisedSheet(
+        name="Peter Housden",
+        rows=[
+            ["Date", "Organisation Name", "Type of hospitality received"],
+            ["40318.0", "Good Work Commission", "Dinner"],
+        ],
+    )
+
+    rows = extract(sheet, schema, provenance)
+
+    assert rows[0]["official_name"] == "Peter Housden"
+
+
 def test_extract_parses_month_year_values():
     schema = schema_from_dict(
         {
@@ -152,6 +177,101 @@ def test_extract_parses_month_precision_from_iso_datetime_cells():
     rows = extract(sheet, schema, provenance)
 
     assert rows[0]["date"] == "2016-12"
+
+
+def test_extract_repairs_three_digit_iso_year_using_publication_period():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "meetings",
+            "subject": {"source": "column"},
+            "date": {"mode": "column", "column": 1, "parsers": [{"type": "iso_datetime", "precision": "day"}]},
+            "mapping": {"official_name": 0, "counterparty_name": 2, "summary": 3},
+        }
+    )
+    provenance = Provenance(
+        department="beis",
+        collection_type="meetings",
+        publication_title="BEIS senior officials meetings, April to June 2019",
+        attachment_title="Meetings",
+        url="https://example.test/source.csv",
+        period_start=date(2019, 4, 1),
+        period_end=date(2019, 6, 30),
+    )
+    sheet = NormalisedSheet(
+        name="Meetings",
+        rows=[
+            ["Permanent secretary", "Date", "Person or organisation that meeting was with", "Purpose of meeting"],
+            ["Patrick Vallance", "201-05-16", "The Guardian", "Meeting with the Science Editor"],
+        ],
+    )
+
+    rows = extract(sheet, schema, provenance)
+
+    assert rows[0]["date"] == "2019-05-16"
+
+
+def test_gift_emission_uses_non_numeric_amount_as_fallback_outcome_text():
+    entities_module = load_module("gov_transparency_entities_for_extract", "datasets/gb/gov_transparency/entities.py")
+
+    class DummyEntity:
+        def __init__(self, schema_name: str):
+            self.schema = type("Schema", (), {"name": schema_name})()
+            self.id = None
+            self.props = {}
+
+        def add(self, key, value):
+            self.props.setdefault(key, []).append(value)
+
+    class DummyDataset:
+        def __init__(self):
+            self.emitted = []
+
+        def make(self, schema_name: str):
+            return DummyEntity(schema_name)
+
+        def make_id(self, *parts, **kwargs):
+            return "::".join(str(p) for p in parts) or "id"
+
+        def emit(self, entity):
+            self.emitted.append(entity)
+
+    dataset = DummyDataset()
+    provenance = Provenance(
+        department="bis",
+        collection_type="special-advisers-gifts",
+        publication_title="Special advisers gifts received: July to September 2012",
+        attachment_title="gifts",
+        url="https://example.test/source.csv",
+        period_start=date(2012, 7, 1),
+        period_end=date(2012, 9, 30),
+    )
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "gifts",
+            "subject": {"source": "column"},
+            "date": {"mode": "column", "column": 1, "parsers": [{"type": "iso_datetime", "precision": "day"}]},
+            "mapping": {"official_name": 0, "counterparty_name": 2, "summary": 3, "amount": 4},
+        }
+    )
+    row = {
+        "official_name": "Giles Wilkes",
+        "counterparty_name": "EngineeringUK",
+        "summary": "Large framed photo",
+        "amount": "Held by the Department",
+        "date": "2012-09-25",
+        "date_precision": "day",
+        "row_index": 1,
+        "sheet_name": "default",
+    }
+
+    entities_module.emit_entities(dataset, row, provenance, schema)
+
+    gift = next(entity for entity in dataset.emitted if entity.schema.name == "Gift")
+    assert gift.props["description"] == ["Held by the Department"]
 
 
 def test_extract_parses_ordinal_day_dates_and_day_ranges():
@@ -191,6 +311,36 @@ def test_extract_parses_ordinal_day_dates_and_day_ranges():
     assert rows[1]["end_date"] == "2016-09-06"
     assert rows[2]["start_date"] == "2016-05-04"
     assert rows[2]["end_date"] == "2016-05-11"
+
+
+def test_extract_parses_slash_separated_ordinal_day_ranges():
+    schema = schema_from_dict(
+        {
+            "fingerprint": "abc",
+            "sheet_type": "data",
+            "activity_type": "travel",
+            "subject": {"source": "column"},
+            "date": {
+                "mode": "column",
+                "column": 1,
+                "parsers": [{"type": "day_range", "precision": "day"}],
+            },
+            "mapping": {"official_name": 0, "location": 2},
+        }
+    )
+    provenance = make_provenance("travel", "Travel")
+    sheet = NormalisedSheet(
+        name="Travel",
+        rows=[
+            ["Minister", "Date(s) of trip", "Destination"],
+            ["Jane Doe", "11th/12th June 2016", "Paris"],
+        ],
+    )
+
+    rows = extract(sheet, schema, provenance)
+
+    assert rows[0]["start_date"] == "2016-06-11"
+    assert rows[0]["end_date"] == "2016-06-12"
 
 
 def test_extract_parses_mixed_day_and_month_dates_with_ordered_rules():

@@ -5,6 +5,7 @@ import json
 import sys
 from dataclasses import dataclass, field
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -40,7 +41,7 @@ DEFAULT_NIL_RETURN_MARKERS = [
 ]
 VALID_SHEET_TYPES = {"data", "notes", "ignore"}
 VALID_ACTIVITY_TYPES = {"meetings", "gifts", "hospitality", "travel", "outside_employment"}
-VALID_SUBJECT_SOURCES = {"column", "value", "provenance"}
+VALID_SUBJECT_SOURCES = {"column", "value", "provenance", "sheet_name"}
 VALID_DATE_MODES = {"none", "provenance_period", "column", "column_range"}
 VALID_ROLE_MODES = {"default", "hosted_by_official"}
 VALID_MAPPING_KEYS = {
@@ -106,6 +107,7 @@ class Schema:
     role_mode: str = "default"
 
 
+@lru_cache(maxsize=None)
 def load_schema(fingerprint: str) -> Schema | None:
     path = SCHEMAS_DIR / f"{fingerprint}.json"
     if not path.exists():
@@ -197,10 +199,17 @@ def validate_schema(schema: Schema, sheet: "NormalisedSheetT") -> None:
 
     rows, stats = evaluate_rows(sheet, schema)
     if schema.date.mode == "column_range" and stats.blank_end_date_rows > 0:
-        raise ValueError(f"Schema {schema.fingerprint} has blank end date values in sheet {sheet.name!r}")
+        raise ValueError(
+            f"Schema {schema.fingerprint} has blank end date values in sheet {sheet.name!r} "
+            f"(mapped_rows={stats.mapped_rows}, nil_rows={stats.nil_rows}, blank_end_date_rows={stats.blank_end_date_rows})"
+        )
     if not rows:
-        if stats.mapped_rows == 0 and stats.skip_prefix_rows == 0:
-            raise ValueError(f"Schema {schema.fingerprint} has no data rows in sheet {sheet.name!r}")
+        if stats.mapped_rows == 0 and stats.skip_prefix_rows == 0 and stats.nil_rows == 0:
+            raise ValueError(
+                f"Schema {schema.fingerprint} has no data rows in sheet {sheet.name!r} "
+                f"(mapped_rows={stats.mapped_rows}, nil_rows={stats.nil_rows}, blank_rows={stats.blank_rows}, "
+                f"blank_date_rows={stats.blank_date_rows}, skip_prefix_rows={stats.skip_prefix_rows})"
+            )
         return
 
     if schema.date.mode == "provenance_period":
@@ -208,7 +217,15 @@ def validate_schema(schema: Schema, sheet: "NormalisedSheetT") -> None:
 
     has_date = False
     for row in rows:
-        resolved = resolve_date(row.values, schema, period_start=date(1900, 1, 1), period_end=date(1900, 12, 31))
+        try:
+            resolved = resolve_date(row.values, schema, period_start=date(1900, 1, 1), period_end=date(1900, 12, 31))
+        except Exception as exc:
+            raw_date = row.values[schema.date.column] if schema.date.column is not None and schema.date.column < len(row.values) else ""
+            raise ValueError(
+                f"Cannot parse date value {raw_date!r} at row_index={row.row_index} in sheet {sheet.name!r}; "
+                f"mapped={row.mapped}; layout.fill_down_columns={schema.layout.fill_down_columns}; "
+                f"nil_return_markers={schema.layout.nil_return_markers}"
+            ) from exc
         if resolved:
             has_date = True
     if schema.date.mode != "none" and not has_date:

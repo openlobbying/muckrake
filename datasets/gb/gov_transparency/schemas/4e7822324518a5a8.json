@@ -1,0 +1,37 @@
+{
+  "activity_type": "hospitality",
+  "date": {
+    "column": 1,
+    "mode": "column",
+    "parsers": [
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "day",
+        "type": "iso_datetime"
+      },
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      }
+    ]
+  },
+  "fingerprint": "4e7822324518a5a8",
+  "layout": {
+    "skip_row_prefixes": [
+      "Hospitality (not including functions hosted by the government or Royal Household"
+    ]
+  },
+  "mapping": {
+    "official_name": 0,
+    "counterparty_name": 2,
+    "summary": 3
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "column"
+  }
+}

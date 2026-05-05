@@ -1,0 +1,22 @@
+{
+  "activity_type": "meetings",
+  "date": {
+    "column": 0,
+    "mode": "column",
+    "parsers": [
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      }
+    ]
+  },
+  "fingerprint": "7764b3b9fd95f083",
+  "mapping": {
+    "counterparty_name": 1,
+    "summary": 2
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "provenance"
+  }
+}

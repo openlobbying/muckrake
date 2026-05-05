@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
+import json
 import sys
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
@@ -24,7 +27,7 @@ try:
     from .normalise import detect_file_format, normalise
     from .rows import evaluate_rows
     from .schema import load_schema, validate_schema
-    from .trace import TraceWriter
+    from .trace import NullTraceWriter, TraceWriter
     from .types import Provenance
 except ImportError:
     common_spec = importlib.util.spec_from_file_location(
@@ -52,19 +55,30 @@ except ImportError:
     schema_module = load_sibling_module(__file__, __name__, "schema")
     load_schema = schema_module.load_schema
     validate_schema = schema_module.validate_schema
-    TraceWriter = load_sibling_module(__file__, __name__, "trace").TraceWriter
+    trace_module = load_sibling_module(__file__, __name__, "trace")
+    TraceWriter = trace_module.TraceWriter
+    NullTraceWriter = trace_module.NullTraceWriter
     Provenance = load_sibling_module(__file__, __name__, "types").Provenance
 
 GOVUK_URL = "https://www.gov.uk"
 GOVUK_CONTENT_API_URL = "https://www.gov.uk/api/content"
 CONTENT_CACHE_DAYS = 7
 RESOURCE_CACHE_DAYS = 30
+INCREMENTAL_MANIFEST_VERSION = 1
 
 
 @dataclass(frozen=True)
 class CollectionConfig:
     department: str
     collection_url: str
+
+
+@dataclass(frozen=True)
+class SourceReference:
+    data: bytes | None
+    resource_path: Path | None
+    fetch_status: str
+    source_signature: str
 
 
 def iter_collection_configs(dataset: Dataset):
@@ -127,6 +141,105 @@ def fetch_resource_or_warn(dataset: Dataset, name: str, url: str):
             dataset.log.warning("Skipping missing attachment: %s", url)
             return None
         raise
+
+
+def incremental_manifest_path(dataset: Dataset) -> Path:
+    return dataset.data_path / "incremental-manifest.json"
+
+
+def should_use_incremental_manifest(dataset: Dataset) -> bool:
+    value = dataset._data.get("incremental_manifest_enabled", True)
+    return bool(value)
+
+
+def load_incremental_manifest(dataset: Dataset) -> dict[str, Any]:
+    path = incremental_manifest_path(dataset)
+    if not path.exists():
+        return {"version": INCREMENTAL_MANIFEST_VERSION, "sources": {}}
+    with path.open("r", encoding="utf-8") as fh:
+        payload = json.load(fh)
+    if not isinstance(payload, dict):
+        return {"version": INCREMENTAL_MANIFEST_VERSION, "sources": {}}
+    if payload.get("version") != INCREMENTAL_MANIFEST_VERSION:
+        return {"version": INCREMENTAL_MANIFEST_VERSION, "sources": {}}
+    sources = payload.get("sources")
+    if not isinstance(sources, dict):
+        return {"version": INCREMENTAL_MANIFEST_VERSION, "sources": {}}
+    return {"version": INCREMENTAL_MANIFEST_VERSION, "sources": sources}
+
+
+def save_incremental_manifest(dataset: Dataset, manifest: dict[str, Any]) -> None:
+    path = incremental_manifest_path(dataset)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+
+
+@lru_cache(maxsize=1)
+def schema_registry_signature() -> str:
+    digest = hashlib.sha256()
+    schema_dir = Path(__file__).with_name("schemas")
+    for path in sorted(schema_dir.glob("*.json")):
+        digest.update(path.name.encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def make_source_key(provenance: "ProvenanceT") -> str:
+    return provenance.url
+
+
+def make_source_signature(resource_path: Path | None, data: bytes | None) -> str:
+    if data is None:
+        return "missing"
+    digest = hashlib.sha256(data).hexdigest()
+    return f"bytes:{digest}:{len(data)}"
+
+
+def load_source_reference(dataset: Dataset, filename: str, provenance: "ProvenanceT") -> SourceReference:
+    data, resource_path, fetch_status = fetch_source_bytes(dataset, filename, provenance)
+    return SourceReference(
+        data=data,
+        resource_path=resource_path,
+        fetch_status=fetch_status,
+        source_signature=make_source_signature(resource_path, data),
+    )
+
+
+def should_skip_source(
+    manifest: dict[str, Any],
+    provenance: "ProvenanceT",
+    source_reference: SourceReference,
+) -> bool:
+    source_entry = manifest.get("sources", {}).get(make_source_key(provenance))
+    if not isinstance(source_entry, dict):
+        return False
+    return (
+        source_entry.get("source_signature") == source_reference.source_signature
+        and source_entry.get("schema_registry_signature") == schema_registry_signature()
+        and source_entry.get("status") == "processed"
+    )
+
+
+def update_manifest_for_source(
+    manifest: dict[str, Any],
+    provenance: "ProvenanceT",
+    source_reference: SourceReference,
+    *,
+    status: str,
+    file_format: str | None,
+    sheet_fingerprints: list[str] | None = None,
+) -> None:
+    manifest.setdefault("sources", {})[make_source_key(provenance)] = {
+        "url": provenance.url,
+        "resource_path": str(source_reference.resource_path) if source_reference.resource_path is not None else None,
+        "source_signature": source_reference.source_signature,
+        "schema_registry_signature": schema_registry_signature(),
+        "status": status,
+        "file_format": file_format,
+        "sheet_fingerprints": sheet_fingerprints or [],
+    }
 
 
 def get_attachment_filename(attachment: dict, publication_path: str) -> str:
@@ -272,7 +385,7 @@ def format_sheet_preview(rows: list[list[str]]) -> list[str]:
     column_widths = [max(len(row[index]) for row in padded) for index in range(width)]
     output = []
     for row in padded:
-        output.append(" | ".join(cell.ljust(column_widths[index]) for index, cell in enumerate(row)).rstrip())
+        output.append(" | ".join(row[index].ljust(column_widths[index]) for index in range(width)).rstrip())
     return output
 
 
@@ -293,11 +406,18 @@ def should_continue_on_error(dataset: Dataset) -> bool:
     return bool(value)
 
 
+def should_write_trace(dataset: Dataset) -> bool:
+    value = dataset._data.get("trace_enabled", False)
+    return bool(value)
+
+
 def crawl(dataset: Dataset):
     trace_path = dataset.data_path / "trace" / "manifest.jsonl"
-    trace = TraceWriter(trace_path)
+    trace = TraceWriter(trace_path) if should_write_trace(dataset) else NullTraceWriter()
+    incremental_manifest = load_incremental_manifest(dataset) if should_use_incremental_manifest(dataset) else None
     stats = {
         "sources_processed": 0,
+        "sources_skipped": 0,
         "sheets_processed": 0,
         "unknown_fingerprints": 0,
         "validated_sheets": 0,
@@ -309,7 +429,7 @@ def crawl(dataset: Dataset):
         for collection in iter_collection_configs(dataset):
             for filename, provenance in iter_collection_sources(dataset, collection):
                 try:
-                    process_source(dataset, filename, provenance, stats, trace)
+                    process_source(dataset, filename, provenance, stats, trace, incremental_manifest)
                 except Exception as exc:
                     stats["source_errors"] += 1
                     write_source_trace(
@@ -327,16 +447,19 @@ def crawl(dataset: Dataset):
                     raise
     finally:
         trace.close()
+        if incremental_manifest is not None:
+            save_incremental_manifest(dataset, incremental_manifest)
 
     dataset.log.info(
-        "gov-transparency summary: %d sources, %d sheets, %d validated, %d unknown, %d entities, %d source_errors. trace=%s",
+        "gov-transparency summary: %d sources, %d skipped, %d sheets, %d validated, %d unknown, %d entities, %d source_errors%s",
         stats["sources_processed"],
+        stats["sources_skipped"],
         stats["sheets_processed"],
         stats["validated_sheets"],
         stats["unknown_fingerprints"],
         stats["entities_emitted"],
         stats["source_errors"],
-        trace_path,
+        f" trace={trace_path}" if should_write_trace(dataset) else "",
     )
 
 
@@ -370,31 +493,84 @@ def iter_collection_sources(dataset: Dataset, collection: CollectionConfig):
         yield from iter_publication_sources(collection.department, collection.collection_url, publication_path, publication)
 
 
-def process_source(dataset: Dataset, filename: str, provenance: "ProvenanceT", stats: dict[str, int], trace: "TraceWriterT") -> None:
-    data, resource_path, fetch_status = fetch_source_bytes(dataset, filename, provenance)
-    if data is None:
+def process_source(
+    dataset: Dataset,
+    filename: str,
+    provenance: "ProvenanceT",
+    stats: dict[str, int],
+    trace: "TraceWriterT",
+    incremental_manifest: dict[str, Any] | None,
+) -> None:
+    source_reference = load_source_reference(dataset, filename, provenance)
+    if source_reference.data is None:
         return
 
-    file_format = detect_file_format(data, filename)
+    if incremental_manifest is not None and should_skip_source(incremental_manifest, provenance, source_reference):
+        stats["sources_skipped"] += 1
+        write_source_trace(
+            trace,
+            provenance,
+            filename,
+            source_reference.resource_path,
+            file_format=None,
+            status="skipped_unchanged",
+        )
+        return
+
+    file_format = detect_file_format(source_reference.data, filename)
     if file_format is None:
-        write_source_trace(trace, provenance, filename, resource_path, file_format=None, status="unsupported")
+        write_source_trace(trace, provenance, filename, source_reference.resource_path, file_format=None, status="unsupported")
+        if incremental_manifest is not None:
+            update_manifest_for_source(
+                incremental_manifest,
+                provenance,
+                source_reference,
+                status="unsupported",
+                file_format=None,
+            )
         return
 
     try:
-        sheets = normalise(data, filename)
+        sheets = normalise(source_reference.data, filename)
     except Exception as exc:
-        write_source_trace(trace, provenance, filename, resource_path, file_format=file_format, status="parse_error", error=str(exc))
+        write_source_trace(
+            trace,
+            provenance,
+            filename,
+            source_reference.resource_path,
+            file_format=file_format,
+            status="parse_error",
+            error=str(exc),
+        )
         raise
 
-    status = "empty" if not sheets else fetch_status
+    status = "empty" if not sheets else source_reference.fetch_status
     if not sheets:
-        write_source_trace(trace, provenance, filename, resource_path, file_format=file_format, status=status)
+        write_source_trace(trace, provenance, filename, source_reference.resource_path, file_format=file_format, status=status)
+        if incremental_manifest is not None:
+            update_manifest_for_source(
+                incremental_manifest,
+                provenance,
+                source_reference,
+                status=status,
+                file_format=file_format,
+            )
         return
 
     stats["sources_processed"] += 1
     stats["sheets_processed"] += len(sheets)
     for sheet in sheets:
-        process_sheet(dataset, sheet, provenance, resource_path, file_format, stats, trace)
+        process_sheet(dataset, sheet, provenance, source_reference.resource_path, file_format, stats, trace)
+
+    if incremental_manifest is not None:
+        update_manifest_for_source(
+            incremental_manifest,
+            provenance,
+            source_reference,
+            status="processed",
+            file_format=file_format,
+            sheet_fingerprints=[fingerprint(sheet) for sheet in sheets],
+        )
 
 
 def process_sheet(

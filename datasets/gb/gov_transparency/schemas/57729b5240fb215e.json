@@ -5,6 +5,15 @@
     "mode": "column",
     "parsers": [
       {
+        "format": "%Y-%m-%d %H:%M:%S",
+        "precision": "day",
+        "type": "strptime"
+      },
+      {
+        "precision": "month",
+        "type": "month_name_from_period"
+      },
+      {
         "precision": "day",
         "type": "iso_datetime"
       }

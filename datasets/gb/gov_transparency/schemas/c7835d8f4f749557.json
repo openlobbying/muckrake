@@ -1,0 +1,31 @@
+{
+  "activity_type": "hospitality",
+  "date": {
+    "column": 0,
+    "mode": "column",
+    "parsers": [
+      {
+        "precision": "day",
+        "type": "excel_serial"
+      },
+      {
+        "precision": "day",
+        "type": "day_range"
+      },
+      {
+        "format": "%d/%m/%Y",
+        "precision": "day",
+        "type": "strptime"
+      }
+    ]
+  },
+  "fingerprint": "c7835d8f4f749557",
+  "mapping": {
+    "counterparty_name": 1,
+    "summary": 2
+  },
+  "sheet_type": "data",
+  "subject": {
+    "source": "sheet_name"
+  }
+}
