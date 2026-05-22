@@ -180,31 +180,42 @@ function buildRelationshipItems(item: Entity, refs: EntityRef[]): RelationshipIt
 	}));
 }
 
+export function transformActivityEntities(items: Entity[]): TimelineItem[] {
+	const activities: TimelineItem[] = [];
+	for (const item of items) {
+		const type = getActivityType(item);
+		if (type === null) {
+			continue;
+		}
+
+		activities.push({
+			id: item.id,
+			type,
+			title: getActivityTitle(item),
+			description: getStringProp(item, 'description') || '',
+			date: getBestDate(item.properties) || '',
+			amount: getStringProp(item, 'amount'),
+			properties: item.properties,
+			schema: item.schema,
+			datasets: item.datasets,
+		});
+	}
+
+	return activities.sort((a, b) => b.date.localeCompare(a.date));
+}
+
 export function transformActivities(entity: Entity): TimelineItem[] {
-    if (!entity.adjacent) return [];
+	if (entity.activities) {
+		return transformActivityEntities(entity.activities.results);
+	}
+	if (!entity.adjacent) return [];
 
-    const items: TimelineItem[] = [];
-    for (const [_, group] of Object.entries(entity.adjacent)) {
-        for (const item of group.results) {
-			const type = getActivityType(item);
-			if (type === null) {
-				continue;
-			}
+	const items: Entity[] = [];
+	for (const [_, group] of Object.entries(entity.adjacent)) {
+		items.push(...group.results);
+	}
 
-			items.push({
-				id: item.id,
-				type,
-				title: getActivityTitle(item),
-				description: getStringProp(item, 'description') || '',
-				date: getBestDate(item.properties) || '',
-				amount: getStringProp(item, 'amount'),
-				properties: item.properties,
-				schema: item.schema,
-				datasets: item.datasets,
-			});
-        }
-    }
-    return items.sort((a, b) => b.date.localeCompare(a.date));
+	return transformActivityEntities(items);
 }
 
 export function transformRelationships(entity: Entity): RelationshipGroup[] {

@@ -5,10 +5,20 @@ export interface Entity {
     properties: Record<string, any[]>;
     datasets?: DatasetMetadata[];
     canonical_id?: string;
+    activities?: ProfileActivitiesResponse;
+    has_network?: boolean;
     adjacent?: Record<string, {
         results: Entity[];
         total: number;
     }>;
+}
+
+export interface ProfileActivitiesResponse {
+	results: Entity[];
+	total: number;
+	offset: number;
+	limit: number;
+	has_next: boolean;
 }
 
 export interface DatasetMetadata {
@@ -55,10 +65,10 @@ export interface GraphData {
 }
 
 export interface TimelineItem {
-    id: string;
-    type: string;
-    title: string;
-    description: string;
+	id: string;
+	type: string;
+	title: string;
+	description: string;
     date: string;
     amount?: string;
     properties: Record<string, any[]>;

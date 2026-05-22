@@ -9,8 +9,9 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from followthemoney import model
 from functools import lru_cache
+from nomenklatura.resolver import Identifier
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import case, distinct, func, select, text
 
 from muckrake.logging import configure_logging
 from muckrake.api.view import (
@@ -79,6 +80,223 @@ def _adjacent_prop_rank(ent, prop_name: str) -> tuple[int, str]:
         if prop_name in event_ranks:
             return event_ranks[prop_name], prop_name
     return 100, prop_name
+
+
+PROFILE_ACTIVITY_DEFAULT_LIMIT = 20
+PROFILE_ACTIVITY_MAX_LIMIT = 100
+PROFILE_ACTIVITY_SCHEMATA = {
+    "Event",
+    "Meeting",
+    "Hospitality",
+    "Trip",
+    "Representation",
+    "Payment",
+    "Donation",
+    "Gift",
+    "Ownership",
+    "Directorship",
+    "Family",
+    "UnknownLink",
+    "PublicDisclosure",
+}
+PROFILE_RELATIONSHIP_SCHEMATA = {"Employment", "Membership", "Representation"}
+PROFILE_ACTIVITY_DATE_PROPS = (
+    "date",
+    "startDate",
+    "endDate",
+    "incorporationDate",
+    "registrationDate",
+    "created_at",
+    "publishedAt",
+)
+
+
+def _normalize_profile_activity_pagination(
+    limit: int, offset: int
+) -> tuple[int, int]:
+    return max(1, min(limit, PROFILE_ACTIVITY_MAX_LIMIT)), max(0, offset)
+
+
+def _is_profile_activity_entity(ent) -> bool:
+    return ent.schema.name in PROFILE_ACTIVITY_SCHEMATA
+
+
+def _is_profile_relationship_entity(ent) -> bool:
+    return ent.schema.name in PROFILE_RELATIONSHIP_SCHEMATA
+
+
+def _get_profile_activity_sort_value(ent) -> tuple[str, str]:
+    for prop_name in PROFILE_ACTIVITY_DATE_PROPS:
+        for value in ent.get(prop_name):
+            if isinstance(value, str) and value:
+                return value, ent.id
+    return "", ent.id
+
+
+def _collect_profile_adjacent(ent) -> List[tuple[str, Any, tuple[int, str]]]:
+    unique_adjacent: dict[str, tuple[str, Any, tuple[int, str]]] = {}
+    for prop, adj_ent in view.get_adjacent(ent):
+        rank = _adjacent_prop_rank(adj_ent, prop.name)
+        existing = unique_adjacent.get(adj_ent.id)
+        if existing is None or rank < existing[2]:
+            unique_adjacent[adj_ent.id] = (prop.name, adj_ent, rank)
+    return list(unique_adjacent.values())
+
+
+def _get_profile_lookup_ids(entity_id: str) -> List[str]:
+    ids = [identifier.id for identifier in view.store.linker.connected(Identifier.get(entity_id))]
+    return ids or [entity_id]
+
+
+def _get_profile_statement_query_parts(
+    entity_id: str, schema_names: Optional[set[str]] = None
+):
+    table = view.store.table
+    filters = [
+        table.c.prop_type == "entity",
+        table.c.value.in_(_get_profile_lookup_ids(entity_id)),
+        table.c.dataset.in_(view.dataset_names),
+        table.c.canonical_id.is_not(None),
+    ]
+    if schema_names is not None:
+        filters.append(table.c.schema.in_(sorted(schema_names)))
+    return table, filters
+
+
+def _get_profile_activity_sort_expression(table):
+    return func.coalesce(
+        *[
+            func.max(case((table.c.prop == prop_name, table.c.value), else_=None))
+            for prop_name in PROFILE_ACTIVITY_DATE_PROPS
+        ],
+        "",
+    )
+
+
+def _get_profile_adjacent_rank(adj_ent, entity_id: str) -> tuple[int, str]:
+    ranks = []
+    seen = set()
+    for prop, value in adj_ent.itervalues():
+        if value != entity_id or prop.reverse is None:
+            continue
+        prop_name = prop.reverse.name
+        if prop_name in seen:
+            continue
+        seen.add(prop_name)
+        ranks.append(_adjacent_prop_rank(adj_ent, prop_name))
+    if ranks:
+        return min(ranks)
+    return 100, adj_ent.schema.name
+
+
+def _load_profile_relationship_items(entity_id: str) -> List[tuple[str, Any, tuple[int, str]]]:
+    table, filters = _get_profile_statement_query_parts(
+        entity_id, PROFILE_RELATIONSHIP_SCHEMATA
+    )
+    query = select(table.c.canonical_id).where(*filters).group_by(table.c.canonical_id)
+
+    with view.store.engine.connect() as conn:
+        relationship_ids = [
+            str(canonical_id)
+            for canonical_id in conn.execute(query).scalars().all()
+            if canonical_id is not None
+        ]
+
+    items: List[tuple[str, Any, tuple[int, str]]] = []
+    for relationship_id in relationship_ids:
+        adj_ent = view.get_entity(relationship_id)
+        if adj_ent is None:
+            continue
+        rank = _get_profile_adjacent_rank(adj_ent, entity_id)
+        items.append((rank[1], adj_ent, rank))
+    return items
+
+
+def _has_profile_inverted_adjacent(entity_id: str) -> bool:
+    table, filters = _get_profile_statement_query_parts(entity_id)
+    query = select(table.c.canonical_id).where(*filters).limit(1)
+    with view.store.engine.connect() as conn:
+        return conn.execute(query).first() is not None
+
+
+def _has_profile_direct_adjacent(ent) -> bool:
+    for prop, _ in ent.itervalues():
+        if prop.type.name == "entity":
+            return True
+    return False
+
+
+def _serialize_profile_relationships(
+    items: List[tuple[str, Any, tuple[int, str]]],
+) -> Dict[str, Dict[str, Any]]:
+    adjacent: Dict[str, Dict[str, Any]] = {}
+    for prop_name, adj_ent, _ in items:
+        if not _is_profile_relationship_entity(adj_ent):
+            continue
+
+        if prop_name not in adjacent:
+            adjacent[prop_name] = {"results": [], "total": 0}
+        adjacent[prop_name]["results"].append(serialize_view_entity(adj_ent))
+        adjacent[prop_name]["total"] += 1
+    return adjacent
+
+
+def _paginate_profile_activities(
+    items: List[tuple[str, Any, tuple[int, str]]],
+    limit: int,
+    offset: int,
+) -> Dict[str, Any]:
+    activities = [adj_ent for _, adj_ent, _ in items if _is_profile_activity_entity(adj_ent)]
+    activities.sort(key=_get_profile_activity_sort_value, reverse=True)
+
+    total = len(activities)
+    paged = activities[offset : offset + limit]
+
+    return {
+        "results": [serialize_view_entity(adj_ent) for adj_ent in paged],
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "has_next": (offset + len(paged)) < total,
+    }
+
+
+def _paginate_profile_activities_sql(entity_id: str, limit: int, offset: int) -> Dict[str, Any]:
+    table, filters = _get_profile_statement_query_parts(entity_id, PROFILE_ACTIVITY_SCHEMATA)
+    sort_expr = _get_profile_activity_sort_expression(table)
+
+    count_query = select(func.count(distinct(table.c.canonical_id))).where(*filters)
+    page_query = (
+        select(table.c.canonical_id)
+        .where(*filters)
+        .group_by(table.c.canonical_id)
+        .order_by(sort_expr.desc(), table.c.canonical_id.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+
+    with view.store.engine.connect() as conn:
+        total = int(conn.execute(count_query).scalar() or 0)
+        activity_ids = [
+            str(canonical_id)
+            for canonical_id in conn.execute(page_query).scalars().all()
+            if canonical_id is not None
+        ]
+
+    results = []
+    for activity_id in activity_ids:
+        adj_ent = view.get_entity(activity_id)
+        if adj_ent is None:
+            continue
+        results.append(serialize_view_entity(adj_ent))
+
+    return {
+        "results": results,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "has_next": (offset + len(results)) < total,
+    }
 
 
 @app.on_event("startup")
@@ -515,7 +733,11 @@ def list_entities(
 
 
 @app.get("/profile/{id}")
-def get_profile(id: str) -> Dict[str, Any]:
+def get_profile(
+    id: str,
+    activity_limit: int = PROFILE_ACTIVITY_DEFAULT_LIMIT,
+    activity_offset: int = 0,
+) -> Dict[str, Any]:
     """Endpoint for actor profiles, includes adjacency (timeline)."""
     ent = _get_entity_or_404(id, "Profile not found")
 
@@ -523,24 +745,56 @@ def get_profile(id: str) -> Dict[str, Any]:
     if not is_actor(ent.schema.name):
         return _redirect_payload(ent, f"/statement/{ent.id}")
 
+    activity_limit, activity_offset = _normalize_profile_activity_pagination(
+        activity_limit, activity_offset
+    )
+
     data = serialize_view_entity(ent)
-    adjacent = {}
-    unique_adjacent: dict[str, tuple[str, dict[str, Any], tuple[int, str]]] = {}
-    for prop, adj_ent in view.get_adjacent(ent):
-        serialized = serialize_view_entity(adj_ent)
-        rank = _adjacent_prop_rank(adj_ent, prop.name)
-        existing = unique_adjacent.get(adj_ent.id)
-        if existing is None or rank < existing[2]:
-            unique_adjacent[adj_ent.id] = (prop.name, serialized, rank)
-
-    for prop_name, serialized, _ in unique_adjacent.values():
-        if prop_name not in adjacent:
-            adjacent[prop_name] = {"results": [], "total": 0}
-        adjacent[prop_name]["results"].append(serialized)
-        adjacent[prop_name]["total"] += 1
-
-    data["adjacent"] = adjacent
+    try:
+        data["adjacent"] = _serialize_profile_relationships(
+            _load_profile_relationship_items(id)
+        )
+        data["activities"] = _paginate_profile_activities_sql(
+            id, activity_limit, activity_offset
+        )
+        data["has_network"] = _has_profile_direct_adjacent(
+            ent
+        ) or _has_profile_inverted_adjacent(id)
+    except Exception as exc:
+        log.exception(
+            "Profile pagination query failed, falling back to full adjacency scan: %s",
+            exc,
+        )
+        adjacent_items = _collect_profile_adjacent(ent)
+        data["adjacent"] = _serialize_profile_relationships(adjacent_items)
+        data["activities"] = _paginate_profile_activities(
+            adjacent_items, activity_limit, activity_offset
+        )
+        data["has_network"] = len(adjacent_items) > 0
     return data
+
+
+@app.get("/profile/{id}/activities")
+def get_profile_activities(
+    id: str,
+    limit: int = 10,
+    offset: int = 0,
+) -> Dict[str, Any]:
+    ent = _get_entity_or_404(id, "Profile not found")
+
+    if not is_actor(ent.schema.name):
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    limit, offset = _normalize_profile_activity_pagination(limit, offset)
+    try:
+        return _paginate_profile_activities_sql(id, limit, offset)
+    except Exception as exc:
+        log.exception(
+            "Profile activities query failed, falling back to full adjacency scan: %s",
+            exc,
+        )
+        adjacent_items = _collect_profile_adjacent(ent)
+        return _paginate_profile_activities(adjacent_items, limit, offset)
 
 
 @app.get("/sitemaps/profiles")

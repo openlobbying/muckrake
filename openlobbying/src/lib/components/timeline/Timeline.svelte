@@ -3,35 +3,37 @@
 	import { allTypes } from './registry';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import type { TimelineItem as TimelineActivity } from '$lib/types';
 
 	interface Props {
-		activities: any[];
+		activities: TimelineActivity[];
 		currentEntityId?: string;
 		title?: string;
+		hasMore?: boolean;
+		loadingMore?: boolean;
+		loadMoreError?: string | null;
+		onLoadMore?: () => void;
 	}
 
-	let { activities = [], currentEntityId = '', title = 'Activity Timeline' }: Props = $props();
+	let {
+		activities = [],
+		currentEntityId = '',
+		title = 'Activity Timeline',
+		hasMore = false,
+		loadingMore = false,
+		loadMoreError = null,
+		onLoadMore,
+	}: Props = $props();
 
 	const activityTypes = $derived([...new Set(activities.map((a) => a.type))]);
 	const availableFilters = $derived(allTypes().filter((t) => activityTypes.includes(t.key)));
 
 	let selectedFilter = $state<string | null>(null);
-	let showCount = $state(20);
-	let previousFilter = $state<string | null>(null);
-
-	$effect(() => {
-		if (selectedFilter !== previousFilter) {
-			previousFilter = selectedFilter;
-			showCount = 20;
-		}
-	});
 
 	const filteredActivities = $derived(
 		selectedFilter ? activities.filter((a) => a.type === selectedFilter) : activities
 	);
-
-	const displayedActivities = $derived(filteredActivities.slice(0, showCount));
-	const hasMore = $derived(displayedActivities.length < filteredActivities.length);
+	const canLoadMore = $derived(hasMore && typeof onLoadMore === 'function');
 </script>
 
 <Card class="bg-gray-50/50 py-0 gap-0">
@@ -67,20 +69,27 @@
 		<div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
 
 		<div class="space-y-2">
-			{#each displayedActivities as activity (activity.id)}
+			{#each filteredActivities as activity (activity.id)}
 				<TimelineItem {activity} {currentEntityId} />
 			{/each}
 		</div>
 
-		{#if hasMore}
+		{#if canLoadMore}
 			<div class="text-center">
 				<Button
-					onclick={() => (showCount += 10)}
+					onclick={() => onLoadMore?.()}
 					variant="outline"
 					class="rounded-full"
+					disabled={loadingMore}
 				>
-					Show more activities
+					{loadingMore ? 'Loading activities...' : 'Show more activities'}
 				</Button>
+			</div>
+		{/if}
+
+		{#if loadMoreError}
+			<div class="pt-3 text-center">
+				<p class="text-sm text-red-600">{loadMoreError}</p>
 			</div>
 		{/if}
 

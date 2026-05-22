@@ -8,20 +8,104 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { TextAlignJustify, Waypoints } from '@lucide/svelte';
-	import type { Entity } from '$lib/types';
+	import type { Entity, ProfileActivitiesResponse } from '$lib/types';
+	import type { PageData } from './$types';
 	import type { Component } from 'svelte';
 	import {
 		transformActivities,
+		transformActivityEntities,
 		transformRelationships,
 	} from "$lib/util/transformers";
 
 	type ProfileTab = 'timeline' | 'network';
 
-	let { data }: { data: { entity: Promise<Entity> } } = $props();
+	const EMPTY_ACTIVITIES: ProfileActivitiesResponse = {
+		results: [],
+		total: 0,
+		offset: 0,
+		limit: 20,
+		has_next: false,
+	};
+
+	let { data }: { data: PageData } = $props();
 	let activeTab = $state<ProfileTab>('timeline');
 	let NetworkGraphComponent = $state<Component<{ entity: Entity }> | null>(null);
 	let networkComponentLoading = $state(false);
 	let networkComponentError = $state<string | null>(null);
+	let profile = $state<Entity | null>(null);
+	let timelineActivities = $state(transformActivityEntities([]));
+	let activitiesMeta = $state<ProfileActivitiesResponse>(EMPTY_ACTIVITIES);
+	let loadingMoreActivities = $state(false);
+	let loadMoreActivitiesError = $state<string | null>(null);
+	let lastEntityId = $state<string | null>(null);
+
+	function getEntityActivities(entity: Entity): ProfileActivitiesResponse {
+		return entity.activities ?? EMPTY_ACTIVITIES;
+	}
+
+	function applyEntity(entity: Entity) {
+		if (lastEntityId === entity.id) {
+			return;
+		}
+
+		profile = entity;
+		timelineActivities = transformActivities(entity);
+		activitiesMeta = getEntityActivities(entity);
+		loadingMoreActivities = false;
+		loadMoreActivitiesError = null;
+		lastEntityId = entity.id;
+	}
+
+	$effect(() => {
+		const entityOrPromise = data.entity as Entity | Promise<Entity>;
+		if (entityOrPromise && typeof entityOrPromise === 'object' && 'then' in entityOrPromise) {
+			void entityOrPromise.then((entity) => {
+				applyEntity(entity);
+			});
+			return;
+		}
+
+		if (entityOrPromise) {
+			applyEntity(entityOrPromise as Entity);
+		}
+	});
+
+	async function loadMoreActivities(currentEntity: Entity) {
+		const currentProfile = profile ?? currentEntity;
+		const currentMeta = profile?.id === currentEntity.id
+			? activitiesMeta
+			: getEntityActivities(currentEntity);
+
+		if (loadingMoreActivities || !currentMeta.has_next) {
+			return;
+		}
+
+		loadingMoreActivities = true;
+		loadMoreActivitiesError = null;
+		try {
+			const nextOffset = currentMeta.offset + currentMeta.results.length;
+			const response = await fetch(
+				`/api/profile/${currentProfile.id}/activities?limit=${currentMeta.limit}&offset=${nextOffset}`
+			);
+			if (!response.ok) {
+				throw new Error('Could not fetch activities');
+			}
+
+			const nextPage = (await response.json()) as ProfileActivitiesResponse;
+			activitiesMeta = {
+				...nextPage,
+				results: [...currentMeta.results, ...nextPage.results],
+				offset: currentMeta.offset,
+			};
+			timelineActivities = transformActivityEntities(activitiesMeta.results);
+		} catch (err) {
+			loadMoreActivitiesError = err instanceof Error
+				? err.message
+				: 'Could not fetch activities';
+		} finally {
+			loadingMoreActivities = false;
+		}
+	}
 
 	async function openTab(tab: ProfileTab, hasNetwork: boolean) {
 		activeTab = tab;
@@ -116,10 +200,11 @@
 			</div>
 		</div>
 	{:then entity}
-		{@const activities = transformActivities(entity)}
 		{@const relationships = transformRelationships(entity)}
-		{@const hasNetwork = Boolean(entity.adjacent && Object.keys(entity.adjacent).length > 0)}
-		{@const hasActivities = activities.length > 0}
+		{@const visibleActivities = profile?.id === entity.id ? timelineActivities : transformActivities(entity)}
+		{@const visibleActivitiesMeta = profile?.id === entity.id ? activitiesMeta : getEntityActivities(entity)}
+		{@const hasNetwork = Boolean(entity.has_network)}
+		{@const hasActivities = visibleActivities.length > 0}
 
 		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 			<div class="lg:col-span-1 space-y-6">
@@ -165,7 +250,15 @@
 
 				{#if activeTab === 'timeline'}
 					{#if hasActivities}
-						<Timeline {activities} currentEntityId={entity.id} title="" />
+						<Timeline
+							activities={visibleActivities}
+							currentEntityId={entity.id}
+							title=""
+							hasMore={visibleActivitiesMeta.has_next}
+							loadingMore={loadingMoreActivities}
+							loadMoreError={loadMoreActivitiesError}
+							onLoadMore={() => loadMoreActivities(entity)}
+						/>
 					{:else}
 						{@render EmptyState('No activity available for this profile.')}
 					{/if}
