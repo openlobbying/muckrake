@@ -8,8 +8,9 @@ from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
 from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
-from nomenklatura.db import get_metadata, make_statement_table
-from sqlalchemy import select
+from nomenklatura.db import get_metadata
+from nomenklatura.store.sql import make_statement_table
+from sqlalchemy import MetaData, select
 from sqlalchemy.engine import create_engine
 
 from muckrake.db import get_database_dialect, get_resolver
@@ -88,7 +89,7 @@ class MergedSQLStore(SQLStore[DS, SE]):
         Store.__init__(self, dataset, linker)
         if get_database_dialect(uri) != "sqlite" and "pool_size" not in engine_kwargs:
             engine_kwargs["pool_size"] = nk_settings.DB_POOL_SIZE
-        metadata = get_metadata()
+        metadata = MetaData()
         self.engine = create_engine(uri, **engine_kwargs)
         self.table = make_statement_table(metadata)
         metadata.create_all(self.engine, tables=[self.table], checkfirst=True)

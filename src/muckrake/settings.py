@@ -32,13 +32,23 @@ def _default_sqlite_uri(filename: str) -> str:
     return f"sqlite:///{(DATA_PATH / filename).as_posix()}"
 
 
+def _current_data_path() -> Path:
+    return Path(os.getenv("MUCKRAKE_DATA_PATH", "data"))
+
+
+def get_working_sql_uri() -> str:
+    return _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL")) or (
+        f"sqlite:///{(_current_data_path() / 'muckrake.db').as_posix()}"
+    )
+
+
+def get_published_sql_uri() -> str:
+    return _normalize_database_url(os.getenv("MUCKRAKE_PUBLISHED_DATABASE_URL")) or get_working_sql_uri()
+
+
 DATA_PATH = Path(os.getenv("MUCKRAKE_DATA_PATH", "data"))
 ARTIFACT_PATH = Path(os.getenv("MUCKRAKE_ARTIFACT_PATH", DATA_PATH / "artifacts"))
-SQL_URI: str = _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL")) or _default_sqlite_uri(
-    "muckrake.db"
-)
-PUBLISHED_SQL_URI: str = (
-    _normalize_database_url(os.getenv("MUCKRAKE_PUBLISHED_DATABASE_URL")) or SQL_URI
-)
+SQL_URI: str = get_working_sql_uri()
+PUBLISHED_SQL_URI: str = get_published_sql_uri()
 
 LEVEL_PATH = DATA_PATH / "leveldb"

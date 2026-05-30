@@ -1,4 +1,5 @@
 import logging
+import json
 import sys
 from pathlib import Path
 
@@ -17,8 +18,17 @@ from muckrake.dedupe import (
 )
 from muckrake.extract.ner import run_ner_extract, run_ner_review
 from muckrake.extract.ner.engines import list_extractors
+from muckrake.entity_query import (
+    get_entity_payload,
+    normalize_schema_filter,
+    search_entity_payload,
+)
+from muckrake.entity_write import add_entity as run_add_entity
+from muckrake.entity_write import build_entity_spec
+from muckrake.entity_write import update_entity as run_update_entity
 from muckrake.load import run_load
 from muckrake.release import list_releases, run_release_build, run_release_publish
+from muckrake.settings import get_working_sql_uri
 
 log = logging.getLogger("muckrake")
 
@@ -41,6 +51,7 @@ class MuckrakeGroup(click.Group):
         ),
         ("Build releases", ["release-build", "release-list", "release-publish"]),
         ("Load to database", ["load", "export"]),
+        ("Inspect and edit entities", ["add", "get", "search", "update"]),
     ]
 
     def list_commands(self, ctx):
@@ -152,6 +163,142 @@ def list_cmd():
     for ds in datasets:
         title = ds.to_dict().get("title", "")
         click.echo(f"  {ds.name:<30} {title}")
+
+
+def _emit_json(payload, pretty: bool) -> None:
+    if pretty:
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        click.echo(json.dumps(payload, sort_keys=True))
+
+
+@cli.command("add")
+@click.option("--schema", "schema_name", required=True, help="FtM schema name")
+@click.option("--dataset", required=True, help="Dataset name used for provenance")
+@click.option("--source", "source_ref", required=True, help="Durable source reference")
+@click.option("--id", "entity_id", help="Explicit FtM entity ID")
+@click.option(
+    "--id-part",
+    "id_parts",
+    multiple=True,
+    help="Stable key component used to generate an ID. Repeat as needed.",
+)
+@click.option("--key-prefix", help="Optional FtM key prefix for generated IDs")
+@click.option(
+    "--property",
+    "property_items",
+    multiple=True,
+    required=True,
+    help="Entity property in KEY=VALUE form. Repeat for more values.",
+)
+@click.option("--pretty", is_flag=True, default=False, help="Pretty-print JSON output")
+def add_cmd(
+    schema_name,
+    dataset,
+    source_ref,
+    entity_id,
+    id_parts,
+    key_prefix,
+    property_items,
+    pretty,
+):
+    """Add or update one FtM entity in the working database."""
+    try:
+        spec = build_entity_spec(
+            schema_name=schema_name,
+            dataset=dataset,
+            source_ref=source_ref,
+            entity_id=entity_id,
+            id_parts=list(id_parts),
+            key_prefix=key_prefix,
+            property_items=list(property_items),
+        )
+        _emit_json(run_add_entity(spec, uri=get_working_sql_uri()), pretty)
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
+
+
+@cli.command("get")
+@click.argument("entity_id", required=True)
+@click.option("--pretty", is_flag=True, default=False, help="Pretty-print JSON output")
+def get_cmd(entity_id, pretty):
+    """Get one FtM entity by canonical ID from the working database."""
+    try:
+        payload = get_entity_payload(entity_id, uri=get_working_sql_uri())
+        if payload is None:
+            raise ValueError(f"Entity not found: {entity_id}")
+        _emit_json({"status": "ok", "entity": payload}, pretty)
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
+
+
+@cli.command("search")
+@click.argument("query", required=False, default="")
+@click.option("--schema", "schemas", multiple=True, help="Filter by FtM schema")
+@click.option("--limit", type=int, default=20, help="Maximum number of results")
+@click.option("--offset", type=int, default=0, help="Result offset")
+@click.option("--pretty", is_flag=True, default=False, help="Pretty-print JSON output")
+def search_cmd(query, schemas, limit, offset, pretty):
+    """Search FtM entities in the working database."""
+    try:
+        limit = max(1, min(limit, 100))
+        offset = max(0, offset)
+        requested_schema = list(schemas) if schemas else []
+        applied_schema = normalize_schema_filter(requested_schema)
+        response = search_entity_payload(
+            query.strip(), requested_schema, limit, offset, uri=get_working_sql_uri()
+        )
+        _emit_json(
+            {
+                "status": "ok",
+                "query": query,
+                "results": response.results,
+                "total": response.total,
+                "offset": response.offset,
+                "limit": response.limit,
+                "has_next": response.has_next,
+                "requested_schema": requested_schema,
+                "applied_schema": applied_schema,
+            },
+            pretty,
+        )
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
+
+
+@cli.command("update")
+@click.argument("entity_id", required=True)
+@click.option("--schema", "schema_name", help="Optional replacement FtM schema name")
+@click.option("--dataset", help="Replacement dataset name used for rewritten provenance")
+@click.option("--source", "source_ref", help="Replacement source reference for rewritten provenance")
+@click.option(
+    "--property",
+    "property_items",
+    multiple=True,
+    required=True,
+    help="Entity property in KEY=VALUE form. Repeat for more values.",
+)
+@click.option("--pretty", is_flag=True, default=False, help="Pretty-print JSON output")
+def update_cmd(entity_id, schema_name, dataset, source_ref, property_items, pretty):
+    """Update one FtM entity in the working database by ID."""
+    try:
+        _emit_json(
+            run_update_entity(
+                entity_id,
+                property_items=list(property_items),
+                dataset=dataset,
+                source_ref=source_ref,
+                schema_name=schema_name,
+                uri=get_working_sql_uri(),
+            ),
+            pretty,
+        )
+    except Exception as e:
+        log.exception(e)
+        sys.exit(1)
 
 
 @cli.command()

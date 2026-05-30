@@ -10,9 +10,17 @@ from sqlalchemy import text
 
 from muckrake.db import is_postgres_uri, refresh_postgres_search
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
-from muckrake.view import get_view
+from muckrake.entity_query import get_view
 
 ACTOR_SCHEMATA = ("Company", "LegalEntity", "Organization", "Person", "PublicBody")
+SEARCH_PROPS = (
+    "name",
+    "alias",
+    "previousName",
+    "weakAlias",
+    "abbreviation",
+    "title",
+)
 
 
 @dataclass
@@ -139,26 +147,70 @@ def _include_schema(schema_names: Sequence[str]):
     return include_schema
 
 
-def _view_search(query: str, schema_filter: Sequence[str], limit: int, offset: int) -> SearchResponse:
-    view = get_view()
-    matched = []
-    seen_ids = set()
-    query_lower = query.lower()
+def _view_search(
+    query: str, schema_filter: Sequence[str], limit: int, offset: int, *, uri: str
+) -> SearchResponse:
+    engine = get_engine(uri)
+    params: dict[str, Any] = {"limit": limit, "offset": offset}
 
-    for ent in view.entities(include_schemata=_include_schema(schema_filter)):
-        if ent.id in seen_ids:
-            continue
-        if query_lower in ent.caption.lower():
-            matched.append({"id": ent.id, "name": ent.caption, "type": ent.schema.name})
-            seen_ids.add(ent.id)
+    prop_sql = ", ".join(f"'{prop}'" for prop in SEARCH_PROPS)
+    schema_clause = ""
+    if schema_filter:
+        schema_params = []
+        for index, schema_name in enumerate(schema_filter):
+            key = f"schema_{index}"
+            params[key] = schema_name
+            schema_params.append(f":{key}")
+        schema_clause = f" AND schema IN ({', '.join(schema_params)})"
 
-    total = len(matched)
-    return SearchResponse(
-        results=matched[offset : offset + limit],
-        total=total,
-        offset=offset,
-        limit=limit,
-    )
+    search_sql = f"""
+        SELECT canonical_id AS entity_id,
+               MIN(schema) AS schema,
+               MAX(CASE WHEN prop = 'name' THEN value END) AS name,
+               MAX(CASE WHEN prop = 'title' THEN value END) AS title,
+               0 AS exact_score
+        FROM statement
+        WHERE canonical_id IS NOT NULL
+          AND prop IN ({prop_sql})
+          {schema_clause}
+    """
+    count_sql = f"""
+        SELECT COUNT(*) AS total
+        FROM (
+            SELECT canonical_id
+            FROM statement
+            WHERE canonical_id IS NOT NULL
+              AND prop IN ({prop_sql})
+              {schema_clause}
+    """
+
+    if query:
+        params["query"] = query
+        search_sql = search_sql.replace(
+            "0 AS exact_score",
+            "MAX(CASE WHEN lower(value) = lower(:query) THEN 3 ELSE 0 END) AS exact_score",
+        )
+        search_sql += " AND instr(lower(value), lower(:query)) > 0"
+        count_sql += " AND instr(lower(value), lower(:query)) > 0"
+
+    search_sql += " GROUP BY canonical_id ORDER BY exact_score DESC, COALESCE(name, title, canonical_id) ASC LIMIT :limit OFFSET :offset"
+    count_sql += " GROUP BY canonical_id ) AS matches"
+
+    with engine.connect() as conn:
+        total = int(conn.execute(text(count_sql), params).scalar() or 0)
+        rows = conn.execute(text(search_sql), params)
+        results = []
+        for row in rows:
+            name = row._mapping["name"] or row._mapping["title"] or row._mapping["entity_id"]
+            results.append(
+                {
+                    "id": str(row._mapping["entity_id"]),
+                    "name": str(name),
+                    "type": str(row._mapping["schema"]),
+                }
+            )
+
+    return SearchResponse(results=results, total=total, offset=offset, limit=limit)
 
 
 def search_entities(
@@ -205,7 +257,7 @@ def search_entities(
             limit=limit,
         )
 
-    return _view_search(query, schema_filter, limit, offset)
+    return _view_search(query, schema_filter, limit, offset, uri=uri)
 
 
 def list_actor_sitemap_entries(
@@ -241,7 +293,7 @@ def list_actor_sitemap_entries(
             limit=limit,
         )
 
-    view = get_view()
+    view = get_view(uri)
     results = []
     seen_ids = set()
     total = 0
@@ -276,7 +328,7 @@ def get_actor_schema_counts(
                 counts[schema_name] = int(row._mapping["count"])
         return counts
 
-    view = get_view()
+    view = get_view(uri)
     for ent in view.entities(include_schemata=_include_schema(schema_names)):
         if ent.schema.name in counts:
             counts[ent.schema.name] += 1

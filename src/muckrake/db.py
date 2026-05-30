@@ -186,7 +186,7 @@ def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
 
 def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
     """Get the resolver backed by the main database."""
-    resolver = Resolver(get_engine(uri), _resolved_metadata(), create=True)
+    resolver = Resolver(get_engine(uri), MetaData(), create=True)
     if begin:
         resolver.begin()
     return resolver
