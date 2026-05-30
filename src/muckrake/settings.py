@@ -28,9 +28,15 @@ def _require_database_url(name: str) -> str:
     return value
 
 
+def _default_sqlite_uri(filename: str) -> str:
+    return f"sqlite:///{(DATA_PATH / filename).as_posix()}"
+
+
 DATA_PATH = Path(os.getenv("MUCKRAKE_DATA_PATH", "data"))
 ARTIFACT_PATH = Path(os.getenv("MUCKRAKE_ARTIFACT_PATH", DATA_PATH / "artifacts"))
-SQL_URI: str = _require_database_url("MUCKRAKE_DATABASE_URL")
+SQL_URI: str = _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL")) or _default_sqlite_uri(
+    "muckrake.db"
+)
 PUBLISHED_SQL_URI: str = (
     _normalize_database_url(os.getenv("MUCKRAKE_PUBLISHED_DATABASE_URL")) or SQL_URI
 )

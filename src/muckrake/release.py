@@ -22,7 +22,6 @@ from muckrake.db import (
     get_releases_table,
     init_database,
     init_published_database,
-    refresh_postgres_search,
 )
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.runs import (
@@ -31,6 +30,7 @@ from muckrake.runs import (
     get_latest_successful_run,
     utc_now_iso,
 )
+from muckrake.search import refresh_search_index
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
 from muckrake.store import get_sql_store
 
@@ -317,7 +317,7 @@ def _load_release_into_published_db(dataset_names: list[str], pack_path: Path) -
             for stmt in read_pack_statements(fh):
                 writer.add_statement(stmt)
 
-    refresh_postgres_search(PUBLISHED_SQL_URI)
+    refresh_search_index(PUBLISHED_SQL_URI)
 
 
 def _copy_resolver_state() -> None:

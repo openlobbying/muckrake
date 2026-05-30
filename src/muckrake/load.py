@@ -4,9 +4,9 @@ from typing import Optional
 
 from muckrake.artifacts import get_artifact_store
 from muckrake.dataset import find_datasets, load_config, get_dataset_path
-from muckrake.db import refresh_postgres_search
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.runs import get_dataset_run, get_dataset_run_artifact
+from muckrake.search import refresh_search_index
 from muckrake.store import get_sql_store
 
 log = logging.getLogger(__name__)
@@ -67,4 +67,4 @@ def run_load(dataset_name: Optional[str] = None, run_id: Optional[int] = None):
         for ds_name in dataset_names:
             load_dataset_statements(ds_name, writer, run_id=run_id)
 
-    refresh_postgres_search()
+    refresh_search_index()

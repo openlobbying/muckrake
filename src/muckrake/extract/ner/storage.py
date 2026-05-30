@@ -23,8 +23,8 @@ class Candidate:
     status: str = "pending"
 
 
-def get_connection() -> Connection:
-    engine = init_database()
+def get_connection(uri: str | None = None) -> Connection:
+    engine = init_database(uri=uri) if uri is not None else init_database()
     return engine.connect()
 
 

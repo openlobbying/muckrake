@@ -192,6 +192,18 @@ def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
     return resolver
 
 
+def get_database_dialect(uri: str = SQL_URI) -> str:
+    return get_engine(uri).dialect.name
+
+
+def is_postgres_uri(uri: str = SQL_URI) -> bool:
+    return get_database_dialect(uri) in ("postgresql", "postgres")
+
+
+def is_sqlite_uri(uri: str = SQL_URI) -> bool:
+    return get_database_dialect(uri) == "sqlite"
+
+
 def init_database(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
@@ -271,6 +283,9 @@ def init_published_database(uri: str = PUBLISHED_SQL_URI) -> Engine:
 
 
 def refresh_postgres_search(uri: str = SQL_URI) -> None:
+    if not is_postgres_uri(uri):
+        return
+
     engine = get_engine(uri)
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
@@ -440,9 +455,7 @@ def _ensure_resolver_cluster_skip_constraints(engine: Engine) -> None:
 
 def _sync_postgres_sequences(engine: Engine, tables: list[Table]) -> None:
     if engine.dialect.name not in ("postgresql", "postgres"):
-        raise RuntimeError(
-            f"Postgres database required, got unsupported dialect: {engine.dialect.name}"
-        )
+        return
 
     with engine.begin() as conn:
         for table in tables:

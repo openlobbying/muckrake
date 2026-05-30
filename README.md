@@ -84,7 +84,10 @@ The primary user of Muckrake data is [OpenLobbying](https://openlobbying.org/), 
 
 - Copy `.env.example` to `.env` in the repo root.
 - By default `muckrake` loads the nearest `.env` from the current working directory upward. Override that with `MUCKRAKE_ENV_FILE` if needed.
-- Required for local development:
+- Default local database setup:
+  - working DB: `sqlite:///data/muckrake.db`
+  - published DB: same as the working DB unless `MUCKRAKE_PUBLISHED_DATABASE_URL` is set
+- Required only if you want Postgres:
   - `MUCKRAKE_DATABASE_URL`
 - Common local settings:
   - `MUCKRAKE_PUBLISHED_DATABASE_URL` for a separate published API database

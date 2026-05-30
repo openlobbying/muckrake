@@ -12,7 +12,7 @@ from nomenklatura.db import get_metadata, make_statement_table
 from sqlalchemy import select
 from sqlalchemy.engine import create_engine
 
-from muckrake.db import get_resolver
+from muckrake.db import get_database_dialect, get_resolver
 from muckrake.settings import SQL_URI, LEVEL_PATH
 
 log = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ class MergedSQLStore(SQLStore[DS, SE]):
 
     def __init__(self, dataset: DS, linker, uri: str = SQL_URI, **engine_kwargs):
         Store.__init__(self, dataset, linker)
-        if "pool_size" not in engine_kwargs:
+        if get_database_dialect(uri) != "sqlite" and "pool_size" not in engine_kwargs:
             engine_kwargs["pool_size"] = nk_settings.DB_POOL_SIZE
         metadata = get_metadata()
         self.engine = create_engine(uri, **engine_kwargs)
