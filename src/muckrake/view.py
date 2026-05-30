@@ -6,8 +6,8 @@ from typing import Any, Dict, List
 from nomenklatura.db import get_engine
 from sqlalchemy import text
 
-from muckrake.api.serialization import get_all_datasets_metadata, serialize_entity
 from muckrake.dataset import list_dataset_names
+from muckrake.serialize import get_all_datasets_metadata, serialize_entity
 from muckrake.settings import PUBLISHED_SQL_URI
 from muckrake.store import get_sql_store
 

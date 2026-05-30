@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Optional
 from followthemoney.statement.serialize import PackStatementWriter
 
-from muckrake.dataset import Dataset, load_config, get_dataset_path
+from muckrake.dataset import Dataset, get_dataset_path, load_config, resolve_dataset_root
 from muckrake.artifacts import get_artifact_store
 from muckrake.runs import (
     config_version,
@@ -44,32 +44,38 @@ def execute_crawler(config_path: Path, ds: Dataset):
     if not crawler_path.exists():
         raise RuntimeError(f"crawler.py not found at {crawler_path}")
 
-    # Determine the package hierarchy based on directory structure relative to datasets/
-    datasets_root = Path("datasets").resolve()
+    # Build a virtual package hierarchy so relative imports inside dataset code keep working
+    datasets_root = resolve_dataset_root(config_path)
+    parts = ["muckrake", "crawler"]
     try:
-        # Try to find the path relative to the datasets root
+        if datasets_root is None:
+            raise ValueError("Dataset root could not be resolved")
         rel_path = crawler_path.parent.relative_to(datasets_root)
-        parts = ["muckrake", "crawler"] + list(rel_path.parts)
+        if rel_path.parts:
+            parts.extend(rel_path.parts)
+        else:
+            parts.append(ds.name)
     except ValueError:
-        # Fallback if crawler is not in datasets/ or we can't find the root
-        parts = ["muckrake", "crawler", ds.name]
+        parts.append(ds.name)
 
     import types
-    import sys
-    
+
     # Initialize all parent packages to ensure relative imports work.
     # We walk down the hierarchy and create virtual modules for each level.
     for i in range(1, len(parts) + 1):
         pkg_name = ".".join(parts[:i])
         if pkg_name not in sys.modules:
             mod = types.ModuleType(pkg_name)
-            if i >= 2: # muckrake.crawler and below
+            if i >= 2:  # muckrake.crawler and below
                 # Map this virtual package to the corresponding filesystem directory
                 rel_parts = parts[2:i]
-                fs_path = datasets_root.joinpath(*rel_parts)
+                if datasets_root is not None:
+                    fs_path = datasets_root.joinpath(*rel_parts)
+                else:
+                    fs_path = crawler_path.parent
                 if fs_path.exists():
                     mod.__path__ = [str(fs_path)]
-            
+
             # For packages, __package__ should be the name of the package itself.
             mod.__package__ = pkg_name
             sys.modules[pkg_name] = mod
@@ -80,7 +86,7 @@ def execute_crawler(config_path: Path, ds: Dataset):
     spec = importlib.util.spec_from_file_location(module_name, str(crawler_path))
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load crawler from {crawler_path}")
-    
+
     crawler_module = importlib.util.module_from_spec(spec)
     # Ensure the module knows its package for relative imports
     crawler_module.__package__ = pkg_name

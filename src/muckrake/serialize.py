@@ -1,16 +1,16 @@
-from typing import Any, Dict
-from followthemoney import model
-from followthemoney.types import registry
+from __future__ import annotations
+
 from functools import lru_cache
+from typing import Any, Dict
+
+from followthemoney.types import registry
 
 from muckrake.dataset import find_datasets, get_dataset_config, load_raw_config
-from muckrake.settings import ACTOR_SCHEMATA
 from muckrake.util import parse_date_token
 
 
 @lru_cache(maxsize=1)
 def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
-    """Load all dataset configurations."""
     datasets = {}
 
     for config_path in find_datasets():
@@ -61,12 +61,6 @@ def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
     return datasets
 
 
-def is_actor(schema_name: str) -> bool:
-    """Check if a schema should be treated as an actor profile."""
-    schema = model.get(schema_name)
-    return schema is not None and any(schema.is_a(s) for s in ACTOR_SCHEMATA)
-
-
 def _collapse_edge_temporal_extent(data: Dict[str, Any]) -> None:
     if data.get("schema") != "Representation":
         return
@@ -97,27 +91,24 @@ def _collapse_edge_temporal_extent(data: Dict[str, Any]) -> None:
 
 
 def serialize_entity(ent, ds_meta: Dict[str, Any], get_details_fn) -> Dict[str, Any]:
-    """Serialize a FollowTheMoney entity object to a simple dict."""
     data = ent.to_dict()
     data["caption"] = ent.caption
     data["canonical_id"] = ent.id
 
-    # Enrich datasets with metadata
     datasets = []
     for ds_name in ent.datasets:
         datasets.append(ds_meta.get(ds_name, {"name": ds_name, "title": ds_name}))
     data["datasets"] = datasets
 
-    # Resolve entity references to include captions for the UI
     for prop, values in data.get("properties", {}).items():
-        p = ent.schema.get(prop)
-        if p and p.type == registry.entity:
+        schema_prop = ent.schema.get(prop)
+        if schema_prop and schema_prop.type == registry.entity:
             enriched = []
-            for val in values:
-                details = get_details_fn(val)
+            for value in values:
+                details = get_details_fn(value)
                 enriched.append(
                     {
-                        "id": val,
+                        "id": value,
                         "caption": details["caption"],
                         "schema": details["schema"],
                     }
@@ -125,5 +116,4 @@ def serialize_entity(ent, ds_meta: Dict[str, Any], get_details_fn) -> Dict[str, 
             data["properties"][prop] = enriched
 
     _collapse_edge_temporal_extent(data)
-
     return data

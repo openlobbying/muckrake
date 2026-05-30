@@ -10,7 +10,6 @@ from nomenklatura.judgement import Judgement
 from sqlalchemy import bindparam, text
 from sqlalchemy.engine import Connection
 
-from muckrake.api.view import get_view, serialize_view_entity
 from muckrake.db import get_resolver
 from muckrake.dedupe.review import (
     DedupeLockError,
@@ -26,6 +25,7 @@ from muckrake.dedupe.review import (
     _utc_now,
     get_lock_engine,
 )
+from muckrake.view import get_view, serialize_view_entity
 from muckrake.settings import SQL_URI
 from nomenklatura.db import get_engine
 

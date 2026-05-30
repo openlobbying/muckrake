@@ -1,8 +1,8 @@
 # Instructions for AI agents
 
-Muckrake crawls various [datasets](/datasets/), creates [FollowTheMoney](https://followthemoney.tech/) entities and relationships, servese them via a [FastAPI backend](/src/muckrake/api/server.py) and a [SvelteKit frontend](/openlobbying/). It is used for OpenLobbying.org, a public website for exploring UK lobbying data (donations, meetings, lobbying representation, etc.).
+Muckrake is the reusable FollowTheMoney data pipeline core. It provides dataset discovery, crawl execution, loading, release-building, dedupe, and NER support for application repos such as OpenLobbying.
 
-Note that the `openlobbying` directory is called "openlobbying", not "openlake", "openlallying" or anything else. Be careful to use the correct name when running commands.
+OpenLobbying-specific crawlers, the FastAPI app, and the Svelte frontend now live in the sibling `../openlobbying/` repository.
 
 ## FollowTheMoney
 
@@ -23,6 +23,8 @@ Always use `uv` to run Python commands, never `python`, `python3` or `pip` direc
 ## Good practices
 
 Keep code simple and tidy. We don't need excessive abstractions and over-engineering. We don't need backwards compatibility. We don't need to account for edge cases before they arise.
+
+When working with crawlers, remember that `muckrake` discovers dataset configs from `./datasets/` in the current working directory, from `MUCKRAKE_DATASET_PATHS`, and from the sibling `../openlobbying/datasets/` checkout used in this workspace.
 
 Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes. Leave comments in the code for future developers to understand your thought process.
 

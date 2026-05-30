@@ -1,4 +1,4 @@
-A framework for creating and storing [FollowTheMoney](https://followthemoney.tech/) entities, used by [OpenLobbying](https://openlobbying.org/).
+A reusable framework for creating and storing [FollowTheMoney](https://followthemoney.tech/) entities.
 
 > [!WARNING]
 > This is a work in progress. Expect breaking changes and incomplete features.
@@ -13,9 +13,16 @@ Install Python dependencies with `uv sync`. This now includes the external `org-
 
 Muckrake also extends the FollowTheMoney model with local `Meeting`, `Donation`, `Gift`, and `Hospitality` schemata. The package bootstrap configures `FTM_MODEL_PATH` automatically so crawls, loads, exports, releases, and the API all use the same model inside this repo.
 
+OpenLobbying-specific code now lives in the sibling `../openlobbying/` repository. That repo owns:
+
+- the OpenLobbying dataset crawlers
+- the OpenLobbying FastAPI application
+- the OpenLobbying Svelte frontend
+- deployment assets for the public site
+
 ### Crawlers
 
-You can find crawlers for [various datasets](https://openlobbying.org/datasets) in `datasets/`. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawl.py` script that outputs FollowTheMoney statements in CSV format.
+Muckrake discovers crawler configs from `./datasets/` in the current working directory, any paths listed in `MUCKRAKE_DATASET_PATHS`, and the sibling `../openlobbying/datasets/` tree used in this workspace. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawler.py` script that outputs FollowTheMoney statements in CSV format.
 
 To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muckrake list` to see available datasets.
 
@@ -71,37 +78,21 @@ uv run muckrake release-publish 1
 
 ## OpenLobbying
 
-The primary user of Muckrake data is [OpenLobbying](https://openlobbying.org/), an open database of lobbying and political finance data.
-
-Start the API server:
-
-```bash
-uv run muckrake server
-```
-
-Start the Svelte frontend:
-
-```bash
-cd openlobbying
-npm run dev
-```
-
-In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8000` via Vite.
+The primary user of Muckrake data is [OpenLobbying](https://openlobbying.org/), an open database of lobbying and political finance data. See `../openlobbying/README.md` for app setup, API serving, and frontend development.
 
 ## Environment setup
 
 - Copy `.env.example` to `.env` in the repo root.
-- That single repo-root `.env` is used for local Python and frontend development.
+- By default `muckrake` loads the nearest `.env` from the current working directory upward. Override that with `MUCKRAKE_ENV_FILE` if needed.
 - Required for local development:
   - `MUCKRAKE_DATABASE_URL`
 - Common local settings:
   - `MUCKRAKE_PUBLISHED_DATABASE_URL` for a separate published API database
-  - `BETTER_AUTH_SECRET` for a stable local auth secret. If omitted, development falls back to a fixed local secret.
-  - `BETTER_AUTH_URL`, usually `http://localhost:5173`
 - Optional local overrides:
-  - `MUCKRAKE_API_URL`
   - `MUCKRAKE_DATA_PATH`
   - `MUCKRAKE_ARTIFACT_PATH`
+  - `MUCKRAKE_DATASET_PATHS`
+  - `MUCKRAKE_ENV_FILE`
   - `FTM_MODEL_PATH` if you need to override the repo's merged local FollowTheMoney model
   - `OPENROUTER_API_KEY`, `LLM_MODEL`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`
 - Example:
@@ -110,8 +101,7 @@ In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8
 cp .env.example .env
 ```
 
-## Deployment docs
+## Consumers
 
-- Deployment runbook: `ops/README.md`
-- App deployment assets: `ops/`
-- One-command app deploy: `./ops/deploy_to_vps.sh {ip_address}`
+- `../openlobbying/`: OpenLobbying application repo built on top of `muckrake`
+- `../us-congress-lobbying/`: project-specific investigative sandbox

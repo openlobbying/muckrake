@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -13,7 +14,7 @@ from nomenklatura.db import get_engine, get_metadata
 from org_id import make_hashed_id, make_org_id
 
 from muckrake.extract.fetch import fetch_file, fetch_json, fetch_html, fetch_text
-from muckrake.settings import DATA_PATH, SQL_URI
+from muckrake.settings import BASE_PATH, DATA_PATH, SQL_URI
 
 
 def load_raw_config(path: Path) -> Dict[str, Any]:
@@ -29,6 +30,44 @@ def get_dataset_config(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def get_dataset_path(name: str) -> Path:
     return DATA_PATH / "datasets" / name
+
+
+def list_dataset_roots() -> List[Path]:
+    roots: list[Path] = []
+
+    def add_root(path: Path) -> None:
+        resolved = path.expanduser().resolve()
+        if resolved in roots or not resolved.is_dir():
+            return
+        roots.append(resolved)
+
+    raw_paths = os.getenv("MUCKRAKE_DATASET_PATHS")
+    if raw_paths:
+        for raw_path in raw_paths.split(os.pathsep):
+            raw_path = raw_path.strip()
+            if raw_path:
+                add_root(Path(raw_path))
+
+    add_root(Path.cwd() / "datasets")
+    add_root(BASE_PATH / "datasets")
+    add_root(BASE_PATH.parent / "openlobbying" / "datasets")
+    return roots
+
+
+def resolve_dataset_root(config_path: Path) -> Path | None:
+    resolved_config = config_path.resolve()
+
+    for root in list_dataset_roots():
+        try:
+            resolved_config.relative_to(root)
+            return root
+        except ValueError:
+            continue
+
+    for parent in resolved_config.parents:
+        if parent.name == "datasets":
+            return parent
+    return None
 
 
 def clear_dataset(name: str):
@@ -155,18 +194,16 @@ class Dataset:
 
 
 def find_datasets(name: Optional[str] = None) -> List[Path]:
-    """Find dataset config files in the datasets/ directory.
+    """Find dataset config files across configured dataset roots.
 
     Args:
         name: Dataset name as defined in config (e.g., 'gb_political_finance').
               If None, finds all datasets recursively.
     """
-    datasets_root = Path("datasets")
-
-    # Find all config files recursively
-    configs = []
-    for ext in ["yml", "yaml"]:
-        configs.extend(datasets_root.glob(f"**/config.{ext}"))
+    configs: list[Path] = []
+    for datasets_root in list_dataset_roots():
+        for ext in ["yml", "yaml"]:
+            configs.extend(datasets_root.glob(f"**/config.{ext}"))
 
     if name:
         # Search through all configs to find the one with matching name
@@ -182,7 +219,8 @@ def find_datasets(name: Optional[str] = None) -> List[Path]:
                 continue
         return []
 
-    return sorted(list(set(configs)))
+    unique_configs = sorted({config.resolve() for config in configs})
+    return unique_configs
 
 
 def list_datasets() -> List[FTMDataset]:

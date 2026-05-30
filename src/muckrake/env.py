@@ -2,6 +2,30 @@ import os
 from pathlib import Path
 
 
+def find_env_file(
+    start: Path | None = None, fallback_paths: list[Path] | None = None
+) -> Path | None:
+    explicit = os.getenv("MUCKRAKE_ENV_FILE")
+    if explicit:
+        path = Path(explicit).expanduser()
+        return path if path.exists() else None
+
+    current = (start or Path.cwd()).resolve()
+    if current.is_file():
+        current = current.parent
+
+    for directory in (current, *current.parents):
+        candidate = directory / ".env"
+        if candidate.exists():
+            return candidate
+
+    for candidate in fallback_paths or []:
+        if candidate.exists():
+            return candidate
+
+    return None
+
+
 def read_env_file(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}

@@ -41,7 +41,6 @@ class MuckrakeGroup(click.Group):
         ),
         ("Build releases", ["release-build", "release-list", "release-publish"]),
         ("Load to database", ["load", "export"]),
-        ("Start server", ["server"]),
     ]
 
     def list_commands(self, ctx):
@@ -312,17 +311,6 @@ def ner_review(dataset_name, limit):
     except Exception as e:
         log.exception(e)
         sys.exit(1)
-
-
-@cli.command()
-@click.option("--port", "-p", type=int, default=8000, help="Port")
-@click.option("--host", "-h", default="127.0.0.1", help="Host")
-@click.option("--reload", "-r", is_flag=True, default=False, help="Reload")
-def server(port, host, reload):
-    """Start the API server."""
-    import uvicorn
-
-    uvicorn.run("muckrake.api.server:app", host=host, port=port, reload=reload)
 
 
 @cli.command("release-build")

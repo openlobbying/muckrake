@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from muckrake.env import load_env_file
+from muckrake.env import find_env_file, load_env_file
 
 # Base directory of the project
 BASE_PATH = Path(__file__).parent.parent.parent
@@ -16,7 +16,9 @@ def _normalize_database_url(url: str | None) -> str | None:
 
 
 if os.getenv("ENVIRONMENT") != "production":
-    load_env_file(BASE_PATH / ".env")
+    env_file = find_env_file(fallback_paths=[BASE_PATH / ".env"])
+    if env_file is not None:
+        load_env_file(env_file)
 
 
 def _require_database_url(name: str) -> str:
@@ -34,5 +36,3 @@ PUBLISHED_SQL_URI: str = (
 )
 
 LEVEL_PATH = DATA_PATH / "leveldb"
-ACTOR_SCHEMATA = {"LegalEntity", "Person", "Organization", "Company", "PublicBody"}
-SEARCH_LIMIT = 25
