@@ -16,20 +16,9 @@ def _normalize_database_url(url: str | None) -> str | None:
 
 
 if os.getenv("ENVIRONMENT") != "production":
-    env_file = find_env_file(fallback_paths=[BASE_PATH / ".env"])
+    env_file = find_env_file()
     if env_file is not None:
         load_env_file(env_file)
-
-
-def _require_database_url(name: str) -> str:
-    value = _normalize_database_url(os.getenv(name))
-    if value is None:
-        raise RuntimeError(f"{name} must be set")
-    return value
-
-
-def _default_sqlite_uri(filename: str) -> str:
-    return f"sqlite:///{(DATA_PATH / filename).as_posix()}"
 
 
 def _current_data_path() -> Path:
@@ -37,9 +26,7 @@ def _current_data_path() -> Path:
 
 
 def get_working_sql_uri() -> str:
-    return _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL")) or (
-        f"sqlite:///{(_current_data_path() / 'muckrake.db').as_posix()}"
-    )
+    return _normalize_database_url(os.getenv("MUCKRAKE_DATABASE_URL")) or f"sqlite:///{(_current_data_path() / 'muckrake.db').as_posix()}"
 
 
 def get_published_sql_uri() -> str:

@@ -33,6 +33,14 @@ from muckrake.settings import get_working_sql_uri
 log = logging.getLogger("muckrake")
 
 
+def _logging_level(verbose: int) -> int:
+    if verbose <= 0:
+        return logging.WARNING
+    if verbose == 1:
+        return logging.INFO
+    return logging.DEBUG
+
+
 class MuckrakeGroup(click.Group):
     COMMAND_GROUPS = [
         ("List all available datasets", ["list"]),
@@ -99,9 +107,15 @@ class MuckrakeGroup(click.Group):
 
 
 @click.group(cls=MuckrakeGroup)
-def cli():
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase logging verbosity. Repeat for debug output.",
+)
+def cli(verbose):
     """Muckrake: A minimal FtM data processing framework."""
-    configure_logging()
+    configure_logging(level=_logging_level(verbose))
 
 
 @cli.command()
@@ -172,6 +186,10 @@ def _emit_json(payload, pretty: bool) -> None:
         click.echo(json.dumps(payload, sort_keys=True))
 
 
+def _working_uri() -> str:
+    return get_working_sql_uri()
+
+
 @cli.command("add")
 @click.option("--schema", "schema_name", required=True, help="FtM schema name")
 @click.option("--dataset", required=True, help="Dataset name used for provenance")
@@ -213,7 +231,7 @@ def add_cmd(
             key_prefix=key_prefix,
             property_items=list(property_items),
         )
-        _emit_json(run_add_entity(spec, uri=get_working_sql_uri()), pretty)
+        _emit_json(run_add_entity(spec, uri=_working_uri()), pretty)
     except Exception as e:
         log.exception(e)
         sys.exit(1)
@@ -225,7 +243,7 @@ def add_cmd(
 def get_cmd(entity_id, pretty):
     """Get one FtM entity by canonical ID from the working database."""
     try:
-        payload = get_entity_payload(entity_id, uri=get_working_sql_uri())
+        payload = get_entity_payload(entity_id, uri=_working_uri())
         if payload is None:
             raise ValueError(f"Entity not found: {entity_id}")
         _emit_json({"status": "ok", "entity": payload}, pretty)
@@ -247,9 +265,7 @@ def search_cmd(query, schemas, limit, offset, pretty):
         offset = max(0, offset)
         requested_schema = list(schemas) if schemas else []
         applied_schema = normalize_schema_filter(requested_schema)
-        response = search_entity_payload(
-            query.strip(), requested_schema, limit, offset, uri=get_working_sql_uri()
-        )
+        response = search_entity_payload(query.strip(), requested_schema, limit, offset, uri=_working_uri())
         _emit_json(
             {
                 "status": "ok",
@@ -292,7 +308,7 @@ def update_cmd(entity_id, schema_name, dataset, source_ref, property_items, pret
                 dataset=dataset,
                 source_ref=source_ref,
                 schema_name=schema_name,
-                uri=get_working_sql_uri(),
+                uri=_working_uri(),
             ),
             pretty,
         )

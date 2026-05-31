@@ -8,7 +8,7 @@ OpenLobbying-specific crawlers, the FastAPI app, and the Svelte frontend now liv
 
 Always prefer using existing FollowTheMoney functions and schemata throughout the codebase. We also heavily rely on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library for entity resolution, as well as data storage. Check the documentation and codebase to see if you can use existing functions before writing new ones, chances are they exist.
 
-This repo also ships local FollowTheMoney schema extensions in `src/muckrake/ftm_schema_ext/`. The `muckrake` package bootstrap merges them into the active FtM model before runtime imports. Current custom schemata are `Meeting`, `Donation`, `Gift`, and `Hospitality`.
+Project-specific FollowTheMoney schema extensions should live in the consuming application repo, not in `muckrake` itself. `muckrake` discovers extension directories from `MUCKRAKE_FTM_SCHEMA_PATHS` and `./ftm_schema_ext/` in the current working directory.
 
 Key Resources:
 - FtM entity schemata: https://followthemoney.tech/explorer/schemata/
@@ -24,7 +24,7 @@ Always use `uv` to run Python commands, never `python`, `python3` or `pip` direc
 
 Keep code simple and tidy. We don't need excessive abstractions and over-engineering. We don't need backwards compatibility. We don't need to account for edge cases before they arise.
 
-When working with crawlers, remember that `muckrake` discovers dataset configs from `./datasets/` in the current working directory, from `MUCKRAKE_DATASET_PATHS`, and from the sibling `../openlobbying/datasets/` checkout used in this workspace.
+When working with crawlers, remember that `muckrake` discovers dataset configs from `./datasets/` in the current working directory and from `MUCKRAKE_DATASET_PATHS` when explicitly set.
 
 Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes. Leave comments in the code for future developers to understand your thought process.
 

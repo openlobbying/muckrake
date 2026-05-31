@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from muckrake.dataset import list_dataset_names
 from muckrake.serialize import get_all_datasets_metadata, serialize_entity
-from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI, get_working_sql_uri
+from muckrake.settings import PUBLISHED_SQL_URI, get_working_sql_uri
 from muckrake.store import get_sql_store
 
 

@@ -49,8 +49,6 @@ def list_dataset_roots() -> List[Path]:
                 add_root(Path(raw_path))
 
     add_root(Path.cwd() / "datasets")
-    add_root(BASE_PATH / "datasets")
-    add_root(BASE_PATH.parent / "openlobbying" / "datasets")
     return roots
 
 

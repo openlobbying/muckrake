@@ -5,7 +5,7 @@ from typing import cast
 
 from nomenklatura.db import get_engine, get_metadata, make_statement_table
 from nomenklatura.resolver import Identifier, Resolver
-from sqlalchemy import Column, Integer, MetaData, String, Table, Text, text
+from sqlalchemy import Column, Integer, MetaData, String, Table, Text, inspect, text
 from sqlalchemy.engine import Engine
 
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
@@ -208,7 +208,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
     statement_table = make_statement_table(metadata)
-    resolver = Resolver(engine, metadata, create=True)
+    resolver = Resolver(engine, MetaData(), create=True)
     ner_candidates = get_ner_candidates_table(metadata)
     dataset_runs = get_dataset_runs_table(metadata)
     dataset_run_artifacts = get_dataset_run_artifacts_table(metadata)
@@ -217,21 +217,22 @@ def init_database(uri: str = SQL_URI) -> Engine:
     resolver_cluster_skip = get_resolver_cluster_skip_table(metadata)
     release_inputs = get_release_inputs_table(metadata)
     release_artifacts = get_release_artifacts_table(metadata)
-    metadata.create_all(
-        bind=engine,
-        tables=[
-            statement_table,
-            ner_candidates,
-            dataset_runs,
-            dataset_run_artifacts,
-            releases,
-            resolver_lock,
-            resolver_cluster_skip,
-            release_inputs,
-            release_artifacts,
-        ],
-        checkfirst=True,
-    )
+
+    inspector = inspect(engine)
+    for table in [
+        statement_table,
+        ner_candidates,
+        dataset_runs,
+        dataset_run_artifacts,
+        releases,
+        resolver_lock,
+        resolver_cluster_skip,
+        release_inputs,
+        release_artifacts,
+    ]:
+        if inspector.has_table(table.name):
+            continue
+        table.create(bind=engine, checkfirst=True)
     _ensure_ner_candidates_constraints(engine)
     _ensure_dataset_run_constraints(engine)
     _ensure_release_constraints(engine)
@@ -273,11 +274,8 @@ def init_published_database(uri: str = PUBLISHED_SQL_URI) -> Engine:
     metadata = MetaData()
     statement_table = make_statement_table(metadata)
     resolver = Resolver(engine, metadata, create=True)
-    metadata.create_all(
-        bind=engine,
-        tables=[statement_table],
-        checkfirst=True,
-    )
+    if not inspect(engine).has_table(statement_table.name):
+        statement_table.create(bind=engine, checkfirst=True)
     _sync_postgres_sequences(engine, [resolver._table])
     return engine
 

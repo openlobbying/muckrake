@@ -11,7 +11,7 @@ from followthemoney.statement import Statement
 from sqlalchemy import delete, select, update
 
 from muckrake.entity_query import clear_query_caches, get_entity_payload, get_view, list_all_dataset_names
-from muckrake.settings import SQL_URI, get_working_sql_uri
+from muckrake.settings import get_working_sql_uri
 from muckrake.store import get_sql_store
 
 
@@ -123,6 +123,10 @@ def _entity_statements(entity, dataset_name: str, source_ref: str) -> list[State
     return statements
 
 
+def _dataset_title(name: str) -> str:
+    return name
+
+
 def _mark_existing_statements_canonical(store, entity_id: str) -> None:
     with store.engine.begin() as conn:
         conn.execute(
@@ -137,7 +141,7 @@ def add_entity(spec: EntitySpec, *, uri: str | None = None) -> dict[str, Any]:
         uri = get_working_sql_uri()
 
     entity = build_entity(spec)
-    dataset = FTMDataset.make({"name": spec.dataset, "title": spec.dataset})
+    dataset = FTMDataset.make({"name": spec.dataset, "title": _dataset_title(spec.dataset)})
     store = get_sql_store([spec.dataset], uri=uri)
 
     with store.engine.begin() as conn:

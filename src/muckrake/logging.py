@@ -15,8 +15,11 @@ def configure_logging(
     enable_logfire: bool = False,
 ) -> None:
     """Configure basic logging and Logfire if available."""
-    # Basic logging setup
-    logging.basicConfig(level=level)
+    root_logger = logging.getLogger()
+    if root_logger.handlers:
+        root_logger.setLevel(level)
+    else:
+        logging.basicConfig(level=level)
 
     global _LOGFIRE_CONFIGURED
 

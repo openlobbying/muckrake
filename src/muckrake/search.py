@@ -138,7 +138,7 @@ def postgres_search_ready(uri: str = PUBLISHED_SQL_URI) -> bool:
         return False
 
 
-def _include_schema(schema_names: Sequence[str]):
+def _include_schema(schema_names: Sequence[str]) -> list[Any]:
     include_schema = []
     for schema_name in schema_names:
         schema_obj = model.get(schema_name)

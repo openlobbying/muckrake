@@ -11,18 +11,17 @@ Run `uv run muckrake --help` for a full list of available commands.
 
 Install Python dependencies with `uv sync`. This now includes the external `org-id` package used for structured organization identifiers.
 
-Muckrake also extends the FollowTheMoney model with local `Meeting`, `Donation`, `Gift`, and `Hospitality` schemata. The package bootstrap configures `FTM_MODEL_PATH` automatically so crawls, loads, exports, releases, and the API all use the same model inside this repo.
-
 OpenLobbying-specific code now lives in the sibling `../openlobbying/` repository. That repo owns:
 
 - the OpenLobbying dataset crawlers
 - the OpenLobbying FastAPI application
 - the OpenLobbying Svelte frontend
+- any project-specific FtM schema extensions
 - deployment assets for the public site
 
 ### Crawlers
 
-Muckrake discovers crawler configs from `./datasets/` in the current working directory, any paths listed in `MUCKRAKE_DATASET_PATHS`, and the sibling `../openlobbying/datasets/` tree used in this workspace. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawler.py` script that outputs FollowTheMoney statements in CSV format.
+Muckrake discovers crawler configs from `./datasets/` in the current working directory and any paths listed in `MUCKRAKE_DATASET_PATHS`. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawler.py` script that outputs FollowTheMoney statements in CSV format.
 
 To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muckrake list` to see available datasets.
 
@@ -95,8 +94,9 @@ The primary user of Muckrake data is [OpenLobbying](https://openlobbying.org/), 
   - `MUCKRAKE_DATA_PATH`
   - `MUCKRAKE_ARTIFACT_PATH`
   - `MUCKRAKE_DATASET_PATHS`
+  - `MUCKRAKE_FTM_SCHEMA_PATHS`
   - `MUCKRAKE_ENV_FILE`
-  - `FTM_MODEL_PATH` if you need to override the repo's merged local FollowTheMoney model
+  - `FTM_MODEL_PATH` if you need to override the merged FollowTheMoney model entirely
   - `OPENROUTER_API_KEY`, `LLM_MODEL`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`
 - Example:
 
