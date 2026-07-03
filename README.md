@@ -86,7 +86,25 @@ cd openlobbying
 npm run dev
 ```
 
-In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8000` via Vite.
+In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8000` via Vite (override with `MUCKRAKE_API_URL`, e.g. `http://127.0.0.1:8001` for the containerised API).
+
+## Docker
+
+The compose stack runs Postgres 18, the API, and pipeline commands in containers. Host ports are offset (db `5433`, API `8001`) so it can run side by side with the undertheinfluence stack.
+
+```bash
+# Postgres only (creates both the app and published databases)
+docker compose up -d db
+
+# Postgres + API on http://127.0.0.1:8001
+docker compose up -d
+
+# Pipeline commands via the CLI runner
+docker compose run --rm cli list
+docker compose run --rm cli crawl gb_political_finance
+```
+
+The repo is bind-mounted into the containers, so code changes, `datasets/`, and `data/` (fetch cache + artifacts) are shared with the host. Host `uv` remains the default dev workflow; the containers are for running the full stack, e.g. alongside undertheinfluence.
 
 ## Environment setup
 

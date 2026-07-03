@@ -1,15 +1,52 @@
+# Standalone muckrake stack. Host ports are offset (db 5433, api 8001) so this
+# can run side by side with the undertheinfluence stack (5432/8000).
+name: muckrake
+
+x-muckrake: &muckrake
+  build: .
+  image: muckrake
+  environment:
+    MUCKRAKE_DATABASE_URL: postgresql://muckrake:muckrake@db:5432/muckrake
+    MUCKRAKE_PUBLISHED_DATABASE_URL: postgresql://muckrake:muckrake@db:5432/muckrake_published
+  volumes:
+    # Bind-mount the repo: muckrake is installed editable against /app/src, so
+    # code, datasets/ and data/ (cache + artifacts) come from the host.
+    - .:/app
+  depends_on:
+    db:
+      condition: service_healthy
+
 services:
   db:
-    image: docker.io/library/postgres:16
+    image: docker.io/library/postgres:18
     restart: unless-stopped
     environment:
-      POSTGRES_USER: myproject
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: myproject
+      POSTGRES_USER: muckrake
+      POSTGRES_PASSWORD: muckrake
+      POSTGRES_DB: muckrake
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # postgres:18 keeps PGDATA under /var/lib/postgresql (not …/data).
+      - postgres_data:/var/lib/postgresql
+      - ./ops/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muckrake -d muckrake"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    <<: *muckrake
+    command: muckrake server --host 0.0.0.0
+    ports:
+      - "8001:8000"
+
+  # Pipeline runner: `docker compose run --rm cli crawl <dataset>` etc.
+  cli:
+    <<: *muckrake
+    entrypoint: ["muckrake"]
+    profiles: ["tools"]
 
 volumes:
   postgres_data:

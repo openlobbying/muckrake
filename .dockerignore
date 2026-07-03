@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+data
+__pycache__
+*.pyc
+.pytest_cache
+.vscode
+.github
+.claude
+CLAUDE.md
+# Frontend runs outside this image (host npm, or its own service later).
+openlobbying
+ops
+Dockerfile
+docker-compose.yml
