@@ -38,12 +38,13 @@ services:
 
   api:
     <<: *muckrake
+    restart: unless-stopped
     command: muckrake server --host 0.0.0.0
     ports:
       - "8001:8000"
 
-  # Pipeline runner: `docker compose run --rm cli crawl <dataset>` etc.
-  cli:
+  # Pipeline runner: `docker compose run --rm muckrake crawl <dataset>` etc.
+  muckrake:
     <<: *muckrake
     entrypoint: ["muckrake"]
     profiles: ["tools"]

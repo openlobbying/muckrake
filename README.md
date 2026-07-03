@@ -7,9 +7,21 @@ A framework for creating and storing [FollowTheMoney](https://followthemoney.tec
 
 Muckrake is the data pipeline. It is partially inspired by [`zavod`](https://zavod.opensanctions.org/) and [other tools in the FollowTheMoney ecosystems](https://followthemoney.tech/community/stack/).
 
-Run `uv run muckrake --help` for a full list of available commands.
+### Setup
 
-Install Python dependencies with `uv sync`. This now includes the external `org-id` package used for structured organization identifiers.
+The compose stack runs Postgres 18, the API, and pipeline commands in containers. Host ports are offset (db `5433`, API `8001`) so it can run side by side with the undertheinfluence stack.
+
+```bash
+# Postgres (creates the app + published databases) and the API on http://127.0.0.1:8001
+docker compose up -d
+
+# Full list of available commands (muckrake --help)
+docker compose run --rm muckrake --help
+```
+
+The `muckrake` service's entrypoint is the muckrake CLI, so `docker compose run --rm muckrake <command>` is the container equivalent of `uv run muckrake <command>`. The repo is bind-mounted into the containers: code changes, `datasets/`, `data/` (fetch cache + artifacts) and the repo-root `.env` are shared with the host (the database URLs are overridden to point at the compose Postgres).
+
+To work on the host instead, copy `.env.example` to `.env` (see [Environment setup](#environment-setup)), install dependencies with `uv sync`, start Postgres with `docker compose up -d db`, and run commands with `uv run muckrake <command>`.
 
 Muckrake also extends the FollowTheMoney model with local `Meeting`, `Donation`, `Gift`, and `Hospitality` schemata. The package bootstrap configures `FTM_MODEL_PATH` automatically so crawls, loads, exports, releases, and the API all use the same model inside this repo.
 
@@ -17,7 +29,7 @@ Muckrake also extends the FollowTheMoney model with local `Meeting`, `Donation`,
 
 You can find crawlers for [various datasets](https://openlobbying.org/datasets) in `datasets/`. At a minimum, each dataset consists of a `config.yml` with metadata and a `crawl.py` script that outputs FollowTheMoney statements in CSV format.
 
-To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muckrake list` to see available datasets.
+To crawl a dataset, run `docker compose run --rm muckrake crawl {dataset_name}`. Run `docker compose run --rm muckrake list` to see available datasets.
 
 Each crawl now creates a `dataset_runs` record in Postgres and stores immutable artifacts under `MUCKRAKE_ARTIFACT_PATH` (defaults to `data/artifacts`). The latest successful run remains mirrored into `data/datasets/{name}/statements.pack.csv` for local compatibility.
 
@@ -25,12 +37,14 @@ Each crawl now creates a `dataset_runs` record in Postgres and stores immutable 
 
 Many data sources have [composite fields that contain multiple entities](https://openaccess.transparency.org.uk/?meeting=10088). We use LLMs to extract unique entities and relationships from these fields, and store them as candidates in the database for review and approval. See [NER docs](/src/muckrake/extract/ner/README.md) for details.
 
+LLM-based extraction needs `OPENROUTER_API_KEY` and `LLM_MODEL` in the repo-root `.env` — the containers pick these up through the bind mount.
+
 ```bash
 # Create extraction candidates for one dataset
-uv run muckrake ner-extract open_access --extractor llm --limit 50
+docker compose run --rm muckrake ner-extract open_access --extractor llm --limit 50
 
 # Review candidates in a terminal UI
-uv run muckrake ner-review
+docker compose run --rm muckrake ner-review
 ```
 
 ### Dedupe
@@ -39,33 +53,33 @@ Our goal is to link entities across datasets to provide a unified view of lobbyi
 
 ```bash
 # Create dedupe candidates across all datasets
-uv run muckrake xref
+docker compose run --rm muckrake xref
 
 # Review candidates in a terminal UI
-uv run muckrake dedupe
+docker compose run --rm muckrake dedupe
 ```
 
 We also want to collapse duplicate relationship edges across datasets, especially for ORCL and PRCA. This is done automatically, no review step required.
 
 ```bash
-uv run muckrake dedupe-edges
+docker compose run --rm muckrake dedupe-edges
 ```
 
 ### Loading
 
-Statements are loaded into Postgres with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
+Statements are loaded into Postgres with `docker compose run --rm muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
 
 To load from a specific immutable crawl snapshot instead of the local workspace copy:
 
 ```bash
-uv run muckrake load gb_political_finance --run-id 123
+docker compose run --rm muckrake load gb_political_finance --run-id 123
 ```
 
 For the published site, prefer the release workflow instead of loading directly into the serving database:
 
 ```bash
-uv run muckrake release-build
-uv run muckrake release-publish 1
+docker compose run --rm muckrake release-build
+docker compose run --rm muckrake release-publish 1
 ```
 
 
@@ -73,11 +87,7 @@ uv run muckrake release-publish 1
 
 The primary user of Muckrake data is [OpenLobbying](https://openlobbying.org/), an open database of lobbying and political finance data.
 
-Start the API server:
-
-```bash
-uv run muckrake server
-```
+The compose stack serves the API at `http://127.0.0.1:8001` (started by `docker compose up -d`). On the host, `uv run muckrake server` serves it at `http://127.0.0.1:8000`.
 
 Start the Svelte frontend:
 
@@ -88,28 +98,10 @@ npm run dev
 
 In development, frontend requests to `/api/*` are proxied to `http://127.0.0.1:8000` via Vite (override with `MUCKRAKE_API_URL`, e.g. `http://127.0.0.1:8001` for the containerised API).
 
-## Docker
-
-The compose stack runs Postgres 18, the API, and pipeline commands in containers. Host ports are offset (db `5433`, API `8001`) so it can run side by side with the undertheinfluence stack.
-
-```bash
-# Postgres only (creates both the app and published databases)
-docker compose up -d db
-
-# Postgres + API on http://127.0.0.1:8001
-docker compose up -d
-
-# Pipeline commands via the CLI runner
-docker compose run --rm cli list
-docker compose run --rm cli crawl gb_political_finance
-```
-
-The repo is bind-mounted into the containers, so code changes, `datasets/`, and `data/` (fetch cache + artifacts) are shared with the host. Host `uv` remains the default dev workflow; the containers are for running the full stack, e.g. alongside undertheinfluence.
-
 ## Environment setup
 
 - Copy `.env.example` to `.env` in the repo root.
-- That single repo-root `.env` is used for local Python and frontend development.
+- That single repo-root `.env` is used for local Python and frontend development, and is shared with the containers via the bind mount. Docker-only use works without one (compose sets the database URLs), but LLM-based NER needs the `OPENROUTER_API_KEY`/`LLM_MODEL` values from it.
 - Required for local development:
   - `MUCKRAKE_DATABASE_URL`
 - Common local settings:
