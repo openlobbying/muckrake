@@ -10,9 +10,9 @@ Muckrake is the reusable FollowTheMoney data-pipeline core, published to PyPI. A
 
 Work in this repo is tracked on GitHub project boards 2 ("To-do", this repo's issues) and 3 ("muckrake × UTI merge", issues in `openlobbying/docs`). Merge-driven workstreams that land here:
 
-- **Containerisation** ([docs#30](https://github.com/openlobbying/docs/issues/30), in progress): multi-stage Dockerfile + a standalone compose (Postgres with app + published DBs, CLI runner), with host ports chosen to avoid the UTI stack (db → 5433, API → 8001). The standalone compose must have no knowledge of UTI (🔒).
+- **Containerisation** ([docs#30](https://github.com/openlobbying/docs/issues/30), in progress): multi-stage Dockerfile + a standalone compose (Postgres with app + published DBs, CLI runner), with the db host port offset to 5433 to avoid the UTI stack; no API service (the server moved to openlobbying). The standalone compose must have no knowledge of UTI (🔒).
 - **Tooling baseline + tests** (docs#33, #34): adopt ruff/mypy/pre-commit (currently none configured) and build out test coverage across core — existing tests only cover CLI entities, entity writes, and SQLite storage; load, release, artifacts, `make_id`, NER apply, and dedupe have essentially none. Hardening work should land with tests.
-- **Workstream B — data-plane hardening** (docs#23–#29), prerequisite for UTI-scale ingestion (155k actors); fixes belong in core so all crawlers inherit them:
+- **Data-plane hardening workstream** (docs#23–#29), prerequisite for UTI-scale ingestion (155k actors); fixes belong in core so all crawlers inherit them:
   - resilient fetch layer in `src/muckrake/extract/fetch.py`: retry + exponential backoff + rate limit + timeout (currently bare `raise_for_status()`)
   - crawl checkpointing + keep partial artifacts (`src/muckrake/crawl.py` currently discards everything on failure)
   - stream spreadsheet/CSV rows to the statement writer instead of materialising whole sheets
@@ -20,7 +20,7 @@ Work in this repo is tracked on GitHub project boards 2 ("To-do", this repo's is
   - batched/incremental xref (hard `--limit 50000` today) + document complexity at 150k+ entities
   - atomic load in `src/muckrake/load.py` (currently delete-all-then-insert; a midway failure leaves the dataset empty)
   - opt-in concurrency for I/O-bound fetches
-- **Phase 4 ports (later)**: Companies House enrichment stage feeding the resolver (+ seed UTI's 51k match decisions as judgements), and APPC-archive / ParlParse historical crawlers — generic GB data-plane capabilities, not UTI glue.
+- **Data backfill ports (later)**: Companies House enrichment stage feeding the resolver (+ seed UTI's 51k match decisions as judgements), and APPC-archive / ParlParse historical crawlers — generic GB data-plane capabilities, not UTI glue.
 - A generic, project-agnostic export interface (docs#6) is an **open decision** that gates the merge's projection work — don't preempt its shape in code.
 
 ## Common commands
