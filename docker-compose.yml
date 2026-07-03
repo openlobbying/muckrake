@@ -1,15 +1,45 @@
+# Standalone muckrake stack: Postgres plus a CLI runner. Host port is offset
+# (db 5433) so this can run side by side with the undertheinfluence umbrella
+# stack (5432/8000). This compose has no knowledge of any consumer project.
+name: muckrake
+
 services:
   db:
-    image: docker.io/library/postgres:16
+    image: docker.io/library/postgres:18
     restart: unless-stopped
     environment:
-      POSTGRES_USER: myproject
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: myproject
+      POSTGRES_USER: muckrake
+      POSTGRES_PASSWORD: muckrake
+      POSTGRES_DB: muckrake
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # postgres:18 keeps PGDATA under /var/lib/postgresql (not …/data).
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muckrake -d muckrake"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Pipeline runner: `docker compose run --rm muckrake <command>` is the
+  # container equivalent of `uv run muckrake <command>`. The repo is
+  # bind-mounted at /work, so datasets/, data/ and .env come from the host.
+  muckrake:
+    build: .
+    image: muckrake
+    entrypoint: ["muckrake"]
+    profiles: ["tools"]
+    working_dir: /work
+    environment:
+      MUCKRAKE_DATABASE_URL: postgresql://muckrake:muckrake@db:5432/muckrake
+      MUCKRAKE_PUBLISHED_DATABASE_URL: postgresql://muckrake:muckrake@db:5432/muckrake_published
+    volumes:
+      - .:/work
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
