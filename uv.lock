@@ -1518,11 +1518,11 @@ wheels = [
 
 [[package]]
 name = "org-id"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9b/57/4cbeab2767ade068e7f2f0c6b83e9f3444fa70c2d5cd45d91d78a56c6bfa/org_id-0.1.0.tar.gz", hash = "sha256:87854686f9313bf91c14aec006de8bab3180b65edec2b6b24e0a91415dc43540", size = 174131, upload-time = "2026-04-01T21:46:23.732Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/d1/f525025f3b181ce694ee8a243f5452a298d0fbca6c14caf3670faedc0d9e/org_id-0.1.1.tar.gz", hash = "sha256:400a773882ee53348b98dfcb308cf422a907ad1d081739d0d21aaf0851074df7", size = 173677, upload-time = "2026-07-19T13:06:21.648Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/9d/f8eabe4eabb69936c44efd02e475d6333d43778bae1f7732bafc70109a6e/org_id-0.1.0-py3-none-any.whl", hash = "sha256:fa09e709dc27e81afa96b42a66744e341df2ae6f10a653d3ab98661d0fdd0145", size = 176457, upload-time = "2026-04-01T21:46:22.489Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/85/4c0ffd0011f32fc7d5ca7ca9ef04b2516ee297711a841941c475fcd394b5/org_id-0.1.1-py3-none-any.whl", hash = "sha256:e6e3c3955860ea32ba98b526b6220f97fc66dd983c05b5ae3acbaa4d87a571ac", size = 175728, upload-time = "2026-07-19T13:06:19.487Z" },
 ]
 
 [[package]]
