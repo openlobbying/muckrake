@@ -8,19 +8,19 @@ Muckrake is the reusable FollowTheMoney data-pipeline core, published to PyPI. A
 
 ## Current workstreams (July 2026)
 
-Work in this repo is tracked on GitHub project boards 2 ("To-do", this repo's issues) and 3 ("muckrake × UTI merge", issues in `openlobbying/docs`). Merge-driven workstreams that land here:
+Note: the org-id dependency needs a **v0.1.1 PyPI release** to pick up the `Registry.default()` cache fix (org-id#2, closes muckrake#21); until then rebuilt images keep the slow path. Work in this repo is tracked on GitHub project boards 2 ("To-do", this repo's issues) and 3 ("muckrake × UTI merge", issues in `openlobbying/docs`). Merge-driven workstreams that land here:
 
-- **Containerisation** ([docs#30](https://github.com/openlobbying/docs/issues/30), in progress): multi-stage Dockerfile + a standalone compose (Postgres with app + published DBs, CLI runner), with the db host port offset to 5433 to avoid the UTI stack; no API service (the server moved to openlobbying). The standalone compose must have no knowledge of UTI (🔒).
+- **Containerisation** ([docs#30](https://github.com/openlobbying/docs/issues/30), ✅ done — PR #20): multi-stage Dockerfile + a standalone compose (Postgres with app + published DBs, CLI runner), with the db host port offset to 5433 to avoid the UTI stack; no API service (the server moved to openlobbying). The standalone compose must have no knowledge of UTI (🔒).
 - **Tooling baseline + tests** (docs#33, #34): adopt ruff/mypy/pre-commit (currently none configured) and build out test coverage across core — existing tests only cover CLI entities, entity writes, and SQLite storage; load, release, artifacts, `make_id`, NER apply, and dedupe have essentially none. Hardening work should land with tests.
 - **Data-plane hardening workstream** (docs#23–#29), prerequisite for UTI-scale ingestion (155k actors); fixes belong in core so all crawlers inherit them:
-  - resilient fetch layer in `src/muckrake/extract/fetch.py`: retry + exponential backoff + rate limit + timeout (currently bare `raise_for_status()`)
+  - ✅ resilient fetch layer (PR #22): shared polite session in `src/muckrake/extract/fetch.py` — retry + exponential backoff (Retry-After honoured, idempotent methods only) + opt-in per-host rate limit (`MUCKRAKE_HTTP_MIN_INTERVAL`) + timeout
   - crawl checkpointing + keep partial artifacts (`src/muckrake/crawl.py` currently discards everything on failure)
   - stream spreadsheet/CSV rows to the statement writer instead of materialising whole sheets
   - remove silent pagination caps; emit completeness warnings into the run summary
   - batched/incremental xref (hard `--limit 50000` today) + document complexity at 150k+ entities
   - atomic load in `src/muckrake/load.py` (currently delete-all-then-insert; a midway failure leaves the dataset empty)
   - opt-in concurrency for I/O-bound fetches
-- **Data backfill ports (later)**: Companies House enrichment stage feeding the resolver (+ seed UTI's 51k match decisions as judgements), and APPC-archive / ParlParse historical crawlers — generic GB data-plane capabilities, not UTI glue.
+- **Data backfill ports (later)**: Companies House enrichment as a `nomenklatura.enrich` enricher feeding the resolver (note: UTI holds **no human CH match decisions to migrate** — its 51k figure is orgs *processed*, mostly unreviewed; the enricher matches from scratch), and APPC-archive / ParlParse historical crawlers — generic GB data-plane capabilities, not UTI glue.
 - A generic, project-agnostic export interface (docs#6) is an **open decision** that gates the merge's projection work — don't preempt its shape in code.
 
 ## Common commands
