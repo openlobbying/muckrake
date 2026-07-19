@@ -1,18 +1,81 @@
 import json
+import os
+import threading
 import time
 import requests
+from functools import cache
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Optional, Any, TYPE_CHECKING
+from urllib.parse import urlparse
 from lxml import html
 from lxml.html import HtmlElement
 from banal import hash_data
+from requests.adapters import HTTPAdapter
 from rigour.urls import build_url
+from urllib3.util.retry import Retry
 import logging
 
 if TYPE_CHECKING:
     from nomenklatura.cache import Cache
 
 log = logging.getLogger(__name__)
+
+RETRY_STATUSES = (429, 500, 502, 503, 504)
+
+
+def _user_agent() -> str:
+    try:
+        pkg_version = version("muckrake")
+    except PackageNotFoundError:
+        pkg_version = "dev"
+    return f"muckrake/{pkg_version} (+https://github.com/openlobbying/muckrake)"
+
+
+def make_session(retries: int = 5, backoff_factor: float = 1.0) -> requests.Session:
+    """A polite HTTP session: connection pooling, a muckrake User-Agent, and
+    retry with exponential backoff on transient failures (connection errors
+    and 429/5xx statuses, honouring Retry-After). Only idempotent methods
+    (GET/HEAD) are retried — a failed POST is raised immediately."""
+    session = requests.Session()
+    retry = Retry(
+        total=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=RETRY_STATUSES,
+        allowed_methods=("GET", "HEAD"),
+        respect_retry_after_header=True,
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    session.headers["User-Agent"] = _user_agent()
+    return session
+
+
+@cache
+def get_session() -> requests.Session:
+    """The shared session used whenever a caller does not supply one."""
+    return make_session()
+
+
+_throttle_lock = threading.Lock()
+_next_request_at: dict[str, float] = {}
+
+
+def _throttle(url: str) -> None:
+    """Enforce a minimum interval between requests to the same host
+    (MUCKRAKE_HTTP_MIN_INTERVAL, seconds; off by default)."""
+    interval = float(os.getenv("MUCKRAKE_HTTP_MIN_INTERVAL") or 0)
+    if interval <= 0:
+        return
+    host = urlparse(url).netloc
+    with _throttle_lock:
+        now = time.monotonic()
+        wait = _next_request_at.get(host, now) - now
+        _next_request_at[host] = max(now, _next_request_at.get(host, now)) + interval
+    if wait > 0:
+        time.sleep(wait)
 
 
 def request_hash(
@@ -46,7 +109,8 @@ def fetch_file(
 
     log.info("Fetching file from %s", url)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    requester = session.request if session is not None else requests.request
+    requester = (session or get_session()).request
+    _throttle(url)
 
     with requester(
         method=method,
@@ -93,7 +157,8 @@ def fetch_text(
             time.sleep(sleep)
 
     log.debug("HTTP %s: %s", method, url)
-    requester = session.request if session is not None else requests.request
+    requester = (session or get_session()).request
+    _throttle(url)
     response = requester(
         method=method,
         url=url,
