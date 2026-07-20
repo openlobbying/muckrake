@@ -59,9 +59,7 @@ def _names(dataset_name: str) -> set[str]:
 def test_approved_candidate_is_applied_at_load(make_dataset):
     first, second = "Alice Zephyr", "Bob Quill"
     composite = f"{first} and {second}"
-    name, _ = make_dataset(
-        [{"schema": "Person", "properties": {"name": [composite]}}]
-    )
+    name, _ = make_dataset([{"schema": "Person", "properties": {"name": [composite]}}])
     _seed_candidate(name, first, second, approve=True)
 
     run_load(name)
@@ -77,9 +75,7 @@ def test_pending_candidate_is_not_applied_at_load(make_dataset):
     # That cross-dataset coupling is itself a finding for docs#38.
     first, second = "Carol Vane", "Dave Frost"
     composite = f"{first} and {second}"
-    name, _ = make_dataset(
-        [{"schema": "Person", "properties": {"name": [composite]}}]
-    )
+    name, _ = make_dataset([{"schema": "Person", "properties": {"name": [composite]}}])
     _seed_candidate(name, first, second, approve=False)
 
     run_load(name)

@@ -11,8 +11,9 @@ from __future__ import annotations
 import os
 import tempfile
 import uuid
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 _TEST_ROOT = Path(tempfile.mkdtemp(prefix="muckrake-tests-"))
 os.environ.pop("MUCKRAKE_DATABASE_URL", None)  # working DB falls back to the SQLite default
@@ -27,12 +28,11 @@ os.environ["MUCKRAKE_PUBLISHED_DATABASE_URL"] = (
 # a dataset pack.
 (_TEST_ROOT / "data").mkdir(parents=True, exist_ok=True)
 
-import muckrake  # noqa: E402  (must follow the env setup above)
-
 import pytest  # noqa: E402
 import yaml  # noqa: E402
 from followthemoney.statement.serialize import PackStatementWriter  # noqa: E402
 
+import muckrake  # noqa: E402  (must follow the env setup above)
 from muckrake.dataset import Dataset, get_dataset_path  # noqa: E402
 
 __all__ = ["muckrake"]
@@ -68,9 +68,7 @@ def make_dataset(
         config_dir = roots / name
         config_dir.mkdir(parents=True)
         config_path = config_dir / "config.yml"
-        config_path.write_text(
-            yaml.safe_dump({"name": name, "title": name, "prefix": name})
-        )
+        config_path.write_text(yaml.safe_dump({"name": name, "title": name, "prefix": name}))
 
         pack_path = get_dataset_path(name) / "statements.pack.csv"
         if write_pack:

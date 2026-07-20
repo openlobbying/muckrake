@@ -22,9 +22,7 @@ def _statement_count(dataset_name: str) -> int:
 
 
 def test_load_materialises_entities(make_dataset):
-    name, _ = make_dataset(
-        [{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}]
-    )
+    name, _ = make_dataset([{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}])
 
     run_load(name)
 
@@ -35,9 +33,7 @@ def test_load_materialises_entities(make_dataset):
 
 
 def test_reload_is_idempotent(make_dataset):
-    name, _ = make_dataset(
-        [{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}]
-    )
+    name, _ = make_dataset([{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}])
 
     run_load(name)
     first_count = _statement_count(name)

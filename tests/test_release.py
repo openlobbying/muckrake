@@ -47,9 +47,7 @@ def _published_entities(name: str):
 
 
 def test_release_build_then_publish_copies_statements(make_dataset):
-    name, pack_path = make_dataset(
-        [{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}]
-    )
+    name, pack_path = make_dataset([{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}])
     _register_successful_run(name, pack_path)
 
     release_id = run_release_build([name])
@@ -77,9 +75,7 @@ def test_release_build_fails_without_successful_run(make_dataset):
 
 
 def test_release_build_is_all_or_nothing_across_datasets(make_dataset):
-    ready, ready_pack = make_dataset(
-        [{"schema": "Company", "properties": {"name": ["Ready Ltd"]}}]
-    )
+    ready, ready_pack = make_dataset([{"schema": "Company", "properties": {"name": ["Ready Ltd"]}}])
     _register_successful_run(ready, ready_pack)
     missing, _ = make_dataset(write_pack=False)
 
