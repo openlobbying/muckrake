@@ -1,23 +1,21 @@
-import logging
 import json
+import logging
 import sys
 from pathlib import Path
 
 import click
 from nomenklatura.matching import DefaultAlgorithm
-from muckrake.logging import configure_logging
-from muckrake.dataset import find_datasets, load_config, clear_dataset, list_datasets
+
 from muckrake.crawl import run_crawl
+from muckrake.dataset import clear_dataset, find_datasets, list_datasets, load_config
 from muckrake.dedupe import (
-    run_xref,
     run_dedupe,
+    run_dedupe_edges,
     run_dedupe_explode,
     run_merge,
     run_prune,
-    run_dedupe_edges,
+    run_xref,
 )
-from muckrake.extract.ner import run_ner_extract, run_ner_review
-from muckrake.extract.ner.engines import list_extractors
 from muckrake.entity_query import (
     get_entity_payload,
     normalize_schema_filter,
@@ -26,7 +24,10 @@ from muckrake.entity_query import (
 from muckrake.entity_write import add_entity as run_add_entity
 from muckrake.entity_write import build_entity_spec
 from muckrake.entity_write import update_entity as run_update_entity
+from muckrake.extract.ner import run_ner_extract, run_ner_review
+from muckrake.extract.ner.engines import list_extractors
 from muckrake.load import run_load
+from muckrake.logging import configure_logging
 from muckrake.release import list_releases, run_release_build, run_release_publish
 from muckrake.settings import get_working_sql_uri
 
@@ -265,7 +266,9 @@ def search_cmd(query, schemas, limit, offset, pretty):
         offset = max(0, offset)
         requested_schema = list(schemas) if schemas else []
         applied_schema = normalize_schema_filter(requested_schema)
-        response = search_entity_payload(query.strip(), requested_schema, limit, offset, uri=_working_uri())
+        response = search_entity_payload(
+            query.strip(), requested_schema, limit, offset, uri=_working_uri()
+        )
         _emit_json(
             {
                 "status": "ok",
@@ -289,7 +292,9 @@ def search_cmd(query, schemas, limit, offset, pretty):
 @click.argument("entity_id", required=True)
 @click.option("--schema", "schema_name", help="Optional replacement FtM schema name")
 @click.option("--dataset", help="Replacement dataset name used for rewritten provenance")
-@click.option("--source", "source_ref", help="Replacement source reference for rewritten provenance")
+@click.option(
+    "--source", "source_ref", help="Replacement source reference for rewritten provenance"
+)
 @click.option(
     "--property",
     "property_items",
@@ -318,9 +323,7 @@ def update_cmd(entity_id, schema_name, dataset, source_ref, property_items, pret
 
 
 @cli.command()
-@click.option(
-    "--output", "-o", type=click.Path(), required=True, help="Output file path"
-)
+@click.option("--output", "-o", type=click.Path(), required=True, help="Output file path")
 @click.option("--dataset", "-d", help="Filter by dataset")
 def export(output, dataset):
     """Export entities to FtM JSON."""
@@ -438,6 +441,7 @@ def load(dataset_name, run_id):
         log.exception(e)
         sys.exit(1)
 
+
 @cli.command("ner-extract")
 @click.argument("dataset_name", required=False)
 @click.option("--limit", "limit", type=int, default=None, help="Max candidate rows")
@@ -511,7 +515,8 @@ def release_list(limit):
             return
         for release in releases:
             click.echo(
-                f"{release.id}\t{release.status}\tcreated={release.created_at}\tpublished={release.published_at or '-'}"
+                f"{release.id}\t{release.status}\tcreated={release.created_at}"
+                f"\tpublished={release.published_at or '-'}"
             )
     except Exception as e:
         log.exception(e)

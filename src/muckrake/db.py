@@ -5,11 +5,11 @@ from typing import cast
 
 from nomenklatura.db import get_engine, get_metadata, make_statement_table
 from nomenklatura.resolver import Identifier, Resolver
+from org_id import is_org_id
 from sqlalchemy import Column, Integer, MetaData, String, Table, Text, inspect, text
 from sqlalchemy.engine import Engine
 
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
-from org_id import is_org_id
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def _patched_identifier_init(self, id: str) -> None:
         self.canonical = True
 
 
-Identifier.__init__ = _patched_identifier_init
+Identifier.__init__ = _patched_identifier_init  # type: ignore[method-assign]
 
 
 def _resolved_metadata(metadata: MetaData | None = None) -> MetaData:
@@ -186,7 +186,7 @@ def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
 
 def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
     """Get the resolver backed by the main database."""
-    resolver = Resolver(get_engine(uri), MetaData(), create=True)
+    resolver: Resolver = Resolver(get_engine(uri), MetaData(), create=True)
     if begin:
         resolver.begin()
     return resolver
@@ -208,7 +208,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
     statement_table = make_statement_table(metadata)
-    resolver = Resolver(engine, MetaData(), create=True)
+    resolver: Resolver = Resolver(engine, MetaData(), create=True)
     ner_candidates = get_ner_candidates_table(metadata)
     dataset_runs = get_dataset_runs_table(metadata)
     dataset_run_artifacts = get_dataset_run_artifacts_table(metadata)
@@ -273,7 +273,7 @@ def init_published_database(uri: str = PUBLISHED_SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
     statement_table = make_statement_table(metadata)
-    resolver = Resolver(engine, metadata, create=True)
+    resolver: Resolver = Resolver(engine, metadata, create=True)
     if not inspect(engine).has_table(statement_table.name):
         statement_table.create(bind=engine, checkfirst=True)
     _sync_postgres_sequences(engine, [resolver._table])
@@ -298,14 +298,16 @@ def refresh_postgres_search(uri: str = SQL_URI) -> None:
                   MIN(CASE WHEN s.prop = 'name' THEN s.value END) AS display_name,
                   MIN(s.schema) AS schema,
                   string_agg(DISTINCT s.value, ' ')
-                    FILTER (WHERE s.prop IN ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation'))
+                    FILTER (WHERE s.prop IN
+                        ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation'))
                     AS names_text,
                   to_tsvector(
                     'simple',
                     unaccent(
                       COALESCE(
                         string_agg(DISTINCT s.value, ' ')
-                          FILTER (WHERE s.prop IN ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation')),
+                          FILTER (WHERE s.prop IN
+                        ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation')),
                         ''
                       )
                     )
@@ -318,9 +320,7 @@ def refresh_postgres_search(uri: str = SQL_URI) -> None:
             )
         )
         conn.execute(
-            text(
-                "CREATE UNIQUE INDEX IF NOT EXISTS entity_search_id_idx ON entity_search (id)"
-            )
+            text("CREATE UNIQUE INDEX IF NOT EXISTS entity_search_id_idx ON entity_search (id)")
         )
         conn.execute(
             text(

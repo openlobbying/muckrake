@@ -1,20 +1,21 @@
 import json
+import logging
 import os
 import threading
 import time
-import requests
 from functools import cache
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Optional, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 from urllib.parse import urlparse
+
+import requests
+from banal import hash_data
 from lxml import html
 from lxml.html import HtmlElement
-from banal import hash_data
 from requests.adapters import HTTPAdapter
 from rigour.urls import build_url
 from urllib3.util.retry import Retry
-import logging
 
 if TYPE_CHECKING:
     from nomenklatura.cache import Cache
@@ -80,7 +81,7 @@ def _throttle(url: str) -> None:
 
 def request_hash(
     url: str,
-    auth: Optional[Any] = None,
+    auth: Any | None = None,
     method: str = "GET",
     data: Any = None,
 ) -> str:
@@ -93,11 +94,11 @@ def fetch_file(
     url: str,
     name: str,
     data_path: Path,
-    session: Optional[requests.Session] = None,
-    auth: Optional[Any] = None,
-    headers: Optional[Any] = None,
+    session: requests.Session | None = None,
+    auth: Any | None = None,
+    headers: Any | None = None,
     method: str = "GET",
-    data: Optional[Any] = None,
+    data: Any | None = None,
     verify: bool = True,
     timeout: float = 120,
 ) -> Path:
@@ -132,18 +133,18 @@ def fetch_file(
 
 def fetch_text(
     url: str,
-    params: Optional[dict[str, Any]] = None,
-    headers: Optional[dict[str, str]] = None,
-    session: Optional[requests.Session] = None,
-    auth: Optional[Any] = None,
+    params: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
+    session: requests.Session | None = None,
+    auth: Any | None = None,
     method: str = "GET",
-    data: Optional[Any] = None,
+    data: Any | None = None,
     cache: Optional["Cache"] = None,
-    cache_days: Optional[int] = None,
-    sleep: Optional[float] = None,
+    cache_days: int | None = None,
+    sleep: float | None = None,
     verify: bool = True,
     timeout: float = 120,
-) -> Optional[str]:
+) -> str | None:
     """Execute an HTTP request and return the response text."""
     url = build_url(url, params)
     fingerprint = request_hash(url, auth=auth, method=method, data=data)
@@ -179,15 +180,15 @@ def fetch_text(
 
 def fetch_json(
     url: str,
-    params: Optional[dict[str, Any]] = None,
-    headers: Optional[dict[str, str]] = None,
-    session: Optional[requests.Session] = None,
-    auth: Optional[Any] = None,
+    params: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
+    session: requests.Session | None = None,
+    auth: Any | None = None,
     method: str = "GET",
-    data: Optional[Any] = None,
+    data: Any | None = None,
     cache: Optional["Cache"] = None,
-    cache_days: Optional[int] = None,
-    sleep: Optional[float] = None,
+    cache_days: int | None = None,
+    sleep: float | None = None,
     verify: bool = True,
     timeout: float = 120,
 ) -> Any:
@@ -213,16 +214,16 @@ def fetch_json(
 
 def fetch_html(
     url: str,
-    params: Optional[dict[str, Any]] = None,
-    headers: Optional[dict[str, str]] = None,
-    session: Optional[requests.Session] = None,
-    auth: Optional[Any] = None,
+    params: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
+    session: requests.Session | None = None,
+    auth: Any | None = None,
     method: str = "GET",
-    data: Optional[Any] = None,
+    data: Any | None = None,
     absolute_links: bool = False,
     cache: Optional["Cache"] = None,
-    cache_days: Optional[int] = None,
-    sleep: Optional[float] = None,
+    cache_days: int | None = None,
+    sleep: float | None = None,
     verify: bool = True,
     timeout: float = 120,
 ) -> HtmlElement:

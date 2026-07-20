@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
-from typing import Any, Dict, Iterable, List, Optional, TypedDict
+from typing import Any, TypedDict, cast
 
 from followthemoney import model
 from nomenklatura.judgement import Judgement
@@ -24,7 +25,7 @@ class ResolverLock(TypedDict):
     left_id: str
     right_id: str
     user_id: str
-    user_name: Optional[str]
+    user_name: str | None
     locked_at: str
     expires_at: str
     updated_at: str
@@ -44,7 +45,7 @@ def _pair_key(left_id: str, right_id: str) -> str:
     return f"{left}::{right}"
 
 
-def _resolve_user_label(user_id: str, user_name: Optional[str]) -> str:
+def _resolve_user_label(user_id: str, user_name: str | None) -> str:
     name = (user_name or "").strip()
     if name:
         return f"openlobbying:{user_id}:{name}"
@@ -58,14 +59,13 @@ def _delete_expired_locks(conn: Connection, now: datetime) -> None:
     )
 
 
-def _get_user_lock(
-    conn: Connection, user_id: str, now: datetime
-) -> Optional[ResolverLock]:
+def _get_user_lock(conn: Connection, user_id: str, now: datetime) -> ResolverLock | None:
     row = (
         conn.execute(
             text(
                 """
-            SELECT pair_key, left_id, right_id, user_id, user_name, locked_at, expires_at, updated_at
+            SELECT pair_key, left_id, right_id, user_id, user_name,
+                locked_at, expires_at, updated_at
             FROM resolver_lock
             WHERE user_id = :user_id
               AND expires_at > :now
@@ -80,17 +80,16 @@ def _get_user_lock(
     )
     if row is None:
         return None
-    return ResolverLock(**dict(row))
+    return cast(ResolverLock, dict(row))
 
 
-def _get_user_locks(
-    conn: Connection, user_id: str, now: datetime
-) -> List[ResolverLock]:
+def _get_user_locks(conn: Connection, user_id: str, now: datetime) -> list[ResolverLock]:
     rows = (
         conn.execute(
             text(
                 """
-            SELECT pair_key, left_id, right_id, user_id, user_name, locked_at, expires_at, updated_at
+            SELECT pair_key, left_id, right_id, user_id, user_name,
+                locked_at, expires_at, updated_at
             FROM resolver_lock
             WHERE user_id = :user_id
               AND expires_at > :now
@@ -102,7 +101,7 @@ def _get_user_locks(
         .mappings()
         .all()
     )
-    return [ResolverLock(**dict(row)) for row in rows]
+    return [cast(ResolverLock, dict(row)) for row in rows]
 
 
 def _release_lock(conn: Connection, pair_key: str) -> None:
@@ -117,7 +116,7 @@ def _release_locks(conn: Connection, pair_keys: Iterable[str]) -> None:
         _release_lock(conn, pair_key)
 
 
-def _get_lock_owner(conn: Connection, pair_key: str, now: datetime) -> Optional[str]:
+def _get_lock_owner(conn: Connection, pair_key: str, now: datetime) -> str | None:
     return conn.execute(
         text(
             """
@@ -137,7 +136,7 @@ def _upsert_lock(
     left_id: str,
     right_id: str,
     user_id: str,
-    user_name: Optional[str],
+    user_name: str | None,
     now: datetime,
 ) -> bool:
     pair_key = _pair_key(left_id, right_id)
@@ -148,7 +147,8 @@ def _upsert_lock(
             INSERT INTO resolver_lock(
                 pair_key, left_id, right_id, user_id, user_name, locked_at, expires_at, updated_at
             ) VALUES (
-                :pair_key, :left_id, :right_id, :user_id, :user_name, :locked_at, :expires_at, :updated_at
+                :pair_key, :left_id, :right_id, :user_id, :user_name,
+                :locked_at, :expires_at, :updated_at
             )
             ON CONFLICT (pair_key) DO UPDATE SET
                 left_id = EXCLUDED.left_id,
@@ -180,10 +180,10 @@ def _upsert_lock(
 def _load_candidate_payload(
     left_id: str,
     right_id: str,
-    score: Optional[float],
-    expires_at: Optional[str] = None,
+    score: float | None,
+    expires_at: str | None = None,
     verify_candidate: bool = True,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     view = get_view()
     if verify_candidate:
         resolver = get_resolver(begin=True)
@@ -211,7 +211,7 @@ def _load_candidate_payload(
         else "entity"
     )
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "left": serialize_view_entity(left),
         "right": serialize_view_entity(right),
         "score": score,
@@ -222,7 +222,7 @@ def _load_candidate_payload(
     return payload
 
 
-def _list_candidate_rows(limit: int) -> List[tuple[str, str, Optional[float]]]:
+def _list_candidate_rows(limit: int) -> list[tuple[str, str, float | None]]:
     resolver = get_resolver(begin=True)
     try:
         return list(resolver.get_candidates(limit=limit))
@@ -232,9 +232,9 @@ def _list_candidate_rows(limit: int) -> List[tuple[str, str, Optional[float]]]:
 
 def get_next_dedupe_candidate(
     user_id: str,
-    user_name: Optional[str] = None,
+    user_name: str | None = None,
     limit: int = 200,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     engine = get_lock_engine()
     now = _utc_now()
 
@@ -290,7 +290,7 @@ def record_dedupe_judgement(
     right_id: str,
     judgement_value: str,
     user_id: str,
-    user_name: Optional[str] = None,
+    user_name: str | None = None,
 ) -> str:
     try:
         judgement = Judgement(judgement_value)

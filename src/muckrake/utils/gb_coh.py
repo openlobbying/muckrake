@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 # Companies House company number regex pattern
 # Source: https://gist.github.com/rob-murray/01d43581114a6b319034732bcbda29e1
@@ -15,7 +14,7 @@ def is_gb_coh(company_number: str) -> bool:
     return bool(GB_COH_RE.match(company_number))
 
 
-def normalize_gb_coh(company_number: Optional[str]) -> Optional[str]:
+def normalize_gb_coh(company_number: str | None) -> str | None:
     """Normalize and validate a UK Companies House company number."""
     if company_number is None:
         return None

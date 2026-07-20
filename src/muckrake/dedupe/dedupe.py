@@ -1,13 +1,12 @@
 import logging
-from typing import Optional
 
 from followthemoney import model
 from nomenklatura.judgement import Judgement
 from nomenklatura.matching import DefaultAlgorithm, get_algorithm
 from nomenklatura.xref import xref as nk_xref
 
-from muckrake.db import get_resolver
 from muckrake.dataset import find_datasets, get_dataset_path, load_config
+from muckrake.db import get_resolver
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.settings import DATA_PATH
 from muckrake.store import get_level_store
@@ -28,10 +27,10 @@ def load_statements(store, dataset_names):
 
 def run_xref(
     limit: int = 50000,
-    threshold: Optional[float] = None,
+    threshold: float | None = None,
     algorithm: str = DefaultAlgorithm.NAME,
-    schema: Optional[str] = None,
-    focus_dataset: Optional[str] = None,
+    schema: str | None = None,
+    focus_dataset: str | None = None,
 ) -> None:
     """Generate deduplication candidates."""
     all_configs = find_datasets()
@@ -93,9 +92,7 @@ def run_merge(entity_ids: list[str], force: bool = False) -> None:
             if resolver.get_canonical(other_id) == canonical_id:
                 continue
 
-            resolver.decide(
-                canonical_id, other_id, Judgement.POSITIVE, user="muckrake/manual"
-            )
+            resolver.decide(canonical_id, other_id, Judgement.POSITIVE, user="muckrake/manual")
 
         resolver.commit()
     except Exception:

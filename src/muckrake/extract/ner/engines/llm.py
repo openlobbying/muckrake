@@ -36,8 +36,7 @@ class LLMExtractor(Extractor):
         if not model_name:
             raise RuntimeError("LLM_MODEL is not set")
 
-        from pydantic_ai import Agent
-        from pydantic_ai import ModelRetry
+        from pydantic_ai import Agent, ModelRetry
 
         model_name = self._normalize_model_name(model_name)
 
@@ -91,7 +90,8 @@ class LLMExtractor(Extractor):
 
                 if not isinstance(values, list) or not values:
                     raise ValueError(
-                        f"Property '{prop_name}' on '{schema_name}' must be a non-empty list of strings."
+                        f"Property '{prop_name}' on '{schema_name}' "
+                        "must be a non-empty list of strings."
                     )
 
                 prop = schema.get(prop_name)
@@ -118,7 +118,8 @@ class LLMExtractor(Extractor):
                     cleaned = prop.type.clean(value)
                     if cleaned is None:
                         raise ValueError(
-                            f"Invalid value '{value}' for property '{prop_name}' on '{schema_name}'."
+                            f"Invalid value '{value}' for property "
+                            f"'{prop_name}' on '{schema_name}'."
                         )
 
         for entity in entities:
@@ -145,13 +146,12 @@ class LLMExtractor(Extractor):
                         )
                     ref_schema = model.get(ref_schema_name)
                     if ref_schema is None:
-                        raise ValueError(
-                            f"Unknown schema '{ref_schema_name}' for ref '{ref_key}'."
-                        )
+                        raise ValueError(f"Unknown schema '{ref_schema_name}' for ref '{ref_key}'.")
                     if prop.range is not None and not ref_schema.is_a(prop.range):
                         raise ValueError(
                             f"Reference '$ref:{ref_key}' has schema '{ref_schema_name}', "
-                            f"but property '{entity.schema_}.{prop_name}' expects '{prop.range.name}'."
+                            f"but property '{entity.schema_}.{prop_name}' "
+                            f"expects '{prop.range.name}'."
                         )
 
     def extract(self, text: str) -> list[dict[str, Any]]:

@@ -25,9 +25,10 @@ def test_same_month_range_with_underscore_separator():
 def test_same_month_range_still_parses():
     assert parse_day_range("8-12 July 2015") == ("2015-07-08", "2015-07-12")
     assert parse_day_range("8 to 12 July 2015") == ("2015-07-08", "2015-07-12")
-    assert parse_day_range(
-        "8-12 July", start=date(2015, 4, 1), end=date(2015, 9, 30)
-    ) == ("2015-07-08", "2015-07-12")
+    assert parse_day_range("8-12 July", start=date(2015, 4, 1), end=date(2015, 9, 30)) == (
+        "2015-07-08",
+        "2015-07-12",
+    )
 
 
 def test_slash_day_pair_range_still_parses():

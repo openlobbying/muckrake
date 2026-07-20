@@ -1,9 +1,8 @@
 import logging
 from pathlib import Path
-from typing import Optional
 
 from muckrake.artifacts import get_artifact_store
-from muckrake.dataset import find_datasets, load_config, get_dataset_path
+from muckrake.dataset import find_datasets, get_dataset_path, load_config
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.runs import get_dataset_run, get_dataset_run_artifact
 from muckrake.search import refresh_search_index
@@ -12,7 +11,7 @@ from muckrake.store import get_sql_store
 log = logging.getLogger(__name__)
 
 
-def resolve_dataset_pack_path(dataset_name: str, run_id: Optional[int] = None) -> Path:
+def resolve_dataset_pack_path(dataset_name: str, run_id: int | None = None) -> Path:
     if run_id is not None:
         run = get_dataset_run(run_id)
         if run is None:
@@ -29,7 +28,7 @@ def resolve_dataset_pack_path(dataset_name: str, run_id: Optional[int] = None) -
     return get_dataset_path(dataset_name) / "statements.pack.csv"
 
 
-def load_dataset_statements(dataset_name: str, writer, run_id: Optional[int] = None):
+def load_dataset_statements(dataset_name: str, writer, run_id: int | None = None):
     pack_path = resolve_dataset_pack_path(dataset_name, run_id=run_id)
     if not pack_path.exists():
         log.warning(f"No statements found for {dataset_name}")
@@ -41,7 +40,7 @@ def load_dataset_statements(dataset_name: str, writer, run_id: Optional[int] = N
         writer.add_statement(stmt)
 
 
-def run_load(dataset_name: Optional[str] = None, run_id: Optional[int] = None):
+def run_load(dataset_name: str | None = None, run_id: int | None = None):
     configs = find_datasets(dataset_name)
     if not configs:
         log.error(f"No datasets found matching '{dataset_name}'")

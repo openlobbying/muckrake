@@ -5,7 +5,7 @@ import sys
 import textwrap
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any
 
 import click
 from rich.console import Group, RenderableType
@@ -184,9 +184,7 @@ def _validate_entities_payload(payload: Any) -> None:
             if not isinstance(prop_name, str):
                 raise ValueError(f"Entity #{index} has non-string property name")
             if not isinstance(values, list):
-                raise ValueError(
-                    f"Entity #{index} property '{prop_name}' must be an array"
-                )
+                raise ValueError(f"Entity #{index} property '{prop_name}' must be an array")
             for value in values:
                 if not isinstance(value, str):
                     raise ValueError(
@@ -240,9 +238,7 @@ def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType
     else:
         for entity_idx, entity in enumerate(entities, start=1):
             if not isinstance(entity, dict):
-                entities_table.add_row(
-                    str(entity_idx), "invalid", "-", "-", "-", "-", str(entity)
-                )
+                entities_table.add_row(str(entity_idx), "invalid", "-", "-", "-", "-", str(entity))
                 continue
 
             props = entity.get("properties", {})
@@ -250,9 +246,7 @@ def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType
                 props = {}
 
             aliases = [v for v in props.get("alias", []) if isinstance(v, str)]
-            abbreviations = [
-                v for v in props.get("abbreviation", []) if isinstance(v, str)
-            ]
+            abbreviations = [v for v in props.get("abbreviation", []) if isinstance(v, str)]
 
             refs: list[str] = []
             other_parts: list[str] = []
@@ -265,9 +259,7 @@ def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType
                 prop_refs, prop_plain = _split_refs(values)
                 refs.extend(prop_refs)
                 if prop_plain:
-                    other_parts.append(
-                        f"{prop_name}={_join_values(prop_plain, max_items=2)}"
-                    )
+                    other_parts.append(f"{prop_name}={_join_values(prop_plain, max_items=2)}")
 
             entities_table.add_row(
                 str(entity_idx),
@@ -307,7 +299,7 @@ class NERReviewState:
         return len(self.rows)
 
     @property
-    def current(self) -> Optional[RowMapping]:
+    def current(self) -> RowMapping | None:
         if self.index >= self.total:
             return None
         return self.rows[self.index]
@@ -598,7 +590,8 @@ def _print_candidate(row: RowMapping, index: int, total: int) -> None:
         click.echo(f"  {line}")
 
     click.echo(
-        f"{_style_label('extracted entities')} {click.style(str(len(entities)), fg='green', bold=True)}"
+        f"{_style_label('extracted entities')} "
+        f"{click.style(str(len(entities)), fg='green', bold=True)}"
     )
     if not entities:
         click.echo("  - (none)")
@@ -677,14 +670,10 @@ def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
     return result
 
 
-def run_ner_review(
-    dataset_name: Optional[str] = None, limit: Optional[int] = None
-) -> None:
+def run_ner_review(dataset_name: str | None = None, limit: int | None = None) -> None:
     conn = get_connection()
     init_db(conn)
-    rows = list_candidates(
-        conn, dataset_name=dataset_name, status="pending", limit=limit
-    )
+    rows = list_candidates(conn, dataset_name=dataset_name, status="pending", limit=limit)
 
     if not rows:
         click.echo("No pending NER candidates to review.")

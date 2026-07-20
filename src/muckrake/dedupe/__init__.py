@@ -1,3 +1,8 @@
+from .cluster import (
+    get_next_dedupe_cluster,
+    record_dedupe_cluster_judgement,
+    skip_dedupe_cluster,
+)
 from .dedupe import (
     load_statements,
     run_dedupe,
@@ -7,11 +12,6 @@ from .dedupe import (
     run_xref,
 )
 from .dedupe_edges import run_dedupe_edges
-from .cluster import (
-    get_next_dedupe_cluster,
-    record_dedupe_cluster_judgement,
-    skip_dedupe_cluster,
-)
 from .review import (
     DedupeLockError,
     get_lock_engine,

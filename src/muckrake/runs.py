@@ -98,6 +98,7 @@ def create_dataset_run(
                 finished_at=None,
             )
         )
+        assert result.inserted_primary_key is not None
         run_id = result.inserted_primary_key[0]
         row = conn.execute(select(table).where(table.c.id == run_id)).mappings().one()
     return DatasetRun(**row)
@@ -153,6 +154,7 @@ def record_dataset_run_artifact(
                 created_at=now,
             )
         )
+        assert result.inserted_primary_key is not None
         artifact_id = result.inserted_primary_key[0]
         row = conn.execute(select(table).where(table.c.id == artifact_id)).mappings().one()
     return DatasetRunArtifact(**row)
@@ -175,12 +177,16 @@ def get_dataset_run_artifact(
     engine = init_database()
     table = get_dataset_run_artifacts_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(table)
-            .where(table.c.dataset_run_id == run_id)
-            .where(table.c.artifact_type == artifact_type)
-            .order_by(desc(table.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(table)
+                .where(table.c.dataset_run_id == run_id)
+                .where(table.c.artifact_type == artifact_type)
+                .order_by(desc(table.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return DatasetRunArtifact(**row)
@@ -194,14 +200,18 @@ def get_latest_successful_artifact(
     runs = get_dataset_runs_table()
     artifacts = get_dataset_run_artifacts_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(artifacts)
-            .join(runs, artifacts.c.dataset_run_id == runs.c.id)
-            .where(runs.c.dataset_name == dataset_name)
-            .where(runs.c.status == "succeeded")
-            .where(artifacts.c.artifact_type == artifact_type)
-            .order_by(desc(runs.c.started_at), desc(artifacts.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(artifacts)
+                .join(runs, artifacts.c.dataset_run_id == runs.c.id)
+                .where(runs.c.dataset_name == dataset_name)
+                .where(runs.c.status == "succeeded")
+                .where(artifacts.c.artifact_type == artifact_type)
+                .order_by(desc(runs.c.started_at), desc(artifacts.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return DatasetRunArtifact(**row)
@@ -211,12 +221,16 @@ def get_latest_successful_run(dataset_name: str) -> DatasetRun | None:
     engine = init_database()
     table = get_dataset_runs_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(table)
-            .where(table.c.dataset_name == dataset_name)
-            .where(table.c.status == "succeeded")
-            .order_by(desc(table.c.started_at), desc(table.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(table)
+                .where(table.c.dataset_name == dataset_name)
+                .where(table.c.status == "succeeded")
+                .order_by(desc(table.c.started_at), desc(table.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return DatasetRun(**row)

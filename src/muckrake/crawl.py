@@ -4,11 +4,11 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, Optional
+
 from followthemoney.statement.serialize import PackStatementWriter
 
-from muckrake.dataset import Dataset, get_dataset_path, load_config, resolve_dataset_root
 from muckrake.artifacts import get_artifact_store
+from muckrake.dataset import Dataset, get_dataset_path, load_config, resolve_dataset_root
 from muckrake.runs import (
     config_version,
     create_dataset_run,
@@ -22,7 +22,7 @@ from muckrake.runs import (
 log = logging.getLogger(__name__)
 
 
-def load_timestamps(path: Path) -> Dict[str, str]:
+def load_timestamps(path: Path) -> dict[str, str]:
     """Load previous first_seen timestamps from a pack file."""
     timestamps = {}
     if path.exists() and path.is_file() and path.stat().st_size > 0:
@@ -30,6 +30,7 @@ def load_timestamps(path: Path) -> Dict[str, str]:
         try:
             with open(path, "rb") as fh:
                 from followthemoney.statement.serialize import read_pack_statements
+
                 for stmt in read_pack_statements(fh):
                     if stmt.id is not None and stmt.first_seen is not None:
                         timestamps[stmt.id] = stmt.first_seen
@@ -99,7 +100,7 @@ def execute_crawler(config_path: Path, ds: Dataset):
     crawler_module.crawl(ds)
 
 
-def run_crawl(config_path: Path, output: Optional[str] = None):
+def run_crawl(config_path: Path, output: str | None = None):
     """Helper to run a single crawl."""
     ds_config = load_config(config_path)
     dataset_name = ds_config.name
@@ -151,6 +152,7 @@ def run_crawl(config_path: Path, output: Optional[str] = None):
         finish_dataset_run(dataset_run.id, "succeeded")
         return
 
+    assert temp_output_path is not None
     try:
         stored_pack = store.put_file(
             temp_output_path,

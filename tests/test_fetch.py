@@ -3,6 +3,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
+import requests
 
 from muckrake.extract.fetch import fetch_text, get_session, make_session
 
@@ -52,7 +53,7 @@ def test_retries_transient_statuses(server_url):
 def test_exhausted_retries_raise(server_url):
     Handler.failures_remaining = 10
     session = make_session(retries=2, backoff_factor=0.01)
-    with pytest.raises(Exception):
+    with pytest.raises(requests.exceptions.RequestException):
         fetch_text(server_url, session=session)
 
 

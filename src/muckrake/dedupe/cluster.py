@@ -4,16 +4,18 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from heapq import heappop, heappush
-from typing import Any, Dict, Iterable, List, Optional, TypedDict
+from typing import Any, TypedDict
 
+from nomenklatura.db import get_engine
 from nomenklatura.judgement import Judgement
 from sqlalchemy import bindparam, text
 from sqlalchemy.engine import Connection
 
 from muckrake.db import get_resolver
 from muckrake.dedupe.review import (
-    DedupeLockError,
     LOCK_TTL,
+    DedupeLockError,
+    ResolverLock,
     _delete_expired_locks,
     _get_lock_owner,
     _get_user_locks,
@@ -25,9 +27,8 @@ from muckrake.dedupe.review import (
     _utc_now,
     get_lock_engine,
 )
-from muckrake.view import get_view, serialize_view_entity
 from muckrake.settings import SQL_URI
-from nomenklatura.db import get_engine
+from muckrake.view import get_view, serialize_view_entity
 
 SKIP_TTL = timedelta(hours=2)
 
@@ -35,17 +36,17 @@ SKIP_TTL = timedelta(hours=2)
 class LockedPair(TypedDict):
     left_id: str
     right_id: str
-    score: Optional[float]
+    score: float | None
 
 
 class ClusterMember(TypedDict):
-    entity: Dict[str, Any]
-    score: Optional[float]
+    entity: dict[str, Any]
+    score: float | None
 
 
 @dataclass(frozen=True)
 class ClusterCandidate:
-    member_ids: List[str]
+    member_ids: list[str]
 
 
 def _delete_expired_skips(conn: Connection, now: datetime) -> None:
@@ -74,7 +75,7 @@ def _get_skipped_pair_keys(conn: Connection, user_id: str, now: datetime) -> set
 def _store_skipped_pairs(
     conn: Connection,
     *,
-    locked_pairs: List[LockedPair],
+    locked_pairs: list[LockedPair],
     user_id: str,
     now: datetime,
 ) -> None:
@@ -107,17 +108,15 @@ def _store_skipped_pairs(
 
 
 def _build_cluster_payload(
-    member_ids: List[str],
-    locked_pairs: List[LockedPair],
+    member_ids: list[str],
+    locked_pairs: list[LockedPair],
     expires_at: str,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     if len(member_ids) < 2 or len(locked_pairs) == 0:
         return None
 
     view = get_view()
-    best_scores: Dict[str, Optional[float]] = {
-        entity_id: None for entity_id in member_ids
-    }
+    best_scores: dict[str, float | None] = {entity_id: None for entity_id in member_ids}
     for pair in locked_pairs:
         for entity_id in (pair["left_id"], pair["right_id"]):
             score = pair["score"]
@@ -125,7 +124,7 @@ def _build_cluster_payload(
             if previous is None or (score is not None and score > previous):
                 best_scores[entity_id] = score
 
-    members: List[ClusterMember] = []
+    members: list[ClusterMember] = []
     for entity_id in member_ids:
         entity = view.get_entity(entity_id)
         if entity is None:
@@ -145,8 +144,8 @@ def _build_cluster_payload(
 
 
 def _build_locked_cluster_payload(
-    locks: List[dict[str, Any]],
-) -> Optional[Dict[str, Any]]:
+    locks: list[ResolverLock],
+) -> dict[str, Any] | None:
     if not locks:
         return None
 
@@ -180,11 +179,11 @@ def _build_locked_cluster_payload(
 def _build_cluster_candidate(
     seed_left_id: str,
     seed_right_id: str,
-    candidates: List[tuple[str, str, Optional[float]]],
+    candidates: list[tuple[str, str, float | None]],
     *,
     max_members: int,
-) -> Optional[ClusterCandidate]:
-    adjacency: dict[str, list[tuple[str, Optional[float]]]] = defaultdict(list)
+) -> ClusterCandidate | None:
+    adjacency: dict[str, list[tuple[str, float | None]]] = defaultdict(list)
     has_seed = False
     for left_id, right_id, score in candidates:
         if _pair_key(left_id, right_id) == _pair_key(seed_left_id, seed_right_id):
@@ -221,8 +220,8 @@ def _build_cluster_candidate(
 
 
 def _list_cluster_candidate_rows(
-    member_ids: List[str], skipped_pair_keys: set[str]
-) -> List[LockedPair]:
+    member_ids: list[str], skipped_pair_keys: set[str]
+) -> list[LockedPair]:
     if len(member_ids) < 2:
         return []
 
@@ -257,8 +256,7 @@ def _list_cluster_candidate_rows(
         score = row.score
         existing = pairs.get(pair_key)
         if existing is None or (
-            score is not None
-            and (existing["score"] is None or score > existing["score"])
+            score is not None and (existing["score"] is None or score > existing["score"])
         ):
             pairs[pair_key] = LockedPair(
                 left_id=left_id,
@@ -271,7 +269,7 @@ def _list_cluster_candidate_rows(
 
 def _assert_cluster_locked_to_user(
     conn: Connection,
-    locked_pairs: List[LockedPair],
+    locked_pairs: list[LockedPair],
     user_id: str,
     now: datetime,
 ) -> None:
@@ -281,7 +279,7 @@ def _assert_cluster_locked_to_user(
             raise DedupeLockError("This cluster is not currently locked to you.")
 
 
-def _release_cluster_locks(conn: Connection, locked_pairs: List[LockedPair]) -> None:
+def _release_cluster_locks(conn: Connection, locked_pairs: list[LockedPair]) -> None:
     _release_locks(
         conn,
         [_pair_key(pair["left_id"], pair["right_id"]) for pair in locked_pairs],
@@ -291,12 +289,12 @@ def _release_cluster_locks(conn: Connection, locked_pairs: List[LockedPair]) -> 
 def _claim_cluster_locks(
     conn: Connection,
     *,
-    locked_pairs: List[LockedPair],
+    locked_pairs: list[LockedPair],
     user_id: str,
-    user_name: Optional[str],
+    user_name: str | None,
     now: datetime,
 ) -> bool:
-    claimed_keys: List[str] = []
+    claimed_keys: list[str] = []
     for pair in locked_pairs:
         claimed = _upsert_lock(
             conn,
@@ -315,10 +313,10 @@ def _claim_cluster_locks(
 
 def get_next_dedupe_cluster(
     user_id: str,
-    user_name: Optional[str] = None,
+    user_name: str | None = None,
     limit: int = 200,
     max_members: int = 8,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     engine = get_lock_engine()
     now = _utc_now()
 
@@ -387,8 +385,8 @@ def get_next_dedupe_cluster(
 
 
 def _selected_locked_pairs(
-    selected_ids: List[str], locked_pairs: List[LockedPair]
-) -> List[LockedPair]:
+    selected_ids: list[str], locked_pairs: list[LockedPair]
+) -> list[LockedPair]:
     selected_set = set(selected_ids)
     return [
         pair
@@ -398,17 +396,15 @@ def _selected_locked_pairs(
 
 
 def _validate_selected_graph(
-    selected_ids: List[str],
-    selected_pairs: List[LockedPair],
+    selected_ids: list[str],
+    selected_pairs: list[LockedPair],
     *,
     require_connected: bool,
 ) -> None:
     if len(selected_ids) < 2:
         raise ValueError("Select at least two records to record a judgement.")
     if not selected_pairs:
-        raise ValueError(
-            "The selected records do not share any locked suggestions to judge."
-        )
+        raise ValueError("The selected records do not share any locked suggestions to judge.")
 
     adjacency: dict[str, set[str]] = defaultdict(set)
     covered: set[str] = set()
@@ -444,19 +440,17 @@ def _validate_selected_graph(
 
 
 def record_dedupe_cluster_judgement(
-    entity_ids: List[str],
-    selected_ids: List[str],
-    locked_pairs: List[LockedPair],
+    entity_ids: list[str],
+    selected_ids: list[str],
+    locked_pairs: list[LockedPair],
     judgement_value: str,
     user_id: str,
-    user_name: Optional[str] = None,
-) -> Optional[str]:
+    user_name: str | None = None,
+) -> str | None:
     entity_order = list(dict.fromkeys(entity_ids))
     entity_set = set(entity_order)
     selected_order = [
-        entity_id
-        for entity_id in dict.fromkeys(selected_ids)
-        if entity_id in entity_set
+        entity_id for entity_id in dict.fromkeys(selected_ids) if entity_id in entity_set
     ]
     if len(entity_order) < 2:
         raise ValueError("Need at least two entities in a cluster.")
@@ -485,7 +479,7 @@ def record_dedupe_cluster_judgement(
             _delete_expired_skips(conn, now)
             _assert_cluster_locked_to_user(conn, locked_pairs, user_id, now)
 
-        canonical_id: Optional[str] = None
+        canonical_id: str | None = None
         for pair in selected_pairs:
             left_canonical = resolver.get_canonical(pair["left_id"])
             right_canonical = resolver.get_canonical(pair["right_id"])
@@ -513,7 +507,7 @@ def record_dedupe_cluster_judgement(
         raise
 
 
-def skip_dedupe_cluster(locked_pairs: List[LockedPair], user_id: str) -> None:
+def skip_dedupe_cluster(locked_pairs: list[LockedPair], user_id: str) -> None:
     if not locked_pairs:
         raise ValueError("Missing locked pairs for this cluster.")
 

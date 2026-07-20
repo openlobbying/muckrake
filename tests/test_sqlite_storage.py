@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from muckrake.db import get_database_dialect, init_database
-from muckrake.extract.ner.storage import Candidate, get_connection, list_candidates, upsert_candidate
+from muckrake.extract.ner.storage import (
+    Candidate,
+    get_connection,
+    list_candidates,
+    upsert_candidate,
+)
 from muckrake.search import postgres_search_ready, refresh_search_index
 
 

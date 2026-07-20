@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Any, Dict, Sequence
+from typing import Any
 
 from followthemoney import model
 from nomenklatura.db import get_engine
@@ -63,7 +64,7 @@ def get_view(uri: str = PUBLISHED_SQL_URI):
 
 
 @lru_cache(maxsize=16000)
-def get_entity_details(entity_id: str, uri: str = PUBLISHED_SQL_URI) -> Dict[str, str]:
+def get_entity_details(entity_id: str, uri: str = PUBLISHED_SQL_URI) -> dict[str, str]:
     view = get_view(uri)
     ent = view.get_entity(entity_id)
     if ent is None:
@@ -71,7 +72,7 @@ def get_entity_details(entity_id: str, uri: str = PUBLISHED_SQL_URI) -> Dict[str
     return {"caption": ent.caption, "schema": ent.schema.name}
 
 
-def serialize_view_entity(ent, *, uri: str = PUBLISHED_SQL_URI) -> Dict[str, Any]:
+def serialize_view_entity(ent, *, uri: str = PUBLISHED_SQL_URI) -> dict[str, Any]:
     return serialize_entity(
         ent,
         get_all_datasets_metadata(),
@@ -79,7 +80,7 @@ def serialize_view_entity(ent, *, uri: str = PUBLISHED_SQL_URI) -> Dict[str, Any
     )
 
 
-def get_entity_payload(entity_id: str, *, uri: str | None = None) -> Dict[str, Any] | None:
+def get_entity_payload(entity_id: str, *, uri: str | None = None) -> dict[str, Any] | None:
     if uri is None:
         uri = get_working_sql_uri()
     view = get_view(uri)

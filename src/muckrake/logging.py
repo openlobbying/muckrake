@@ -1,6 +1,6 @@
-import os
 import logging
-from typing import Optional, Any
+import os
+from typing import Any
 
 from muckrake.env import load_env_file
 
@@ -11,7 +11,7 @@ _LOGFIRE_CONFIGURED = False
 
 def configure_logging(
     level: int = logging.INFO,
-    app: Optional[Any] = None,
+    app: Any | None = None,
     enable_logfire: bool = False,
 ) -> None:
     """Configure basic logging and Logfire if available."""
