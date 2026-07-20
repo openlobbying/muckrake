@@ -224,7 +224,7 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
         if start_date is None or end_date is None:
             return None
         return start_date, end_date
-    match = re.fullmatch(r"(\d{1,2})(?:-|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
+    match = re.fullmatch(r"(\d{1,2})(?:\s*[-_]\s*|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
     if match is not None:
         month = month_number(match.group(3))
         if month is None:
@@ -258,25 +258,35 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
             return None
         return start_date, end_date
 
-    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})-(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})", text)
+    # Cross-month ranges: "27 Sep 15-01 Oct 15", "27 Sep _ 01 Oct 15" (the
+    # start year may be omitted; historical files use "_" as the separator).
+    match = re.fullmatch(
+        r"(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?\s*[-_]\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})",
+        text,
+    )
     if match is not None:
         start_month = month_number(match.group(2))
         end_month = month_number(match.group(5))
         if start_month is None or end_month is None:
             return None
-        start_year = int(match.group(3))
         end_year = int(match.group(6))
-        if start_year < 100:
-            start_year += 2000
         if end_year < 100:
             end_year += 2000
+        if match.group(3) is not None:
+            start_year = int(match.group(3))
+            if start_year < 100:
+                start_year += 2000
+        elif start_month > end_month:
+            start_year = end_year - 1
+        else:
+            start_year = end_year
         start_date = safe_iso_date(start_year, start_month, int(match.group(1)))
         end_date = safe_iso_date(end_year, end_month, int(match.group(4)))
         if start_date is None or end_date is None:
             return None
         return start_date, end_date
 
-    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)(?:-|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
+    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)(?:\s*[-_]\s*|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
     if match is None:
         return None
     start_month = month_number(match.group(2))
