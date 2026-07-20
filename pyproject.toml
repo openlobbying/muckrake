@@ -37,4 +37,41 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "ruff>=0.15",
+    "mypy>=1.19",
+    "pre-commit>=4.0",
+    "types-requests>=2.32",
+    "types-pyyaml>=6.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# LLM prompt prose; wrapping would change the prompt text.
+"src/muckrake/extract/ner/engines/llm_prompt.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.13"
+check_untyped_defs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "banal.*",
+    "datapatch.*",
+    "plyvel.*",
+    "org_id.*",
+    "xlrd.*",
+    "odf.*",
+    "lxml.*",
+    "bs4.*",
+]
+ignore_missing_imports = true

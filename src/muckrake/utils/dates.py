@@ -1,9 +1,8 @@
-from calendar import monthrange
-from datetime import date, datetime, timedelta
 import math
 import re
-from typing import Any, Optional
-
+from calendar import monthrange
+from datetime import date, datetime, timedelta
+from typing import Any
 
 DATE_FORMATS = [
     "%d/%m/%Y",
@@ -55,7 +54,7 @@ MONTHS = {
 }
 
 
-def to_string(value: Any) -> Optional[str]:
+def to_string(value: Any) -> str | None:
     if value is None:
         return None
     text = str(value).strip()
@@ -68,7 +67,7 @@ def normalize_whitespace(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip()
 
 
-def month_number(value: str) -> Optional[int]:
+def month_number(value: str) -> int | None:
     return MONTHS.get(value.strip().lower())
 
 
@@ -76,14 +75,14 @@ def month_last_day(year: int, month: int) -> int:
     return monthrange(year, month)[1]
 
 
-def safe_iso_date(year: int, month: int, day: int) -> Optional[str]:
+def safe_iso_date(year: int, month: int, day: int) -> str | None:
     try:
         return date(year, month, day).isoformat()
     except ValueError:
         return None
 
 
-def normalize_date_text(value: Any) -> Optional[str]:
+def normalize_date_text(value: Any) -> str | None:
     text = to_string(value)
     if text is None:
         return None
@@ -110,7 +109,7 @@ def normalize_date_text(value: Any) -> Optional[str]:
     return text
 
 
-def infer_year(month: int, start: Optional[date], end: Optional[date]) -> Optional[int]:
+def infer_year(month: int, start: date | None, end: date | None) -> int | None:
     if start is None or end is None:
         return None
     if start.year == end.year:
@@ -120,7 +119,7 @@ def infer_year(month: int, start: Optional[date], end: Optional[date]) -> Option
     return end.year
 
 
-def parse_date(text: Any, format: Optional[str] = None) -> Optional[str]:
+def parse_date(text: Any, format: str | None = None) -> str | None:
     """Parse a date string into ISO format (YYYY-MM-DD)."""
     if isinstance(text, (int, float)) and not isinstance(text, bool):
         if isinstance(text, float) and math.isnan(text):
@@ -154,7 +153,9 @@ def parse_date(text: Any, format: Optional[str] = None) -> Optional[str]:
     return None
 
 
-def parse_month_value(value: Any, start: Optional[date] = None, end: Optional[date] = None) -> Optional[tuple[str, str]]:
+def parse_month_value(
+    value: Any, start: date | None = None, end: date | None = None
+) -> tuple[str, str] | None:
     text = normalize_date_text(value)
     if text is None:
         return None
@@ -183,24 +184,28 @@ def parse_month_value(value: Any, start: Optional[date] = None, end: Optional[da
     match = re.fullmatch(r"([A-Za-z]+)(?:[\s,-]+(\d{2,4}))?", text)
     if match is None:
         return None
-    month = month_number(match.group(1))
-    if month is None:
+    name_month = month_number(match.group(1))
+    if name_month is None:
         return None
+    month = name_month
     if match.group(2) is not None:
         year = int(match.group(2))
         if year < 100:
             year += 2000
     else:
-        year = infer_year(month, start, end)
-    if year is None:
-        return None
+        inferred_year = infer_year(month, start, end)
+        if inferred_year is None:
+            return None
+        year = inferred_year
     return (
         date(year, month, 1).isoformat(),
         date(year, month, month_last_day(year, month)).isoformat(),
     )
 
 
-def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date] = None) -> Optional[tuple[str, str]]:
+def parse_day_range(
+    value: Any, start: date | None = None, end: date | None = None
+) -> tuple[str, str] | None:
     text = normalize_date_text(value)
     if text is None:
         return None
@@ -224,7 +229,9 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
         if start_date is None or end_date is None:
             return None
         return start_date, end_date
-    match = re.fullmatch(r"(\d{1,2})(?:\s*[-_]\s*|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
+    match = re.fullmatch(
+        r"(\d{1,2})(?:\s*[-_]\s*|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text
+    )
     if match is not None:
         month = month_number(match.group(3))
         if month is None:
@@ -286,7 +293,10 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
             return None
         return start_date, end_date
 
-    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)(?:\s*[-_]\s*|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?", text)
+    match = re.fullmatch(
+        r"(\d{1,2})\s+([A-Za-z]+)(?:\s*[-_]\s*|\s+to\s+)(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?",
+        text,
+    )
     if match is None:
         return None
     start_month = month_number(match.group(2))
@@ -295,13 +305,14 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
         return None
     year_text = match.group(5)
     if year_text is None:
-        end_year = infer_year(end_month, start, end)
+        inferred_end_year = infer_year(end_month, start, end)
+        if inferred_end_year is None:
+            return None
+        end_year = inferred_end_year
     elif len(year_text) == 2:
         end_year = 2000 + int(year_text)
     else:
         end_year = int(year_text)
-    if end_year is None:
-        return None
     start_year = end_year - 1 if start_month > end_month else end_year
     start_date = safe_iso_date(start_year, start_month, int(match.group(1)))
     end_date = safe_iso_date(end_year, end_month, int(match.group(3)))
@@ -312,10 +323,10 @@ def parse_day_range(value: Any, start: Optional[date] = None, end: Optional[date
 
 def parse_day_value(
     value: Any,
-    start: Optional[date] = None,
-    end: Optional[date] = None,
-    format: Optional[str] = None,
-) -> Optional[str | tuple[str, str]]:
+    start: date | None = None,
+    end: date | None = None,
+    format: str | None = None,
+) -> str | tuple[str, str] | None:
     parsed = parse_date(value, format)
     if parsed is not None:
         return parsed
@@ -330,10 +341,10 @@ def parse_day_value(
 
 def parse_day_or_month_value(
     value: Any,
-    start: Optional[date] = None,
-    end: Optional[date] = None,
-    format: Optional[str] = None,
-) -> Optional[tuple[str, str | tuple[str, str]]]:
+    start: date | None = None,
+    end: date | None = None,
+    format: str | None = None,
+) -> tuple[str, str | tuple[str, str]] | None:
     parsed_day = parse_day_value(value, start, end, format)
     if parsed_day is not None:
         return "day", parsed_day
@@ -343,7 +354,9 @@ def parse_day_or_month_value(
     return None
 
 
-def parse_partial_date(value: Any, start: Optional[date] = None, end: Optional[date] = None) -> Optional[str]:
+def parse_partial_date(
+    value: Any, start: date | None = None, end: date | None = None
+) -> str | None:
     text = normalize_date_text(value)
     if text is None:
         return None
@@ -371,7 +384,7 @@ def parse_partial_date(value: Any, start: Optional[date] = None, end: Optional[d
     return safe_iso_date(year, month, int(match.group(1)))
 
 
-def parse_month_span(value: Any, year_hint: Optional[int] = None) -> Optional[tuple[str, str]]:
+def parse_month_span(value: Any, year_hint: int | None = None) -> tuple[str, str] | None:
     text = normalize_date_text(value)
     if text is None or year_hint is None:
         return None
@@ -388,7 +401,9 @@ def parse_month_span(value: Any, year_hint: Optional[int] = None) -> Optional[tu
     )
 
 
-def parse_year_hint_date(value: Any, start: Optional[date] = None, end: Optional[date] = None) -> Optional[str]:
+def parse_year_hint_date(
+    value: Any, start: date | None = None, end: date | None = None
+) -> str | None:
     if start is None or end is None:
         return None
     text = normalize_date_text(value)
@@ -412,10 +427,10 @@ def parse_year_hint_date(value: Any, start: Optional[date] = None, end: Optional
         year = int(match.group(1))
         if 1900 <= year <= 2100:
             return None
-        candidate_years = [int(match.group(1)[::-1])]
+        reversed_years = [int(match.group(1)[::-1])]
         if year >= 1000:
-            candidate_years.append(year - 1000)
-        for candidate_year in candidate_years:
+            reversed_years.append(year - 1000)
+        for candidate_year in reversed_years:
             if start.year <= candidate_year <= end.year:
                 parsed = safe_iso_date(candidate_year, int(match.group(2)), int(match.group(3)))
                 if parsed is not None:
@@ -436,7 +451,7 @@ def parse_year_hint_date(value: Any, start: Optional[date] = None, end: Optional
     return None
 
 
-def parse_date_token(value: Optional[str], is_end: bool = False) -> Optional[date]:
+def parse_date_token(value: str | None, is_end: bool = False) -> date | None:
     if value is None:
         return None
     if len(value) == 7:

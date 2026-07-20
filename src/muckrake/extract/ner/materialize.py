@@ -1,14 +1,13 @@
 import json
 import logging
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 from followthemoney import model
 from followthemoney.statement import Statement
 from followthemoney.statement.serialize import read_pack_statements
-from sqlalchemy import text
-
 from org_id import make_hashed_id
+from sqlalchemy import text
 
 from .pipeline import text_fingerprint
 from .storage import get_connection
@@ -157,9 +156,7 @@ def build_replacement_plan(
                     if out_values:
                         clean_props[prop_name] = out_values
 
-                prefix = (
-                    stmt.entity_id.rsplit("-", 1)[0] if "-" in stmt.entity_id else "ner"
-                )
+                prefix = stmt.entity_id.rsplit("-", 1)[0] if "-" in stmt.entity_id else "ner"
                 names = clean_props.get("name")
                 if names:
                     new_id = make_hashed_id(prefix, names[0])
@@ -176,7 +173,7 @@ def build_replacement_plan(
             for _, new_id, schema, clean_props in prelim:
                 resolved_props: dict[str, list[str]] = {}
                 for prop_name, values in clean_props.items():
-                    out_values: list[str] = []
+                    out_values = []
                     for value in values:
                         if value.startswith("$ref:"):
                             ref_key = value[5:]

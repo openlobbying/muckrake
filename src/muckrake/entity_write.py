@@ -10,7 +10,12 @@ from followthemoney.exc import InvalidData
 from followthemoney.statement import Statement
 from sqlalchemy import delete, select, update
 
-from muckrake.entity_query import clear_query_caches, get_entity_payload, get_view, list_all_dataset_names
+from muckrake.entity_query import (
+    clear_query_caches,
+    get_entity_payload,
+    get_view,
+    list_all_dataset_names,
+)
 from muckrake.settings import get_working_sql_uri
 from muckrake.store import get_sql_store
 
@@ -35,9 +40,7 @@ def parse_properties(items: list[str]) -> dict[str, list[str]]:
         key = key.strip()
         value = value.strip()
         if not key:
-            raise ValueError(
-                f"Invalid --property value: {item!r}. Property name is empty."
-            )
+            raise ValueError(f"Invalid --property value: {item!r}. Property name is empty.")
         properties.setdefault(key, []).append(value)
 
     if not properties:
@@ -147,9 +150,7 @@ def add_entity(spec: EntitySpec, *, uri: str | None = None) -> dict[str, Any]:
     with store.engine.begin() as conn:
         existed = (
             conn.execute(
-                select(store.table.c.entity_id)
-                .where(store.table.c.entity_id == entity.id)
-                .limit(1)
+                select(store.table.c.entity_id).where(store.table.c.entity_id == entity.id).limit(1)
             ).first()
             is not None
         )

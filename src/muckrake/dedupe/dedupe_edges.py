@@ -2,12 +2,11 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Optional
 
 from nomenklatura.judgement import Judgement
 
-from muckrake.db import get_resolver
 from muckrake.dataset import find_datasets, load_config
+from muckrake.db import get_resolver
 from muckrake.dedupe.dedupe import load_statements
 from muckrake.store import get_level_store
 from muckrake.util import parse_date_token
@@ -27,12 +26,12 @@ class EdgeRecord:
     source: str
     target: str
     schema: str
-    role: Optional[str]
-    start: Optional[date]
-    end: Optional[date]
+    role: str | None
+    start: date | None
+    end: date | None
 
 
-def _normalize_role(value: Optional[str]) -> Optional[str]:
+def _normalize_role(value: str | None) -> str | None:
     if value is None:
         return None
     normalized = value.strip().lower()
@@ -41,7 +40,7 @@ def _normalize_role(value: Optional[str]) -> Optional[str]:
     return ROLE_NORMALIZATION.get(normalized, normalized)
 
 
-def _edge_vertices(entity) -> Optional[tuple[str, str]]:
+def _edge_vertices(entity) -> tuple[str, str] | None:
     source_prop = entity.schema.source_prop
     target_prop = entity.schema.target_prop
     if source_prop is None or target_prop is None:
@@ -59,7 +58,7 @@ def _edge_vertices(entity) -> Optional[tuple[str, str]]:
     return source, target
 
 
-def _extract_edge_record(entity, resolver) -> Optional[EdgeRecord]:
+def _extract_edge_record(entity, resolver) -> EdgeRecord | None:
     if entity.id is None or not entity.schema.edge:
         return None
     if not entity.schema.is_a("Representation"):
@@ -109,12 +108,8 @@ def _is_mergeable(a: EdgeRecord, b: EdgeRecord, max_gap_days: int) -> bool:
     return b.start <= a.end + timedelta(days=max_gap_days)
 
 
-def _build_clusters(
-    records: list[EdgeRecord], max_gap_days: int
-) -> list[list[EdgeRecord]]:
-    grouped: dict[tuple[str, str, str, Optional[str]], list[EdgeRecord]] = defaultdict(
-        list
-    )
+def _build_clusters(records: list[EdgeRecord], max_gap_days: int) -> list[list[EdgeRecord]]:
+    grouped: dict[tuple[str, str, str, str | None], list[EdgeRecord]] = defaultdict(list)
     for record in records:
         key = (record.source, record.target, record.schema, record.role)
         grouped[key].append(record)
@@ -150,7 +145,7 @@ def _build_clusters(
 
 
 def run_dedupe_edges(
-    dataset_name: Optional[str] = None,
+    dataset_name: str | None = None,
     max_gap_days: int = 1,
     dry_run: bool = False,
 ) -> None:

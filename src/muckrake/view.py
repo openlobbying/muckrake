@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Dict, List
+from typing import Any
 
 from nomenklatura.db import get_engine
 from sqlalchemy import text
@@ -17,7 +17,7 @@ def get_published_engine():
     return get_engine(PUBLISHED_SQL_URI)
 
 
-def _list_db_dataset_names() -> List[str]:
+def _list_db_dataset_names() -> list[str]:
     engine = get_published_engine()
     with engine.connect() as conn:
         result = conn.execute(
@@ -30,7 +30,7 @@ def _list_db_dataset_names() -> List[str]:
 
 
 @lru_cache(maxsize=1)
-def list_all_dataset_names() -> List[str]:
+def list_all_dataset_names() -> list[str]:
     names = set(list_dataset_names())
     try:
         names.update(_list_db_dataset_names())
@@ -46,7 +46,7 @@ def get_view():
 
 
 @lru_cache(maxsize=2000)
-def get_entity_details(entity_id: str) -> Dict[str, str]:
+def get_entity_details(entity_id: str) -> dict[str, str]:
     view = get_view()
     ent = view.get_entity(entity_id)
     if ent is None:
@@ -54,5 +54,5 @@ def get_entity_details(entity_id: str) -> Dict[str, str]:
     return {"caption": ent.caption, "schema": ent.schema.name}
 
 
-def serialize_view_entity(ent) -> Dict[str, Any]:
+def serialize_view_entity(ent) -> dict[str, Any]:
     return serialize_entity(ent, get_all_datasets_metadata(), get_entity_details)

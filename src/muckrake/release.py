@@ -4,15 +4,15 @@ import json
 import logging
 import shutil
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any
 
 from followthemoney.statement.serialize import PackStatementWriter, read_pack_statements
 from nomenklatura.db import get_engine
 from nomenklatura.resolver import Resolver
-from sqlalchemy import delete, desc, select, update
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, delete, desc, select, update
 
 from muckrake.artifacts import get_artifact_store
 from muckrake.dataset import find_datasets, load_config
@@ -71,6 +71,7 @@ def create_release(
                 published_at=None,
             )
         )
+        assert result.inserted_primary_key is not None
         release_id = result.inserted_primary_key[0]
         row = conn.execute(select(table).where(table.c.id == release_id)).mappings().one()
     return Release(**row)
@@ -117,9 +118,7 @@ def list_releases(limit: int = 20) -> list[Release]:
     engine = init_database()
     table = get_releases_table()
     with engine.begin() as conn:
-        rows = conn.execute(
-            select(table).order_by(desc(table.c.id)).limit(limit)
-        ).mappings().all()
+        rows = conn.execute(select(table).order_by(desc(table.c.id)).limit(limit)).mappings().all()
     return [Release(**row) for row in rows]
 
 
@@ -140,11 +139,15 @@ def get_release_inputs(release_id: int) -> list[dict[str, Any]]:
     engine = init_database()
     table = get_release_inputs_table()
     with engine.begin() as conn:
-        rows = conn.execute(
-            select(table)
-            .where(table.c.release_id == release_id)
-            .order_by(table.c.dataset_name.asc())
-        ).mappings().all()
+        rows = (
+            conn.execute(
+                select(table)
+                .where(table.c.release_id == release_id)
+                .order_by(table.c.dataset_name.asc())
+            )
+            .mappings()
+            .all()
+        )
     return [dict(row) for row in rows]
 
 
@@ -184,19 +187,23 @@ def get_release_artifact(
     engine = init_database()
     table = get_release_artifacts_table()
     with engine.begin() as conn:
-        row = conn.execute(
-            select(table)
-            .where(table.c.release_id == release_id)
-            .where(table.c.artifact_type == artifact_type)
-            .order_by(desc(table.c.id))
-        ).mappings().first()
+        row = (
+            conn.execute(
+                select(table)
+                .where(table.c.release_id == release_id)
+                .where(table.c.artifact_type == artifact_type)
+                .order_by(desc(table.c.id))
+            )
+            .mappings()
+            .first()
+        )
     if row is None:
         return None
     return dict(row)
 
 
 def run_release_build(
-    dataset_names: Optional[Iterable[str]] = None,
+    dataset_names: Iterable[str] | None = None,
     notes: str | None = None,
 ) -> int:
     selected = _resolve_dataset_names(dataset_names)
@@ -242,8 +249,7 @@ def run_release_build(
             "release_id": release.id,
             "status": "built",
             "dataset_runs": [
-                {"dataset_name": name, "dataset_run_id": run_id}
-                for name, run_id, _ in dataset_runs
+                {"dataset_name": name, "dataset_run_id": run_id} for name, run_id, _ in dataset_runs
             ],
             "artifacts": [
                 {
@@ -323,13 +329,17 @@ def _load_release_into_published_db(dataset_names: list[str], pack_path: Path) -
 def _copy_resolver_state() -> None:
     source_engine = get_engine(SQL_URI)
     target_engine = init_published_database(PUBLISHED_SQL_URI)
-    source_resolver = Resolver(source_engine, MetaData(), create=False)
-    target_resolver = Resolver(target_engine, MetaData(), create=False)
+    source_resolver: Resolver = Resolver(source_engine, MetaData(), create=False)
+    target_resolver: Resolver = Resolver(target_engine, MetaData(), create=False)
 
     with source_engine.connect() as source_conn:
-        rows = source_conn.execute(
-            select(source_resolver._table).where(source_resolver._table.c.deleted_at.is_(None))
-        ).mappings().all()
+        rows = (
+            source_conn.execute(
+                select(source_resolver._table).where(source_resolver._table.c.deleted_at.is_(None))
+            )
+            .mappings()
+            .all()
+        )
 
     with target_engine.begin() as target_conn:
         target_conn.execute(delete(target_resolver._table))
@@ -337,7 +347,7 @@ def _copy_resolver_state() -> None:
             target_conn.execute(target_resolver._table.insert(), [dict(row) for row in rows])
 
 
-def _resolve_dataset_names(dataset_names: Optional[Iterable[str]]) -> list[str]:
+def _resolve_dataset_names(dataset_names: Iterable[str] | None) -> list[str]:
     if dataset_names:
         configs = []
         for dataset_name in dataset_names:
@@ -352,5 +362,6 @@ def _resolve_dataset_names(dataset_names: Optional[Iterable[str]]) -> list[str]:
 def _ensure_published_db_is_separate() -> None:
     if PUBLISHED_SQL_URI == SQL_URI:
         raise ValueError(
-            "MUCKRAKE_PUBLISHED_DATABASE_URL must point to a separate published database before release-publish can run"
+            "MUCKRAKE_PUBLISHED_DATABASE_URL must point to a separate published "
+            "database before release-publish can run"
         )

@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, RowMapping
@@ -115,9 +115,9 @@ def load_cached_keys(
 
 def list_candidates(
     conn: Connection,
-    dataset_name: Optional[str] = None,
+    dataset_name: str | None = None,
     status: str = "pending",
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ) -> list[RowMapping]:
     clauses = ["status = :status"]
     params: dict[str, Any] = {"status": status}
@@ -128,7 +128,7 @@ def list_candidates(
     sql = f"""
         SELECT *
         FROM ner_candidates
-        WHERE {' AND '.join(clauses)}
+        WHERE {" AND ".join(clauses)}
         ORDER BY updated_at ASC, id ASC
     """
     if limit is not None:
@@ -138,16 +138,20 @@ def list_candidates(
     return list(conn.execute(text(sql), params).mappings())
 
 
-def get_candidate(conn: Connection, candidate_id: int) -> Optional[RowMapping]:
-    return conn.execute(
-        text(
-            """
+def get_candidate(conn: Connection, candidate_id: int) -> RowMapping | None:
+    return (
+        conn.execute(
+            text(
+                """
             SELECT * FROM ner_candidates
             WHERE id = :candidate_id
             """
-        ),
-        {"candidate_id": candidate_id},
-    ).mappings().first()
+            ),
+            {"candidate_id": candidate_id},
+        )
+        .mappings()
+        .first()
+    )
 
 
 def update_candidate_extraction(
@@ -185,7 +189,8 @@ def review_candidate(
         text(
             """
             UPDATE ner_candidates
-            SET status = :status, reviewer = :reviewer, reviewed_at = :reviewed_at, updated_at = :updated_at
+            SET status = :status, reviewer = :reviewer,
+                reviewed_at = :reviewed_at, updated_at = :updated_at
             WHERE id = :candidate_id
             """
         ),

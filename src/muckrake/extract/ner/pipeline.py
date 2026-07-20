@@ -1,7 +1,7 @@
 import hashlib
 import logging
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional
 
 from followthemoney.statement.serialize import read_pack_statements
 
@@ -55,9 +55,9 @@ def iter_text_statements(pack_path: Path) -> Iterable[tuple[str, str, str, str]]
 
 
 def run_ner_extract(
-    dataset_name: Optional[str] = None,
-    limit: Optional[int] = None,
-    entity_id: Optional[str] = None,
+    dataset_name: str | None = None,
+    limit: int | None = None,
+    entity_id: str | None = None,
     extractor_name: str = "delimiter",
 ) -> None:
     configs = find_datasets(dataset_name)
@@ -143,7 +143,8 @@ def run_ner_extract(
 
     conn.close()
     log.info(
-        "NER extract complete. Processed=%s candidates, cached=%s, skipped=%s, upserted=%s entries.",
+        "NER extract complete. Processed=%s candidates, cached=%s, skipped=%s, "
+        "upserted=%s entries.",
         processed,
         cached,
         skipped,

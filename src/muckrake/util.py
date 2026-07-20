@@ -1,9 +1,10 @@
-from typing import Optional, Any
+from typing import Any
 
-from muckrake.utils.dates import parse_date, parse_date_token
+# Re-exported for consumers that import date helpers from muckrake.util.
+from muckrake.utils.dates import parse_date, parse_date_token  # noqa: F401
 
 
-def to_string(value: Any) -> Optional[str]:
+def to_string(value: Any) -> str | None:
     """Clean a string value, handling NaN and None."""
     if value is None:
         return None
@@ -13,7 +14,7 @@ def to_string(value: Any) -> Optional[str]:
     return text
 
 
-def parse_amount(text: Any) -> Optional[float]:
+def parse_amount(text: Any) -> float | None:
     """Parse a currency amount string into a float."""
     text = to_string(text)
     if text is None:

@@ -1,20 +1,18 @@
 import logging
 import shutil
-from typing import Iterable, Set, List, Optional
+from collections.abc import Iterable
 
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
 from nomenklatura.store.level import LevelDBStore
-from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
-from nomenklatura.db import get_metadata
-from nomenklatura.store.sql import make_statement_table
+from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter, make_statement_table
 from sqlalchemy import MetaData, select
 from sqlalchemy.engine import create_engine
 
 from muckrake.db import get_database_dialect, get_resolver
-from muckrake.settings import SQL_URI, LEVEL_PATH
+from muckrake.settings import LEVEL_PATH, SQL_URI
 
 log = logging.getLogger(__name__)
 SQL_BATCH_STATEMENTS = 500
@@ -28,11 +26,11 @@ class CombinedDataset(Dataset):
         self._leaf_names = set(datasets)
 
     @property
-    def dataset_names(self) -> List[str]:
+    def dataset_names(self) -> list[str]:
         return [self.name] + list(self._leaf_names)
 
     @property
-    def leaf_names(self) -> Set[str]:
+    def leaf_names(self) -> set[str]:
         return self._leaf_names
 
 
@@ -59,7 +57,7 @@ class MergedSQLView(SQLView[DS, SE]):
     a single entity with the most specific schema.
     """
 
-    def get_entity(self, id: str) -> Optional[SE]:
+    def get_entity(self, id: str) -> SE | None:
         """Get entity by canonical ID, merging all statements from merged entities."""
         table = self.store.table
         q = select(table)
@@ -70,7 +68,7 @@ class MergedSQLView(SQLView[DS, SE]):
         q = q.order_by(table.c.entity_id)
 
         # Collect ALL statements with this canonical_id
-        all_statements: List[Statement] = []
+        all_statements: list[Statement] = []
         for stmt in self.store._iterate_stmts(q, stream=False):
             all_statements.append(stmt)
 

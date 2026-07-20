@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Dict
+from typing import Any
 
 from followthemoney.types import registry
 
@@ -10,7 +10,7 @@ from muckrake.util import parse_date_token
 
 
 @lru_cache(maxsize=1)
-def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
+def get_all_datasets_metadata() -> dict[str, dict[str, Any]]:
     datasets = {}
 
     for config_path in find_datasets():
@@ -20,17 +20,9 @@ def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
         if not name:
             continue
 
-        publisher = (
-            raw.get("publisher", {})
-            if isinstance(raw.get("publisher", {}), dict)
-            else {}
-        )
-        licence = (
-            cfg.get("licence", {}) if isinstance(cfg.get("licence", {}), dict) else {}
-        )
-        coverage = (
-            raw.get("coverage", {}) if isinstance(raw.get("coverage", {}), dict) else {}
-        )
+        publisher = raw.get("publisher", {}) if isinstance(raw.get("publisher", {}), dict) else {}
+        licence = cfg.get("licence", {}) if isinstance(cfg.get("licence", {}), dict) else {}
+        coverage = raw.get("coverage", {}) if isinstance(raw.get("coverage", {}), dict) else {}
 
         datasets[name] = {
             "name": name,
@@ -61,7 +53,7 @@ def get_all_datasets_metadata() -> Dict[str, Dict[str, Any]]:
     return datasets
 
 
-def _collapse_edge_temporal_extent(data: Dict[str, Any]) -> None:
+def _collapse_edge_temporal_extent(data: dict[str, Any]) -> None:
     if data.get("schema") != "Representation":
         return
 
@@ -90,7 +82,7 @@ def _collapse_edge_temporal_extent(data: Dict[str, Any]) -> None:
         props["endDate"] = [end_tokens[0][1]]
 
 
-def serialize_entity(ent, ds_meta: Dict[str, Any], get_details_fn) -> Dict[str, Any]:
+def serialize_entity(ent, ds_meta: dict[str, Any], get_details_fn) -> dict[str, Any]:
     data = ent.to_dict()
     data["caption"] = ent.caption
     data["canonical_id"] = ent.id

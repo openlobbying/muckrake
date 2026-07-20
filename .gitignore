@@ -19,3 +19,4 @@ data/*
 do_not_edit/*
 /.quarto/
 **/*.quarto_ipynb
+.claude/worktrees/

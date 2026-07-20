@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any
 
 from followthemoney import model
 from nomenklatura.db import get_engine
 from sqlalchemy import text
 
 from muckrake.db import is_postgres_uri, refresh_postgres_search
-from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
 from muckrake.entity_query import get_view
+from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
 
 ACTOR_SCHEMATA = ("Company", "LegalEntity", "Organization", "Person", "PublicBody")
 SEARCH_PROPS = (
@@ -25,7 +26,7 @@ SEARCH_PROPS = (
 
 @dataclass
 class SearchResponse:
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
     total: int
     offset: int
     limit: int
@@ -193,7 +194,10 @@ def _view_search(
         search_sql += " AND instr(lower(value), lower(:query)) > 0"
         count_sql += " AND instr(lower(value), lower(:query)) > 0"
 
-    search_sql += " GROUP BY canonical_id ORDER BY exact_score DESC, COALESCE(name, title, canonical_id) ASC LIMIT :limit OFFSET :offset"
+    search_sql += (
+        " GROUP BY canonical_id ORDER BY exact_score DESC,"
+        " COALESCE(name, title, canonical_id) ASC LIMIT :limit OFFSET :offset"
+    )
     count_sql += " GROUP BY canonical_id ) AS matches"
 
     with engine.connect() as conn:
@@ -315,7 +319,7 @@ def get_actor_schema_counts(
     schema_filter: Iterable[str] = ACTOR_SCHEMATA,
     *,
     uri: str = PUBLISHED_SQL_URI,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     schema_names = list(schema_filter)
     counts = {schema: 0 for schema in schema_names}
 

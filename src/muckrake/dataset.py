@@ -3,28 +3,28 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, List
-from lxml.html import HtmlElement
-from datapatch import get_lookups, Lookup
+from typing import Any
+
+from datapatch import Lookup, get_lookups
 from followthemoney import Dataset as FTMDataset
 from followthemoney.statement.entity import StatementEntity
+from lxml.html import HtmlElement
 from nomenklatura.cache import Cache
 from nomenklatura.db import get_engine, get_metadata
-
 from org_id import make_hashed_id, make_org_id
 
-from muckrake.extract.fetch import fetch_file, fetch_json, fetch_html, fetch_text
-from muckrake.settings import BASE_PATH, DATA_PATH, SQL_URI
+from muckrake.extract.fetch import fetch_file, fetch_html, fetch_json, fetch_text
+from muckrake.settings import DATA_PATH, SQL_URI
 
 
-def load_raw_config(path: Path) -> Dict[str, Any]:
+def load_raw_config(path: Path) -> dict[str, Any]:
     import yaml
 
     with path.open("r") as fh:
         return yaml.safe_load(fh) or {}
 
 
-def get_dataset_config(data: Dict[str, Any]) -> Dict[str, Any]:
+def get_dataset_config(data: dict[str, Any]) -> dict[str, Any]:
     return data.get("dataset", data)
 
 
@@ -32,7 +32,7 @@ def get_dataset_path(name: str) -> Path:
     return DATA_PATH / "datasets" / name
 
 
-def list_dataset_roots() -> List[Path]:
+def list_dataset_roots() -> list[Path]:
     roots: list[Path] = []
 
     def add_root(path: Path) -> None:
@@ -88,7 +88,7 @@ class Dataset:
         self,
         config_path: Path,
         writer: Any,
-        timestamps: Optional[Dict[str, str]] = None,
+        timestamps: dict[str, str] | None = None,
     ):
         self._data = load_raw_config(config_path)
         config = get_dataset_config(self._data)
@@ -104,22 +104,20 @@ class Dataset:
         self.data_path = get_dataset_path(self.name)
         self.resources_path = self.data_path / "resources"
         self.log = logging.getLogger(self.name)
-        self._cache: Optional[Cache] = None
+        self._cache: Cache | None = None
 
     @property
     def cache(self) -> Cache:
         if self._cache is None:
-            self._cache = Cache(
-                get_engine(SQL_URI), get_metadata(), self.ftm, create=True
-            )
+            self._cache = Cache(get_engine(SQL_URI), get_metadata(), self.ftm, create=True)
         return self._cache
 
     @property
-    def lookups(self) -> Dict[str, Lookup]:
+    def lookups(self) -> dict[str, Lookup]:
         """Load datapatch lookups from config (cached after first access)."""
         if not hasattr(self, "_lookups_cache"):
             config = self._data.get("lookups", {})
-            self._lookups_cache: Dict[str, Lookup] = get_lookups(config)
+            self._lookups_cache: dict[str, Lookup] = get_lookups(config)
         return self._lookups_cache
 
     def lookup(self, lookup_name: str, value: Any):
@@ -132,15 +130,11 @@ class Dataset:
         """Create an entity tied to this dataset."""
         return StatementEntity(self.ftm, {"schema": schema})
 
-    def make_id(
-        self, *parts: Any, reg_nr: Optional[Any] = None, register: Optional[str] = None
-    ) -> str:
+    def make_id(self, *parts: Any, reg_nr: Any | None = None, register: str | None = None) -> str:
         """Create a stable ID, preferring a structured org-id if reg_nr is provided."""
         if reg_nr:
             if not register:
-                raise ValueError(
-                    "Mapping an org-id requires a 'register' (e.g. 'GB-COH')"
-                )
+                raise ValueError("Mapping an org-id requires a 'register' (e.g. 'GB-COH')")
             org_id = make_org_id(reg_nr, register=register)
             if org_id:
                 return org_id
@@ -167,21 +161,15 @@ class Dataset:
             self.log.error(f"Failed to fetch resource {url}: {e}")
             raise
 
-    def fetch_text(
-        self, url: str, cache_days: Optional[int] = None, **kwargs: Any
-    ) -> Optional[str]:
+    def fetch_text(self, url: str, cache_days: int | None = None, **kwargs: Any) -> str | None:
         """Fetch text from a URL, optionally cached."""
         return fetch_text(url, cache=self.cache, cache_days=cache_days, **kwargs)
 
-    def fetch_json(
-        self, url: str, cache_days: Optional[int] = None, **kwargs: Any
-    ) -> Any:
+    def fetch_json(self, url: str, cache_days: int | None = None, **kwargs: Any) -> Any:
         """Fetch JSON from a URL, optionally cached."""
         return fetch_json(url, cache=self.cache, cache_days=cache_days, **kwargs)
 
-    def fetch_html(
-        self, url: str, cache_days: Optional[int] = None, **kwargs: Any
-    ) -> HtmlElement:
+    def fetch_html(self, url: str, cache_days: int | None = None, **kwargs: Any) -> HtmlElement:
         """Fetch HTML from a URL, optionally cached."""
         return fetch_html(url, cache=self.cache, cache_days=cache_days, **kwargs)
 
@@ -191,7 +179,7 @@ class Dataset:
             self._cache.close()
 
 
-def find_datasets(name: Optional[str] = None) -> List[Path]:
+def find_datasets(name: str | None = None) -> list[Path]:
     """Find dataset config files across configured dataset roots.
 
     Args:
@@ -211,9 +199,7 @@ def find_datasets(name: Optional[str] = None) -> List[Path]:
                 if ds.name == name:
                     return [config]
             except Exception as e:
-                logging.getLogger(__name__).warning(
-                    f"Failed to load config {config}: {e}"
-                )
+                logging.getLogger(__name__).warning(f"Failed to load config {config}: {e}")
                 continue
         return []
 
@@ -221,11 +207,11 @@ def find_datasets(name: Optional[str] = None) -> List[Path]:
     return unique_configs
 
 
-def list_datasets() -> List[FTMDataset]:
+def list_datasets() -> list[FTMDataset]:
     """Load all dataset configurations."""
     return [load_config(p) for p in find_datasets()]
 
 
-def list_dataset_names() -> List[str]:
+def list_dataset_names() -> list[str]:
     """Get names of all datasets."""
     return [ds.name for ds in list_datasets()]
