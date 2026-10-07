@@ -62,26 +62,36 @@ def test_release_build_then_publish_copies_statements(make_dataset):
     assert published[0].get("name") == ["ACME Ltd"]
 
 
-def test_release_build_fails_without_successful_run(make_dataset):
-    # The config is discoverable but no successful dataset run exists.
+def test_release_build_fails_with_nothing_to_build(make_dataset):
+    # A single requested dataset with no successful run: raising is the correct
+    # contract (there is nothing to build), and the precondition is checked
+    # before the release row is created, so no partial release is left behind.
+    # This is a legitimate contract, not a pin — kept as a plain assertion.
     name, _ = make_dataset(write_pack=False)
 
     before = len(list_releases(limit=1000))
     with pytest.raises(ValueError, match="No successful dataset run"):
         run_release_build([name])
-    # All-or-nothing: the failing precondition is checked before the release row
-    # is created, so no partial release is left behind. Pinned current behaviour.
     assert len(list_releases(limit=1000)) == before
 
 
-def test_release_build_is_all_or_nothing_across_datasets(make_dataset):
+@pytest.mark.xfail(
+    reason=(
+        "muckrake#30 (proposed): release-build should build from the datasets that "
+        "succeeded and exclude/record run-less ones, rather than aborting the whole "
+        "release. If #30 decides all-or-nothing is the intended contract, replace this "
+        "with a plain assertion of that behaviour."
+    ),
+    strict=True,
+)
+def test_release_build_includes_successful_datasets(make_dataset):
+    # Desired: one run-less dataset in the set must not block a release of the
+    # datasets that did succeed. Today run_release_build aborts the whole build.
     ready, ready_pack = make_dataset([{"schema": "Company", "properties": {"name": ["Ready Ltd"]}}])
     _register_successful_run(ready, ready_pack)
     missing, _ = make_dataset(write_pack=False)
 
     before = len(list_releases(limit=1000))
-    # One run-less dataset in the set aborts the whole build (current behaviour:
-    # a release covers every discovered dataset or none). Finding for docs#38.
-    with pytest.raises(ValueError, match="No successful dataset run"):
-        run_release_build([ready, missing])
-    assert len(list_releases(limit=1000)) == before
+    release_id = run_release_build([ready, missing])
+    assert release_id is not None
+    assert len(list_releases(limit=1000)) == before + 1
