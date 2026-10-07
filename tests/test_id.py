@@ -76,11 +76,10 @@ def test_dataset_make_id_requires_register_with_reg_nr(tmp_path):
         dataset.make_id("acme", reg_nr="01234567")
 
 
-def test_org_id_registry_default_is_not_cached():
-    # Pins current behaviour: the installed org-id rebuilds the Registry from the
-    # bundled JSON on every Registry.default() call rather than sharing a cached
-    # instance. Known finding (docs#38): the cache fix awaits org-id v0.1.1
-    # (org-id#2 / muckrake#21); until then this is a hot-path cost at scale.
+def test_org_id_registry_default_is_cached():
+    # org-id >= 0.1.1 (org-id#2, muckrake#21) caches Registry.default(), so
+    # make_id no longer re-parses the bundled registry JSON on every call — the
+    # hot loop found in docs#38. Guards against a regression to a per-call rebuild.
     from org_id import Registry
 
-    assert Registry.default() is not Registry.default()
+    assert Registry.default() is Registry.default()

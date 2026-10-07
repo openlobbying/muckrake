@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import func, select
 
 from muckrake.load import run_load
@@ -48,20 +49,30 @@ def test_reload_is_idempotent(make_dataset):
     assert entities[0].get("name") == ["ACME Ltd"]
 
 
-def test_load_missing_pack_is_silent_noop(make_dataset):
-    # The config is discoverable but no statements.pack.csv exists. Pins current
-    # behaviour: run_load logs a warning and returns normally (no error, nothing
-    # materialised). Known finding (docs#38) — a missing pack, which can mean an
-    # upstream crawl produced no artifact, is silently skipped rather than
-    # surfaced as a failure.
+# The two tests below assert the DESIRED behaviour and are expected to fail
+# until muckrake#29 lands. strict=True means they flip the suite red the moment
+# the behaviour is fixed, prompting removal of the marker — so they can never
+# silently protect the current silent-no-op. Today run_load returns None without
+# raising; a missing pack usually means an upstream crawl produced no artifact,
+# which should surface as a failure rather than be skipped.
+
+
+@pytest.mark.xfail(
+    reason="muckrake#29: a missing statements pack should raise, not silently no-op",
+    strict=True,
+)
+def test_load_missing_pack_raises(make_dataset):
     name, pack_path = make_dataset(write_pack=False)
     assert not pack_path.exists()
 
-    assert run_load(name) is None
-    assert _entities(name) == []
+    with pytest.raises(Exception):  # noqa: B017 — exact type deferred to the muckrake#29 fix
+        run_load(name)
 
 
-def test_load_unknown_dataset_is_silent_noop():
-    # No config matches: run_load logs an error and returns None without raising.
-    # Pinned as current behaviour (docs#38).
-    assert run_load("dataset-that-does-not-exist") is None
+@pytest.mark.xfail(
+    reason="muckrake#29: loading an unknown dataset should raise, not silently return None",
+    strict=True,
+)
+def test_load_unknown_dataset_raises():
+    with pytest.raises(Exception):  # noqa: B017 — exact type deferred to the muckrake#29 fix
+        run_load("dataset-that-does-not-exist")
