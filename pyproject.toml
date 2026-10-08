@@ -50,6 +50,8 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+# Parked, unmaintained crawler stubs from before the openlobbying split.
+extend-exclude = ["datasets_to_do"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
