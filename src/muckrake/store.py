@@ -1,18 +1,23 @@
+from __future__ import annotations
+
 import logging
 import shutil
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
-from nomenklatura.store.level import LevelDBStore
 from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter, make_statement_table
 from sqlalchemy import MetaData, select
 from sqlalchemy.engine import create_engine
 
 from muckrake.db import get_database_dialect, get_resolver
 from muckrake.settings import LEVEL_PATH, SQL_URI
+
+if TYPE_CHECKING:
+    from nomenklatura.store.level import LevelDBStore
 
 log = logging.getLogger(__name__)
 SQL_BATCH_STATEMENTS = 500
@@ -36,6 +41,10 @@ class CombinedDataset(Dataset):
 
 def get_level_store(dataset_names: Iterable[str], fresh: bool = False) -> LevelDBStore:
     """Get a LevelDB store for processing."""
+    # Imported here so only xref needs a working plyvel/leveldb install; every
+    # other command (crawl, load, release, ...) runs without it.
+    from nomenklatura.store.level import LevelDBStore
+
     if fresh and LEVEL_PATH.exists():
         shutil.rmtree(LEVEL_PATH)
 
