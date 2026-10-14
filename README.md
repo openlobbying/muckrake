@@ -71,6 +71,8 @@ uv run muckrake dedupe-edges
 
 Statements are loaded into Postgres with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
 
+A load is atomic: every dataset in it is cleared and reloaded in a single transaction, so a load that fails partway leaves the previously loaded statements in place. A dataset with no statements pack is skipped with a warning, and its loaded statements are kept.
+
 To load from a specific immutable crawl snapshot instead of the local workspace copy:
 
 ```bash
@@ -83,6 +85,8 @@ For the published site, prefer the release workflow instead of loading directly 
 uv run muckrake release-build
 uv run muckrake release-publish 1
 ```
+
+Publishing is atomic: the previous release is cleared and the new one written in a single transaction, so readers keep seeing the previous release until the new one commits, and a failed publish leaves it in place.
 
 
 ## OpenLobbying

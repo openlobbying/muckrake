@@ -95,3 +95,34 @@ def test_release_build_includes_successful_datasets(make_dataset):
     release_id = run_release_build([ready, missing])
     assert release_id is not None
     assert len(list_releases(limit=1000)) == before + 1
+
+
+def test_failed_publish_keeps_previous_release(make_dataset, monkeypatch):
+    import muckrake.release as release_module
+    from muckrake.store import MuckrakeSQLWriter
+
+    name, pack_path = make_dataset(
+        [
+            {"schema": "Company", "properties": {"name": ["ACME Ltd"]}},
+            {"schema": "Person", "properties": {"name": ["Jane Doe"]}},
+        ]
+    )
+    _register_successful_run(name, pack_path)
+    release_id = run_release_build([name])
+    run_release_publish(release_id)
+    assert len(_published_entities(name)) == 2
+
+    monkeypatch.setattr(MuckrakeSQLWriter, "BATCH_STATEMENTS", 1)
+    real = release_module.read_pack_statements
+
+    def broken(fh):
+        for stmt in real(fh):
+            yield stmt
+            raise RuntimeError("publish interrupted")
+
+    monkeypatch.setattr(release_module, "read_pack_statements", broken)
+    with pytest.raises(RuntimeError, match="publish interrupted"):
+        run_release_publish(release_id)
+
+    # The published DB still serves the previous release in full.
+    assert len(_published_entities(name)) == 2

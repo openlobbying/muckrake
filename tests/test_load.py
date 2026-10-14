@@ -49,6 +49,42 @@ def test_reload_is_idempotent(make_dataset):
     assert entities[0].get("name") == ["ACME Ltd"]
 
 
+def _fail_after_first_statement(real):
+    def broken(*args, **kwargs):
+        for stmt in real(*args, **kwargs):
+            yield stmt
+            raise RuntimeError("load interrupted")
+
+    return broken
+
+
+def test_failed_load_keeps_previously_loaded_statements(make_dataset, monkeypatch):
+    import muckrake.load as load_module
+    from muckrake.store import MuckrakeSQLWriter
+
+    name, _ = make_dataset(
+        [
+            {"schema": "Company", "properties": {"name": ["ACME Ltd"]}},
+            {"schema": "Person", "properties": {"name": ["Jane Doe"]}},
+        ]
+    )
+    run_load(name)
+    before = _statement_count(name)
+
+    # Batches of one, so the interrupted load really has written rows to roll back.
+    monkeypatch.setattr(MuckrakeSQLWriter, "BATCH_STATEMENTS", 1)
+    monkeypatch.setattr(
+        load_module,
+        "iter_dataset_statements",
+        _fail_after_first_statement(load_module.iter_dataset_statements),
+    )
+    with pytest.raises(RuntimeError, match="load interrupted"):
+        run_load(name)
+
+    assert _statement_count(name) == before
+    assert sorted(e.get("name")[0] for e in _entities(name)) == ["ACME Ltd", "Jane Doe"]
+
+
 # The two tests below assert the DESIRED behaviour and are expected to fail
 # until muckrake#29 lands. strict=True means they flip the suite red the moment
 # the behaviour is fixed, prompting removal of the marker — so they can never
