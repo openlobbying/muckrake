@@ -14,7 +14,7 @@ Note: the org-id dependency needs a **v0.1.1 PyPI release** to pick up the `Regi
 - **Tooling baseline + tests** (docs#33, #34): adopt ruff/mypy/pre-commit (currently none configured) and build out test coverage across core — existing tests only cover CLI entities, entity writes, and SQLite storage; load, release, artifacts, `make_id`, NER apply, and dedupe have essentially none. Hardening work should land with tests.
 - **Data-plane hardening workstream** (docs#23–#29), prerequisite for UTI-scale ingestion (155k actors); fixes belong in core so all crawlers inherit them:
   - ✅ resilient fetch layer (PR #22): shared polite session in `src/muckrake/extract/fetch.py` — retry + exponential backoff (Retry-After honoured, idempotent methods only) + opt-in per-host rate limit (`MUCKRAKE_HTTP_MIN_INTERVAL`) + timeout
-  - crawl checkpointing + keep partial artifacts (`src/muckrake/crawl.py` currently discards everything on failure)
+  - crawl checkpointing + keep partial artifacts: units of work (`Dataset.run_unit`, `src/muckrake/units.py`) with skip-and-report, `partial` runs and `crawl --retry-failed` (Oct 2026, docs#24)
   - stream spreadsheet/CSV rows to the statement writer instead of materialising whole sheets
   - remove silent pagination caps; emit completeness warnings into the run summary
   - batched/incremental xref (hard `--limit 50000` today) + document complexity at 150k+ entities

@@ -15,6 +15,10 @@ from muckrake.db import (
     init_database,
 )
 
+# A partial run completed but skipped some failed units; its output is usable and
+# its failures are recorded in the run stats.
+USABLE_RUN_STATUSES = ("succeeded", "partial")
+
 
 def utc_now_iso() -> str:
     return datetime.now(UTC).isoformat()
@@ -205,7 +209,7 @@ def get_latest_successful_artifact(
                 select(artifacts)
                 .join(runs, artifacts.c.dataset_run_id == runs.c.id)
                 .where(runs.c.dataset_name == dataset_name)
-                .where(runs.c.status == "succeeded")
+                .where(runs.c.status.in_(USABLE_RUN_STATUSES))
                 .where(artifacts.c.artifact_type == artifact_type)
                 .order_by(desc(runs.c.started_at), desc(artifacts.c.id))
             )
@@ -225,8 +229,28 @@ def get_latest_successful_run(dataset_name: str) -> DatasetRun | None:
             conn.execute(
                 select(table)
                 .where(table.c.dataset_name == dataset_name)
-                .where(table.c.status == "succeeded")
+                .where(table.c.status.in_(USABLE_RUN_STATUSES))
                 .order_by(desc(table.c.started_at), desc(table.c.id))
+            )
+            .mappings()
+            .first()
+        )
+    if row is None:
+        return None
+    return DatasetRun(**row)
+
+
+def get_latest_crawl_run(dataset_name: str) -> DatasetRun | None:
+    """The most recent crawl run of a dataset, whatever its status."""
+    engine = init_database()
+    table = get_dataset_runs_table()
+    with engine.begin() as conn:
+        row = (
+            conn.execute(
+                select(table)
+                .where(table.c.dataset_name == dataset_name)
+                .where(table.c.run_type == "crawl")
+                .order_by(desc(table.c.id))
             )
             .mappings()
             .first()

@@ -129,12 +129,23 @@ def cli(verbose):
     default=False,
     help="Clear dataset data before crawling",
 )
-def crawl(dataset_name, output, clear):
+@click.option(
+    "--retry-failed",
+    is_flag=True,
+    default=False,
+    help=(
+        "Carry over the units that succeeded in the dataset's latest crawl and re-run "
+        "the rest (failed units, and any never reached if that crawl crashed)"
+    ),
+)
+def crawl(dataset_name, output, clear, retry_failed):
     """Crawl one or all datasets.
 
     DATASET_NAME should be the dataset name from config.yml (e.g., gb_political_finance).
     If not provided, crawls all datasets.
     """
+    if retry_failed and not dataset_name:
+        raise click.UsageError("--retry-failed needs a DATASET_NAME")
     configs = find_datasets(dataset_name)
 
     if dataset_name and not configs:
@@ -160,7 +171,7 @@ def crawl(dataset_name, output, clear):
         try:
             if clear:
                 clear_dataset(ds.name)
-            run_crawl(config, output)
+            run_crawl(config, output, retry_failed=retry_failed)
         finally:
             for logger_name, level in quiet_loggers.items():
                 logging.getLogger(logger_name).setLevel(level)

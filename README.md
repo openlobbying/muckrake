@@ -27,6 +27,12 @@ To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muck
 
 Each crawl now creates a `dataset_runs` record in Postgres and stores immutable artifacts under `MUCKRAKE_ARTIFACT_PATH` (defaults to `data/artifacts`). The latest successful run remains mirrored into `data/datasets/{name}/statements.pack.csv` for local compatibility.
 
+#### Units of work and `--retry-failed`
+
+A crawler can split its work into independently retryable units (one source file, one page, one record) by wrapping each in `dataset.run_unit(key, func, *args)`. A unit's statements reach the pack only if `func` returns. If it raises, the unit is recorded as failed, nothing from it is emitted, and the crawl carries on. A crawl that completes with failed units finishes as `partial`: its output is usable by `load` and `release-build`, and the failures are counted by error type in the run's stats and the end-of-crawl log. Errors outside a unit still fail the whole crawl.
+
+Each run writes a `units.jsonl` ledger next to its pack, recording where every succeeded unit sits in the pack. `uv run muckrake crawl {dataset_name} --retry-failed` copies the units that succeeded in the dataset's latest crawl into a new run and re-runs everything else. That covers both retrying failures (e.g. after a parser fix) and resuming a crawl that crashed or was killed partway. Pack and ledger are written in place under the run's artifact directory as the crawl goes, so even a killed crawl leaves its completed units behind.
+
 ### AI-based NER
 
 Many data sources have [composite fields that contain multiple entities](https://openaccess.transparency.org.uk/?meeting=10088). We use LLMs to extract unique entities and relationships from these fields, and store them as candidates in the database for review and approval. See [NER docs](/src/muckrake/extract/ner/README.md) for details.
