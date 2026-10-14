@@ -3,14 +3,15 @@ from __future__ import annotations
 import logging
 import shutil
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from types import TracebackType
+from typing import TYPE_CHECKING, Any
 
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
 from nomenklatura.store import Store
 from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter, make_statement_table
-from sqlalchemy import MetaData, select
+from sqlalchemy import MetaData, delete, select
 from sqlalchemy.engine import create_engine
 
 from muckrake.db import get_database_dialect, get_resolver
@@ -109,8 +110,38 @@ class MergedSQLStore(SQLStore[DS, SE]):
 
 
 class MuckrakeSQLWriter(SQLWriter[DS, SE]):
+    """A writer whose whole session is one transaction.
+
+    nomenklatura's writer already keeps a single transaction open across batches
+    until it flushes, but flushes (commits) on exit even when an exception is in
+    flight. This one rolls back instead, and ``replace`` deletes inside the same
+    transaction, so a delete-then-reload commits completely or not at all.
+    """
+
     # Keep statement batches moderate to avoid oversized INSERT statements.
     BATCH_STATEMENTS = SQL_BATCH_STATEMENTS
+
+    def replace(self, where: Any = None) -> None:
+        """Delete statements (all, or those matching ``where``) in this writer's transaction."""
+        if self.tx is None:
+            self.tx = self.conn.begin()
+        query = delete(self.store.table)
+        if where is not None:
+            query = query.where(where)
+        self.conn.execute(query)
+
+    def __exit__(
+        self,
+        type: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if type is None:
+            self.flush()
+        elif self.tx is not None:
+            self.tx.rollback()
+            self.tx = None
+        self.conn.close()
 
 
 def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:

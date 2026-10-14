@@ -336,10 +336,10 @@ def _load_release_into_published_db(dataset_names: list[str], pack_path: Path) -
     init_published_database(PUBLISHED_SQL_URI)
     store = get_sql_store(dataset_names, uri=PUBLISHED_SQL_URI)
 
-    with store.engine.begin() as conn:
-        conn.execute(delete(store.table))
-
+    # Clear and rewrite in one transaction, so readers keep seeing the previous
+    # release until this one commits, and a failure leaves it in place.
     with store.writer() as writer:
+        writer.replace()
         with pack_path.open("rb") as fh:
             for stmt in read_pack_statements(fh):
                 writer.add_statement(stmt)

@@ -29,12 +29,14 @@ def resolve_dataset_pack_path(dataset_name: str, run_id: int | None = None) -> P
 
 
 def load_dataset_statements(dataset_name: str, writer, run_id: int | None = None):
+    """Replace a dataset's statements with its pack, inside the writer's transaction."""
     pack_path = resolve_dataset_pack_path(dataset_name, run_id=run_id)
     if not pack_path.exists():
-        log.warning(f"No statements found for {dataset_name}")
+        log.warning(f"No statements found for {dataset_name}; keeping what is loaded")
         return
 
     log.info(f"Loading {dataset_name} into database...")
+    writer.replace(writer.store.table.c.dataset == dataset_name)
     for stmt in iter_dataset_statements(dataset_name, pack_path):
         # The SQLWriter will automatically apply canonical_id resolution
         writer.add_statement(stmt)
@@ -52,16 +54,8 @@ def run_load(dataset_name: str | None = None, run_id: int | None = None):
     dataset_names = [load_config(c).name for c in configs]
     store = get_sql_store(dataset_names)
 
-    # Clear existing statements for these datasets in a separate transaction
-    from sqlalchemy import delete
-
-    with store.engine.begin() as conn:
-        for ds_name in dataset_names:
-            log.info(f"Clearing {ds_name} from database...")
-            delete_q = delete(store.table).where(store.table.c.dataset == ds_name)
-            conn.execute(delete_q)
-
-    # Load new statements
+    # One transaction for every dataset: each is cleared and reloaded, and a
+    # failure anywhere rolls back to what was loaded before.
     with store.writer() as writer:
         for ds_name in dataset_names:
             load_dataset_statements(ds_name, writer, run_id=run_id)
