@@ -7,14 +7,19 @@ nothing from it is emitted. Each run keeps a ``units.jsonl`` ledger next to its
 pack recording the byte range every succeeded unit occupies in the pack, which
 lets ``crawl --retry-failed`` copy those units into a new run and re-run only the
 rest.
+
+A crawler records known gaps in its output (a pagination cap hit, a resource that
+has gone missing) with ``Dataset.warn_incomplete``. Warnings raised inside a unit
+are kept on its ledger record, so they survive being carried over by a retry.
 """
 
 from __future__ import annotations
 
 import json
 from collections import Counter
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any
 
 from followthemoney.statement.serialize import PackStatementWriter
 
@@ -27,6 +32,7 @@ class UnitRecord:
     end: int = 0
     error: str | None = None
     carried: bool = False
+    warnings: list[dict[str, Any]] = field(default_factory=list)
 
 
 def error_group(error: str) -> str:
@@ -51,6 +57,8 @@ class UnitLedger:
         self.writer = writer
         self.records: list[UnitRecord] = []
         self.carried: set[str] = set()
+        # Completeness warnings raised outside any unit.
+        self.warnings: list[dict[str, Any]] = []
         self._fh = path.open("a", encoding="utf-8") if path is not None else None
 
     def position(self) -> int:
@@ -82,19 +90,35 @@ class UnitLedger:
                 start = self.position()
                 self.writer.fh.buffer.write(data)
                 end = start + len(data)
-                self.add(UnitRecord(record.key, "succeeded", start, end, carried=True))
+                self.add(
+                    UnitRecord(
+                        record.key, "succeeded", start, end, carried=True, warnings=record.warnings
+                    )
+                )
                 self.carried.add(record.key)
 
     def close(self) -> None:
         if self._fh is not None:
             self._fh.close()
 
-    def summary(self) -> dict[str, object]:
+    def all_warnings(self) -> list[dict[str, Any]]:
+        unit_warnings = [w for r in self.records for w in r.warnings]
+        return self.warnings + unit_warnings
+
+    def summary(self) -> dict[str, Any]:
         failed = [r for r in self.records if r.status == "failed"]
         groups = Counter(error_group(r.error or "") for r in failed)
+        warnings = Counter(w["reason"] for w in self.all_warnings())
         return {
             "succeeded": sum(1 for r in self.records if r.status == "succeeded" and not r.carried),
             "carried": sum(1 for r in self.records if r.carried),
             "failed": len(failed),
             "failures_by_error": dict(groups.most_common()),
+            "warnings": sum(warnings.values()),
+            "warnings_by_reason": dict(warnings.most_common()),
         }
+
+    @property
+    def incomplete(self) -> bool:
+        """Whether the run is missing data: a unit failed or a gap was recorded."""
+        return any(r.status == "failed" for r in self.records) or bool(self.all_warnings())

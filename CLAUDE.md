@@ -16,7 +16,7 @@ Note: the org-id dependency needs a **v0.1.1 PyPI release** to pick up the `Regi
   - ✅ resilient fetch layer (PR #22): shared polite session in `src/muckrake/extract/fetch.py` — retry + exponential backoff (Retry-After honoured, idempotent methods only) + opt-in per-host rate limit (`MUCKRAKE_HTTP_MIN_INTERVAL`) + timeout
   - crawl checkpointing + keep partial artifacts: units of work (`Dataset.run_unit`, `src/muckrake/units.py`) with skip-and-report, `partial` runs and `crawl --retry-failed` (Oct 2026, docs#24)
   - stream spreadsheet/CSV rows to the statement writer instead of materialising whole sheets
-  - remove silent pagination caps; emit completeness warnings into the run summary
+  - remove silent pagination caps; completeness warnings via `Dataset.warn_incomplete` mark runs `partial`, appear in the run summary, and are reported by `release-build` (Oct 2026, docs#26)
   - batched/incremental xref (hard `--limit 50000` today) + document complexity at 150k+ entities
   - atomic load in `src/muckrake/load.py` (currently delete-all-then-insert; a midway failure leaves the dataset empty)
   - opt-in concurrency for I/O-bound fetches

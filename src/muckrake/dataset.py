@@ -103,6 +103,7 @@ class Dataset:
         self.writer = writer
         self.units = units or UnitLedger(None)
         self._unit_statements: list[Statement] | None = None
+        self._unit_warnings: list[dict[str, Any]] | None = None
         self.timestamps = timestamps or {}
         self.run_time = datetime.utcnow().isoformat()
 
@@ -175,20 +176,37 @@ class Dataset:
         if self._unit_statements is not None:
             raise RuntimeError(f"Unit {key!r} started inside another unit")
         self._unit_statements = []
+        self._unit_warnings = []
         try:
             func(*args, **kwargs)
         except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
             self.log.warning("Unit failed: %s: %s", key, error)
-            self.units.add(UnitRecord(key, "failed", error=error))
+            self.units.add(UnitRecord(key, "failed", error=error, warnings=self._unit_warnings))
             return False
         finally:
             statements, self._unit_statements = self._unit_statements, None
+            warnings, self._unit_warnings = self._unit_warnings, None
         start = self.units.position()
         for stmt in statements:
             self.writer.write(stmt)
-        self.units.add(UnitRecord(key, "succeeded", start, self.units.position()))
+        record = UnitRecord(key, "succeeded", start, self.units.position(), warnings=warnings)
+        self.units.add(record)
         return True
+
+    def warn_incomplete(self, reason: str, **context: Any) -> None:
+        """Record a known gap in this crawl's output, e.g. a pagination cap was hit.
+
+        The run finishes as ``partial`` and the warning is counted by ``reason`` in
+        its stats and summary, so the gap is never silent. Keep ``reason`` a fixed
+        phrase and put specifics (URLs, counts) in JSON-serialisable ``context``.
+        """
+        warning = {"reason": reason, **context}
+        self.log.warning("Incomplete: %s %s", reason, context)
+        if self._unit_warnings is not None:
+            self._unit_warnings.append(warning)
+        else:
+            self.units.warnings.append(warning)
 
     def fetch_resource(self, name: str, url: str, **kwargs: Any):
         """Standard file downloader for datasets."""

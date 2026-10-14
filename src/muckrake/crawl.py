@@ -186,6 +186,10 @@ def log_unit_summary(dataset_name: str, summary: dict[str, Any]) -> None:
     )
     for group, count in summary["failures_by_error"].items():
         log.warning("  %6d x %s", count, group)
+    if summary["warnings"]:
+        log.warning("%s completeness warnings: %d", dataset_name, summary["warnings"])
+        for reason, count in summary["warnings_by_reason"].items():
+            log.warning("  %6d x %s", count, reason)
     if summary["failed"]:
         log.warning("Re-run the failed units with: muckrake crawl %s --retry-failed", dataset_name)
 
@@ -236,8 +240,9 @@ def run_crawl(config_path: Path, output: str | None = None, retry_failed: bool =
             writer.flush()
         summary = units.summary()
         log_unit_summary(dataset_name, summary)
-        status = "partial" if summary["failed"] else "succeeded"
-        finish_dataset_run(dataset_run.id, status, stats={"units": summary})
+        status = "partial" if units.incomplete else "succeeded"
+        stats = {"units": summary, "completeness_warnings": units.all_warnings()}
+        finish_dataset_run(dataset_run.id, status, stats=stats)
         return
 
     store = get_artifact_store()
@@ -270,6 +275,7 @@ def run_crawl(config_path: Path, output: str | None = None, retry_failed: bool =
                     previous_artifact.storage_key if previous_artifact is not None else None
                 ),
                 "units": summary,
+                "completeness_warnings": units.all_warnings(),
             },
         )
         return pack_key
@@ -292,7 +298,7 @@ def run_crawl(config_path: Path, output: str | None = None, retry_failed: bool =
     ds.close()
     writer.close()
     units.close()
-    status = "partial" if units.summary()["failed"] else "succeeded"
+    status = "partial" if units.incomplete else "succeeded"
     finish(status)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(pack_path, output_path)

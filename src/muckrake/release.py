@@ -208,6 +208,8 @@ def run_release_build(
 ) -> int:
     selected = _resolve_dataset_names(dataset_names)
     dataset_runs: list[tuple[str, int, Path]] = []
+    # Runs that finished `partial`: what each is known to be missing.
+    incomplete: dict[str, dict[str, Any]] = {}
     for dataset_name in selected:
         run = get_latest_successful_run(dataset_name)
         if run is None:
@@ -217,6 +219,20 @@ def run_release_build(
             raise ValueError(f"Dataset run {run.id} has no statements artifact")
         path = get_artifact_store().resolve_path(artifact.storage_key)
         dataset_runs.append((dataset_name, run.id, path))
+        if run.status == "partial":
+            units = json.loads(run.stats_json or "{}").get("units", {})
+            incomplete[dataset_name] = {
+                "failed_units": units.get("failed", 0),
+                "failures_by_error": units.get("failures_by_error", {}),
+                "warnings_by_reason": units.get("warnings_by_reason", {}),
+            }
+            log.warning(
+                "Release input %s (run %s) is partial: %d failed units, %d completeness warnings",
+                dataset_name,
+                run.id,
+                units.get("failed", 0),
+                units.get("warnings", 0),
+            )
 
     release = create_release(notes=notes)
     store = get_artifact_store()
@@ -249,7 +265,12 @@ def run_release_build(
             "release_id": release.id,
             "status": "built",
             "dataset_runs": [
-                {"dataset_name": name, "dataset_run_id": run_id} for name, run_id, _ in dataset_runs
+                {
+                    "dataset_name": name,
+                    "dataset_run_id": run_id,
+                    **({"incomplete": incomplete[name]} if name in incomplete else {}),
+                }
+                for name, run_id, _ in dataset_runs
             ],
             "artifacts": [
                 {
