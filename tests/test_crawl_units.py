@@ -9,15 +9,18 @@ import pytest
 import yaml
 from followthemoney.statement.serialize import read_pack_statements
 
+from muckrake.artifacts import get_artifact_store
 from muckrake.crawl import run_crawl
 from muckrake.dataset import get_dataset_path
+from muckrake.release import run_release_build
 from muckrake.runs import get_dataset_run, get_latest_crawl_run, get_latest_successful_run
 from muckrake.units import error_group
 
 # A crawler driven by plan.json: one unit per key, each emitting a Company named
 # after its key. Keys in "fail" raise after emitting (so a failed unit's partial
-# output must be discarded); reaching "crash_at" raises outside any unit. Every
-# executed unit is appended to calls.txt.
+# output must be discarded); keys in "warn" record a completeness warning;
+# "warn_run" records one outside any unit; reaching "crash_at" raises outside
+# any unit. Every executed unit is appended to calls.txt.
 CRAWLER = """
 import json
 from pathlib import Path
@@ -32,6 +35,8 @@ def run(dataset, key, plan):
     entity.id = dataset.make_id(key)
     entity.add("name", key)
     dataset.emit(entity)
+    if key in plan.get("warn", []):
+        dataset.warn_incomplete("page cap reached", key=key)
     if key in plan.get("fail", []):
         raise ValueError(f"bad unit: {key}")
 
@@ -42,6 +47,8 @@ def crawl(dataset):
         if key == plan.get("crash_at"):
             raise RuntimeError(f"crashed at {key}")
         dataset.run_unit(key, run, dataset, key, plan)
+    if plan.get("warn_run"):
+        dataset.warn_incomplete("listing truncated", url="https://example.org/list")
 """
 
 
@@ -55,9 +62,20 @@ class UnitDataset:
         (self.dir / "crawler.py").write_text(CRAWLER)
 
     def plan(
-        self, units: list[str], fail: tuple[str, ...] = (), crash_at: str | None = None
+        self,
+        units: list[str],
+        fail: tuple[str, ...] = (),
+        crash_at: str | None = None,
+        warn: tuple[str, ...] = (),
+        warn_run: bool = False,
     ) -> None:
-        payload = {"units": units, "fail": list(fail), "crash_at": crash_at}
+        payload = {
+            "units": units,
+            "fail": list(fail),
+            "crash_at": crash_at,
+            "warn": list(warn),
+            "warn_run": warn_run,
+        }
         (self.dir / "plan.json").write_text(json.dumps(payload))
         (self.dir / "calls.txt").write_text("")
 
@@ -89,6 +107,8 @@ def test_all_units_succeed(unit_dataset):
         "carried": 0,
         "failed": 0,
         "failures_by_error": {},
+        "warnings": 0,
+        "warnings_by_reason": {},
     }
     assert ds.names() == ["a", "b", "c"]
 
@@ -164,6 +184,50 @@ def test_retry_without_previous_crawl_raises(unit_dataset):
     ds.plan(["a"])
     with pytest.raises(ValueError, match="No previous crawl"):
         run_crawl(ds.config, retry_failed=True)
+
+
+def test_completeness_warnings_make_run_partial(unit_dataset):
+    ds = unit_dataset()
+    ds.plan(["a", "b"], warn=("a",), warn_run=True)
+    run_crawl(ds.config)
+
+    run = get_latest_crawl_run(ds.name)
+    assert run.status == "partial"
+    stats = json.loads(run.stats_json)
+    assert stats["units"]["failed"] == 0
+    assert stats["units"]["warnings_by_reason"] == {"page cap reached": 1, "listing truncated": 1}
+    assert {"reason": "page cap reached", "key": "a"} in stats["completeness_warnings"]
+    # A warning doesn't drop data: both units' statements are in the pack.
+    assert ds.names() == ["a", "b"]
+
+
+def test_unit_warnings_survive_retry(unit_dataset):
+    ds = unit_dataset()
+    ds.plan(["a", "b"], warn=("a",), fail=("b",))
+    run_crawl(ds.config)
+
+    ds.plan(["a", "b"])
+    run_crawl(ds.config, retry_failed=True)
+
+    assert ds.calls() == ["b"]
+    run = get_latest_crawl_run(ds.name)
+    assert run.status == "partial"
+    assert json.loads(run.stats_json)["units"]["warnings_by_reason"] == {"page cap reached": 1}
+
+
+def test_release_build_reports_partial_inputs(unit_dataset):
+    ds = unit_dataset()
+    ds.plan(["a", "b"], fail=("b",), warn=("a",))
+    run_crawl(ds.config)
+
+    release_id = run_release_build([ds.name])
+    manifest_path = get_artifact_store().resolve_path(f"releases/{release_id}/manifest.json")
+    [entry] = json.loads(manifest_path.read_text())["dataset_runs"]
+    assert entry["incomplete"] == {
+        "failed_units": 1,
+        "failures_by_error": {"ValueError: bad unit": 1},
+        "warnings_by_reason": {"page cap reached": 1},
+    }
 
 
 def test_error_group_keeps_type_and_first_clause():

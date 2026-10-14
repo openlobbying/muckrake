@@ -33,6 +33,10 @@ A crawler can split its work into independently retryable units (one source file
 
 Each run writes a `units.jsonl` ledger next to its pack, recording where every succeeded unit sits in the pack. `uv run muckrake crawl {dataset_name} --retry-failed` copies the units that succeeded in the dataset's latest crawl into a new run and re-runs everything else. That covers both retrying failures (e.g. after a parser fix) and resuming a crawl that crashed or was killed partway. Pack and ledger are written in place under the run's artifact directory as the crawl goes, so even a killed crawl leaves its completed units behind.
 
+#### Completeness warnings
+
+When a crawler knows its output is missing something (a pagination cap was hit, an API returned fewer items than it reported, a linked file has gone), it records it with `dataset.warn_incomplete(reason, **context)` rather than only logging it. Keep `reason` a fixed phrase and put the specifics in `context`. The run finishes as `partial`, the warnings are counted by reason in the end-of-crawl log and listed in the run's stats, and warnings raised inside a unit are carried over by `--retry-failed`. `release-build` logs every `partial` input and records what it's missing (failed units and warnings by reason) in the release manifest.
+
 ### AI-based NER
 
 Many data sources have [composite fields that contain multiple entities](https://openaccess.transparency.org.uk/?meeting=10088). We use LLMs to extract unique entities and relationships from these fields, and store them as candidates in the database for review and approval. See [NER docs](/src/muckrake/extract/ner/README.md) for details.

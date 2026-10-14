@@ -14,7 +14,7 @@ Key Resources:
 - FtM entity schemata: https://followthemoney.tech/explorer/schemata/
 - FtM property types: https://followthemoney.tech/explorer/types/
 
-Crawlers must crash loudly on uncertain data, never emit ambiguous information. In a crawler that wraps its work in `dataset.run_unit(...)`, that crash fails only the current unit: nothing from it is emitted, the run finishes `partial`, and `muckrake crawl <name> --retry-failed` re-runs it (see README "Units of work").
+Crawlers must crash loudly on uncertain data, never emit ambiguous information. In a crawler that wraps its work in `dataset.run_unit(...)`, that crash fails only the current unit: nothing from it is emitted, the run finishes `partial`, and `muckrake crawl <name> --retry-failed` re-runs it (see README "Units of work"). A known gap that isn't an error (a pagination cap, a missing linked file) must be recorded with `dataset.warn_incomplete(reason, **context)`, never only logged, so the run is marked `partial`.
 
 ## Python conventions
 
