@@ -31,29 +31,28 @@ class LocalArtifactStore:
     def exists(self, storage_key: str) -> bool:
         return self.resolve_path(storage_key).exists()
 
+    def describe(self, storage_key: str) -> StoredArtifact:
+        """Describe an artifact already written in place under ``storage_key``."""
+        path = self.resolve_path(storage_key)
+        return StoredArtifact(
+            storage_backend=self.storage_backend,
+            storage_key=storage_key,
+            absolute_path=path,
+            sha256=file_sha256(path),
+            size_bytes=path.stat().st_size,
+        )
+
     def put_file(self, source_path: Path, storage_key: str) -> StoredArtifact:
         target_path = self.resolve_path(storage_key)
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, target_path)
-        return StoredArtifact(
-            storage_backend=self.storage_backend,
-            storage_key=storage_key,
-            absolute_path=target_path,
-            sha256=file_sha256(target_path),
-            size_bytes=target_path.stat().st_size,
-        )
+        return self.describe(storage_key)
 
     def put_bytes(self, data: bytes, storage_key: str) -> StoredArtifact:
         target_path = self.resolve_path(storage_key)
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_bytes(data)
-        return StoredArtifact(
-            storage_backend=self.storage_backend,
-            storage_key=storage_key,
-            absolute_path=target_path,
-            sha256=file_sha256(target_path),
-            size_bytes=target_path.stat().st_size,
-        )
+        return self.describe(storage_key)
 
     def put_json(self, payload: dict[str, Any], storage_key: str) -> StoredArtifact:
         data = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")

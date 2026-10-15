@@ -1,12 +1,14 @@
 import logging
 import os
 import shutil
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from datapatch import Lookup, get_lookups
 from followthemoney import Dataset as FTMDataset
+from followthemoney.statement import Statement
 from followthemoney.statement.entity import StatementEntity
 from lxml.html import HtmlElement
 from nomenklatura.cache import Cache
@@ -15,6 +17,7 @@ from org_id import make_hashed_id, make_org_id
 
 from muckrake.extract.fetch import fetch_file, fetch_html, fetch_json, fetch_text
 from muckrake.settings import DATA_PATH, SQL_URI
+from muckrake.units import UnitLedger, UnitRecord
 
 
 def load_raw_config(path: Path) -> dict[str, Any]:
@@ -89,6 +92,7 @@ class Dataset:
         config_path: Path,
         writer: Any,
         timestamps: dict[str, str] | None = None,
+        units: UnitLedger | None = None,
     ):
         self._data = load_raw_config(config_path)
         config = get_dataset_config(self._data)
@@ -97,6 +101,9 @@ class Dataset:
         self.prefix = config.get("prefix", self.name)
 
         self.writer = writer
+        self.units = units or UnitLedger(None)
+        self._unit_statements: list[Statement] | None = None
+        self._unit_warnings: list[dict[str, Any]] | None = None
         self.timestamps = timestamps or {}
         self.run_time = datetime.utcnow().isoformat()
 
@@ -150,7 +157,56 @@ class Dataset:
             else:
                 stmt.first_seen = self.run_time
             stmt.last_seen = self.run_time
+            if self._unit_statements is not None:
+                self._unit_statements.append(stmt)
+            else:
+                self.writer.write(stmt)
+
+    def run_unit(self, key: str, func: Callable[..., object], *args: Any, **kwargs: Any) -> bool:
+        """Run one independently retryable unit of work, e.g. one source file.
+
+        Statements emitted inside ``func`` are written only if it returns. If it
+        raises, the unit is recorded as failed, nothing from it is written, and
+        the crawl carries on; the run then finishes as ``partial``. Units carried
+        over by ``crawl --retry-failed`` are skipped. Returns whether the unit's
+        statements are in the pack.
+        """
+        if key in self.units.carried:
+            return True
+        if self._unit_statements is not None:
+            raise RuntimeError(f"Unit {key!r} started inside another unit")
+        self._unit_statements = []
+        self._unit_warnings = []
+        try:
+            func(*args, **kwargs)
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            self.log.warning("Unit failed: %s: %s", key, error)
+            self.units.add(UnitRecord(key, "failed", error=error, warnings=self._unit_warnings))
+            return False
+        finally:
+            statements, self._unit_statements = self._unit_statements, None
+            warnings, self._unit_warnings = self._unit_warnings, None
+        start = self.units.position()
+        for stmt in statements:
             self.writer.write(stmt)
+        record = UnitRecord(key, "succeeded", start, self.units.position(), warnings=warnings)
+        self.units.add(record)
+        return True
+
+    def warn_incomplete(self, reason: str, **context: Any) -> None:
+        """Record a known gap in this crawl's output, e.g. a pagination cap was hit.
+
+        The run finishes as ``partial`` and the warning is counted by ``reason`` in
+        its stats and summary, so the gap is never silent. Keep ``reason`` a fixed
+        phrase and put specifics (URLs, counts) in JSON-serialisable ``context``.
+        """
+        warning = {"reason": reason, **context}
+        self.log.warning("Incomplete: %s %s", reason, context)
+        if self._unit_warnings is not None:
+            self._unit_warnings.append(warning)
+        else:
+            self.units.warnings.append(warning)
 
     def fetch_resource(self, name: str, url: str, **kwargs: Any):
         """Standard file downloader for datasets."""

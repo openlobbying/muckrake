@@ -7,21 +7,25 @@ import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+import psycopg
 from followthemoney.statement.serialize import PackStatementWriter, read_pack_statements
-from nomenklatura.db import get_engine
-from nomenklatura.resolver import Resolver
-from sqlalchemy import MetaData, delete, desc, select, update
+from nomenklatura.db import get_engine, make_statement_table
+from nomenklatura.resolver import Linker, Resolver
+from sqlalchemy import MetaData, delete, desc, select, text, update
+from sqlalchemy.engine import Connection, Engine
 
 from muckrake.artifacts import get_artifact_store
 from muckrake.dataset import find_datasets, load_config
 from muckrake.db import (
+    create_search_view,
     get_release_artifacts_table,
     get_release_inputs_table,
     get_releases_table,
     init_database,
     init_published_database,
+    is_postgres_uri,
 )
 from muckrake.extract.ner.materialize import iter_dataset_statements
 from muckrake.runs import (
@@ -208,6 +212,8 @@ def run_release_build(
 ) -> int:
     selected = _resolve_dataset_names(dataset_names)
     dataset_runs: list[tuple[str, int, Path]] = []
+    # Runs that finished `partial`: what each is known to be missing.
+    incomplete: dict[str, dict[str, Any]] = {}
     for dataset_name in selected:
         run = get_latest_successful_run(dataset_name)
         if run is None:
@@ -217,6 +223,20 @@ def run_release_build(
             raise ValueError(f"Dataset run {run.id} has no statements artifact")
         path = get_artifact_store().resolve_path(artifact.storage_key)
         dataset_runs.append((dataset_name, run.id, path))
+        if run.status == "partial":
+            units = json.loads(run.stats_json or "{}").get("units", {})
+            incomplete[dataset_name] = {
+                "failed_units": units.get("failed", 0),
+                "failures_by_error": units.get("failures_by_error", {}),
+                "warnings_by_reason": units.get("warnings_by_reason", {}),
+            }
+            log.warning(
+                "Release input %s (run %s) is partial: %d failed units, %d completeness warnings",
+                dataset_name,
+                run.id,
+                units.get("failed", 0),
+                units.get("warnings", 0),
+            )
 
     release = create_release(notes=notes)
     store = get_artifact_store()
@@ -249,7 +269,12 @@ def run_release_build(
             "release_id": release.id,
             "status": "built",
             "dataset_runs": [
-                {"dataset_name": name, "dataset_run_id": run_id} for name, run_id, _ in dataset_runs
+                {
+                    "dataset_name": name,
+                    "dataset_run_id": run_id,
+                    **({"incomplete": incomplete[name]} if name in incomplete else {}),
+                }
+                for name, run_id, _ in dataset_runs
             ],
             "artifacts": [
                 {
@@ -312,18 +337,86 @@ def run_release_publish(release_id: int) -> None:
 
 
 def _load_release_into_published_db(dataset_names: list[str], pack_path: Path) -> None:
-    init_published_database(PUBLISHED_SQL_URI)
+    engine = init_published_database(PUBLISHED_SQL_URI)
     store = get_sql_store(dataset_names, uri=PUBLISHED_SQL_URI)
 
-    with store.engine.begin() as conn:
-        conn.execute(delete(store.table))
+    if is_postgres_uri(PUBLISHED_SQL_URI):
+        _swap_in_release_postgres(engine, store.linker, pack_path)
+        return
 
+    # Clear and rewrite in one transaction, so readers keep seeing the previous
+    # release until this one commits, and a failure leaves it in place.
     with store.writer() as writer:
+        writer.replace()
         with pack_path.open("rb") as fh:
             for stmt in read_pack_statements(fh):
                 writer.add_statement(stmt)
 
     refresh_search_index(PUBLISHED_SQL_URI)
+
+
+def _swap_in_release_postgres(engine: Engine, linker: Linker[Any], pack_path: Path) -> None:
+    """Build the release in new tables and swap them in, in one transaction.
+
+    The pack is streamed with COPY into a temporary table, deduplicated into
+    ``statement_new`` and indexed there, along with a new search view. Swapping
+    is a few renames at the end, so readers see the previous release until the
+    commit and are only blocked for the swap itself. Statements repeated in the
+    pack resolve as the row-by-row upsert does: the last copy wins, except for
+    ``first_seen``, which comes from the first.
+    """
+    columns = [column.name for column in make_statement_table(MetaData()).columns]
+    column_sql = ", ".join(f'"{name}"' for name in columns)
+    select_sql = ", ".join(
+        "FIRST_VALUE(first_seen) OVER (PARTITION BY id ORDER BY seq)"
+        if name == "first_seen"
+        else f'"{name}"'
+        for name in columns
+    )
+    with engine.begin() as conn:
+        conn.execute(text("SET LOCAL statement_timeout = 0"))
+        conn.execute(
+            text("CREATE TEMP TABLE statement_load (seq bigint, LIKE statement) ON COMMIT DROP")
+        )
+        driver = cast(psycopg.Connection[Any], conn.connection.driver_connection)
+        with (
+            driver.cursor() as cursor,
+            cursor.copy(f"COPY statement_load (seq, {column_sql}) FROM STDIN") as copy,
+            pack_path.open("rb") as fh,
+        ):
+            for seq, stmt in enumerate(read_pack_statements(fh)):
+                if stmt.entity_id is None:
+                    continue
+                stmt.canonical_id = linker.get_canonical(stmt.entity_id)
+                row = stmt.to_db_row()
+                copy.write_row([seq, *(row[name] for name in columns)])
+
+        make_statement_table(MetaData(), name="statement_new").create(conn)
+        conn.execute(
+            text(
+                f"INSERT INTO statement_new ({column_sql}) "
+                f"SELECT DISTINCT ON (id) {select_sql} FROM statement_load "
+                "ORDER BY id, seq DESC"
+            )
+        )
+        create_search_view(conn, view="entity_search_new", table="statement_new")
+
+        conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS entity_search"))
+        conn.execute(text("DROP TABLE statement"))
+        conn.execute(text("ALTER TABLE statement_new RENAME TO statement"))
+        conn.execute(text("ALTER MATERIALIZED VIEW entity_search_new RENAME TO entity_search"))
+        _rename_indexes(conn, "statement", "statement_new", "statement")
+        _rename_indexes(conn, "entity_search", "entity_search_new", "entity_search")
+
+
+def _rename_indexes(conn: Connection, relation: str, old: str, new: str) -> None:
+    names = conn.execute(
+        text("SELECT indexname FROM pg_indexes WHERE tablename = :relation"),
+        {"relation": relation},
+    ).scalars()
+    for name in list(names):
+        if old in name:
+            conn.execute(text(f'ALTER INDEX "{name}" RENAME TO "{name.replace(old, new)}"'))
 
 
 def _copy_resolver_state() -> None:

@@ -7,7 +7,7 @@ from nomenklatura.db import get_engine, get_metadata, make_statement_table
 from nomenklatura.resolver import Identifier, Resolver
 from org_id import is_org_id
 from sqlalchemy import Column, Integer, MetaData, String, Table, Text, inspect, text
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Connection, Engine
 
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
 
@@ -286,59 +286,64 @@ def refresh_postgres_search(uri: str = SQL_URI) -> None:
 
     engine = get_engine(uri)
     with engine.begin() as conn:
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+        # nomenklatura's engines cap every statement at NOMENKLATURA_DB_STMT_TIMEOUT
+        # (10 s by default). Rebuilding the search view scans every statement, which
+        # takes longer than that on a full corpus, so lift the cap for this
+        # transaction only.
+        conn.execute(text("SET LOCAL statement_timeout = 0"))
         conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS entity_search"))
-        conn.execute(
-            text(
-                """
-                CREATE MATERIALIZED VIEW entity_search AS
-                SELECT
-                  s.canonical_id AS id,
-                  MIN(CASE WHEN s.prop = 'name' THEN s.value END) AS display_name,
-                  MIN(s.schema) AS schema,
-                  string_agg(DISTINCT s.value, ' ')
-                    FILTER (WHERE s.prop IN
-                        ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation'))
-                    AS names_text,
-                  to_tsvector(
-                    'simple',
-                    unaccent(
-                      COALESCE(
-                        string_agg(DISTINCT s.value, ' ')
-                          FILTER (WHERE s.prop IN
-                        ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation')),
-                        ''
-                      )
-                    )
-                  ) AS tsv
-                FROM statement AS s
-                WHERE s.schema IN ('Company', 'LegalEntity', 'Organization', 'Person', 'PublicBody')
-                  AND s.canonical_id IS NOT NULL
-                GROUP BY s.canonical_id
-                """
-            )
+        create_search_view(conn)
+
+
+def create_search_view(
+    conn: Connection, view: str = "entity_search", table: str = "statement"
+) -> None:
+    """Create the entity search materialized view (and its indexes) over ``table``."""
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+    conn.execute(
+        text(
+            f"""
+            CREATE MATERIALIZED VIEW {view} AS
+            SELECT
+              s.canonical_id AS id,
+              MIN(CASE WHEN s.prop = 'name' THEN s.value END) AS display_name,
+              MIN(s.schema) AS schema,
+              string_agg(DISTINCT s.value, ' ')
+                FILTER (WHERE s.prop IN
+                    ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation'))
+                AS names_text,
+              to_tsvector(
+                'simple',
+                unaccent(
+                  COALESCE(
+                    string_agg(DISTINCT s.value, ' ')
+                      FILTER (WHERE s.prop IN
+                    ('name', 'alias', 'previousName', 'weakAlias', 'abbreviation')),
+                    ''
+                  )
+                )
+              ) AS tsv
+            FROM {table} AS s
+            WHERE s.schema IN ('Company', 'LegalEntity', 'Organization', 'Person', 'PublicBody')
+              AND s.canonical_id IS NOT NULL
+            GROUP BY s.canonical_id
+            """
         )
-        conn.execute(
-            text("CREATE UNIQUE INDEX IF NOT EXISTS entity_search_id_idx ON entity_search (id)")
+    )
+    conn.execute(text(f"CREATE UNIQUE INDEX {view}_id_idx ON {view} (id)"))
+    conn.execute(text(f"CREATE INDEX {view}_tsv_idx ON {view} USING GIN (tsv)"))
+    conn.execute(
+        text(
+            f"CREATE INDEX {view}_display_name_trgm_idx "
+            f"ON {view} USING GIN (display_name gin_trgm_ops)"
         )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS entity_search_tsv_idx ON entity_search USING GIN (tsv)"
-            )
+    )
+    conn.execute(
+        text(
+            f"CREATE INDEX {view}_names_text_trgm_idx ON {view} USING GIN (names_text gin_trgm_ops)"
         )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS entity_search_display_name_trgm_idx "
-                "ON entity_search USING GIN (display_name gin_trgm_ops)"
-            )
-        )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS entity_search_names_text_trgm_idx "
-                "ON entity_search USING GIN (names_text gin_trgm_ops)"
-            )
-        )
+    )
 
 
 def _ensure_ner_candidates_constraints(engine: Engine) -> None:

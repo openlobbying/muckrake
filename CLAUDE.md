@@ -14,11 +14,11 @@ Note: the org-id dependency needs a **v0.1.1 PyPI release** to pick up the `Regi
 - **Tooling baseline + tests** (docs#33, #34): adopt ruff/mypy/pre-commit (currently none configured) and build out test coverage across core — existing tests only cover CLI entities, entity writes, and SQLite storage; load, release, artifacts, `make_id`, NER apply, and dedupe have essentially none. Hardening work should land with tests.
 - **Data-plane hardening workstream** (docs#23–#29), prerequisite for UTI-scale ingestion (155k actors); fixes belong in core so all crawlers inherit them:
   - ✅ resilient fetch layer (PR #22): shared polite session in `src/muckrake/extract/fetch.py` — retry + exponential backoff (Retry-After honoured, idempotent methods only) + opt-in per-host rate limit (`MUCKRAKE_HTTP_MIN_INTERVAL`) + timeout
-  - crawl checkpointing + keep partial artifacts (`src/muckrake/crawl.py` currently discards everything on failure)
+  - crawl checkpointing + keep partial artifacts: units of work (`Dataset.run_unit`, `src/muckrake/units.py`) with skip-and-report, `partial` runs and `crawl --retry-failed` (Oct 2026, docs#24)
   - stream spreadsheet/CSV rows to the statement writer instead of materialising whole sheets
-  - remove silent pagination caps; emit completeness warnings into the run summary
+  - remove silent pagination caps; completeness warnings via `Dataset.warn_incomplete` mark runs `partial`, appear in the run summary, and are reported by `release-build` (Oct 2026, docs#26)
   - batched/incremental xref (hard `--limit 50000` today) + document complexity at 150k+ entities
-  - atomic load in `src/muckrake/load.py` (currently delete-all-then-insert; a midway failure leaves the dataset empty)
+  - atomic load and publish: `MuckrakeSQLWriter` rolls back on exception and `replace()` deletes inside its transaction, so `load` and `release-publish` commit completely or not at all (Oct 2026, docs#28)
   - opt-in concurrency for I/O-bound fetches
 - **Data backfill ports (later)**: Companies House enrichment as a `nomenklatura.enrich` enricher feeding the resolver (note: UTI holds **no human CH match decisions to migrate** — its 51k figure is orgs *processed*, mostly unreviewed; the enricher matches from scratch), and APPC-archive / ParlParse historical crawlers — generic GB data-plane capabilities, not UTI glue.
 - A generic, project-agnostic export interface (docs#6) is an **open decision** that gates the merge's projection work — don't preempt its shape in code.

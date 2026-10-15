@@ -27,6 +27,16 @@ To crawl a dataset, run `uv run muckrake crawl {dataset_name}`. Run `uv run muck
 
 Each crawl now creates a `dataset_runs` record in Postgres and stores immutable artifacts under `MUCKRAKE_ARTIFACT_PATH` (defaults to `data/artifacts`). The latest successful run remains mirrored into `data/datasets/{name}/statements.pack.csv` for local compatibility.
 
+#### Units of work and `--retry-failed`
+
+A crawler can split its work into independently retryable units (one source file, one page, one record) by wrapping each in `dataset.run_unit(key, func, *args)`. A unit's statements reach the pack only if `func` returns. If it raises, the unit is recorded as failed, nothing from it is emitted, and the crawl carries on. A crawl that completes with failed units finishes as `partial`: its output is usable by `load` and `release-build`, and the failures are counted by error type in the run's stats and the end-of-crawl log. Errors outside a unit still fail the whole crawl.
+
+Each run writes a `units.jsonl` ledger next to its pack, recording where every succeeded unit sits in the pack. `uv run muckrake crawl {dataset_name} --retry-failed` copies the units that succeeded in the dataset's latest crawl into a new run and re-runs everything else. That covers both retrying failures (e.g. after a parser fix) and resuming a crawl that crashed or was killed partway. Pack and ledger are written in place under the run's artifact directory as the crawl goes, so even a killed crawl leaves its completed units behind.
+
+#### Completeness warnings
+
+When a crawler knows its output is missing something (a pagination cap was hit, an API returned fewer items than it reported, a linked file has gone), it records it with `dataset.warn_incomplete(reason, **context)` rather than only logging it. Keep `reason` a fixed phrase and put the specifics in `context`. The run finishes as `partial`, the warnings are counted by reason in the end-of-crawl log and listed in the run's stats, and warnings raised inside a unit are carried over by `--retry-failed`. `release-build` logs every `partial` input and records what it's missing (failed units and warnings by reason) in the release manifest.
+
 ### AI-based NER
 
 Many data sources have [composite fields that contain multiple entities](https://openaccess.transparency.org.uk/?meeting=10088). We use LLMs to extract unique entities and relationships from these fields, and store them as candidates in the database for review and approval. See [NER docs](/src/muckrake/extract/ner/README.md) for details.
@@ -61,6 +71,8 @@ uv run muckrake dedupe-edges
 
 Statements are loaded into Postgres with `uv run muckrake load`. This reads the statements CSV files and applies any approved NER candidates before materialising entities and relationships.
 
+A load is atomic: every dataset in it is cleared and reloaded in a single transaction, so a load that fails partway leaves the previously loaded statements in place. A dataset with no statements pack is skipped with a warning, and its loaded statements are kept.
+
 To load from a specific immutable crawl snapshot instead of the local workspace copy:
 
 ```bash
@@ -73,6 +85,8 @@ For the published site, prefer the release workflow instead of loading directly 
 uv run muckrake release-build
 uv run muckrake release-publish 1
 ```
+
+Publishing is atomic: the new release is written in a single transaction, so readers keep seeing the previous release until it commits, and a failed publish leaves it in place. On Postgres, the release is loaded with `COPY` into a new statement table, indexed and given its own search view, then swapped in with renames, so readers only wait for the swap. A full release of ~5M statements publishes in minutes. On SQLite, the published statements are cleared and rewritten row by row.
 
 
 ## OpenLobbying
