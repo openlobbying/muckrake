@@ -1,6 +1,6 @@
 name: Publish
 
-# 1. Update `version` in `pyproject.toml`.
+# 1. Update `version` in `pyproject.toml` and add the release to `CHANGELOG.md`.
 # 2. Commit the change.
 # 3. Create and push a matching git tag, such as `v0.1.1`.
 # 4. Watch the `Publish` workflow in GitHub Actions.
