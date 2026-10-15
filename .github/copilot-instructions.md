@@ -1,4 +1,4 @@
-This project contains crawlers that import source data, such as lobbyists lists and data about politicans, into the FollowTheMoney entities. It puts an emphasis on data cleaning. Much of the input data is semi-structured information published by government bodies - often rife with inconsistencies, manual data entry errors, etc. Our goal is to bring strict interpretation to these source datasets.
+muckrake is a reusable pipeline framework that turns source data into FollowTheMoney entities. It ships no crawlers of its own (apart from the example in `examples/hello_dataset/`); crawlers live in consuming repositories. The source data is often semi-structured government publications with inconsistencies and data-entry errors, so crawlers interpret it strictly.
 
 ### Repo layout
 
@@ -13,5 +13,5 @@ This project contains crawlers that import source data, such as lobbyists lists 
 ## Coding hints
 
 * All new crawlers should be written using typed Python. Suggest adding types to existing ones.
-* Always use `uv` to run `muckrake` commands, eg. `uv muckrake crawl <dataset_name>`.
-* Be extremely conservative in bringing in new dependencies. Libraries are listed in `pyproject.toml`.
+* Always use `uv` to run `muckrake` commands, eg. `uv run muckrake crawl <dataset_name>`.
+* Be conservative in bringing in new dependencies. Libraries are listed in `pyproject.toml`.
