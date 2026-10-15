@@ -11,7 +11,7 @@ Read the shared guide first: [openlobbying/docs CONTRIBUTING.md](https://github.
   - `uv run mypy src/`
   - Run `uv run pre-commit install` once so ruff runs on every commit.
 - New behaviour comes with tests in `tests/`. `tests/conftest.py` isolates data paths and uses SQLite, so no database is needed.
-- PyPI releases: tag `vX.Y.Z` on `main` only, after bumping `version` in `pyproject.toml`. The `Publish` workflow does the rest.
+- PyPI releases: tag `vX.Y.Z` on `main` only, after bumping `version` in `pyproject.toml` and adding the release to `CHANGELOG.md`. The `Publish` workflow does the rest.
 
 ## The one rule
 
