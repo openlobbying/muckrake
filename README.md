@@ -111,7 +111,7 @@ The primary user of Muckrake data is [OpenLobbying](https://openlobbying.org/), 
   - `MUCKRAKE_FTM_SCHEMA_PATHS`
   - `MUCKRAKE_ENV_FILE`
   - `FTM_MODEL_PATH` if you need to override the merged FollowTheMoney model entirely
-  - `OPENROUTER_API_KEY`, `LLM_MODEL`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`
+  - `LLM_MODEL`, `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY`, `NER_LLM_PROMPT_FILE`, `LOGFIRE_TOKEN`
 - Example:
 
 ```bash

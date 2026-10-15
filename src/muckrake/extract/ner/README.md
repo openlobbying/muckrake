@@ -35,6 +35,10 @@ Currently selected statement fields:
 
 This keeps the process format-agnostic across CSV/JSON/HTML-backed datasets.
 
+Only texts of 20+ characters containing a separator (`,`, `;` or `:`) are
+extracted. "and", "&" and brackets are nearly always part of one name
+("Department for Work & Pensions"), so they don't trigger extraction on their own.
+
 ## Current strategy: `delimiter`
 
 - Splits candidate text on commas and semicolons.
@@ -56,9 +60,9 @@ cannot reliably distinguish `Person` vs `Organization`.
 
 ## LLM strategy: `llm` (basic)
 
-- Uses `pydantic-ai` with OpenRouter.
-- Reads `OPENROUTER_API_KEY` and `LLM_MODEL` (from environment, with `.env` fallback).
-  `LLM_MODEL` can be either `stepfun/step-3.5-flash:free` or `openrouter:stepfun/step-3.5-flash:free`.
+- Uses `pydantic-ai`. `LLM_MODEL` picks the provider and model (from environment, with `.env` fallback):
+  - OpenRouter: `openrouter:stepfun/step-3.5-flash:free` (or just `stepfun/step-3.5-flash:free`), with `OPENROUTER_API_KEY`.
+  - Anthropic: `anthropic:claude-haiku-5-5`, with `ANTHROPIC_API_KEY`.
 - Produces FtM-style fragments in the same `entities` format as delimiter.
 - Supports relation links via local keys and `$ref:<key>` values in extracted properties
   (for example `Employment.employee -> "$ref:p1"`).
@@ -97,7 +101,7 @@ So reruns with unchanged input + extractor configuration are idempotent.
 
 `muckrake load` and `muckrake xref` both read `ner_candidates` and apply matching extractions before materializing statements:
 
-- if a candidate matches `(entity_id, property_name, fingerprint)`, the original source entity is skipped,
+- if a candidate matches `(property_name, fingerprint)`, in any dataset, the original source entity is skipped,
 - extracted fragments from `extraction_json` are materialized as new FtM entities,
 - references to the original entity ID are rewritten to the extracted entity IDs,
 - generated IDs use source dataset prefix + extracted `name` (for example `gb-meet-...`),
@@ -137,6 +141,10 @@ Run across all datasets:
 uv run muckrake ner-extract
 ```
 
+Each distinct text is extracted once: a text already extracted for any dataset
+is skipped, because approved candidates apply wherever that text appears. Use
+`--workers N` to extract N texts in parallel (useful with an LLM).
+
 Review pending candidates:
 
 ```bash
@@ -145,7 +153,26 @@ uv run muckrake ner-review open_access
 
 # All datasets
 uv run muckrake ner-review
+
+# Decide every pending candidate without review
+uv run muckrake ner-review --auto
 ```
+
+Save and restore candidates (with review decisions) outside the database, so
+paid LLM extractions are never repeated:
+
+```bash
+uv run muckrake ner-export ner/candidates.jsonl.gz
+uv run muckrake ner-import ner/candidates.jsonl.gz
+```
+
+Import adds only candidates that aren't already present, so local review
+decisions are kept.
+
+`--auto` approves every pending split and rejects extractions that only repeat
+the source text (so the original entity and its ID are kept). It records the
+reviewer as `muckrake/auto` and only touches pending candidates, so decisions
+made in the review TUI are never overwritten.
 
 Review controls:
 

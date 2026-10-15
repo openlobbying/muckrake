@@ -17,6 +17,7 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Footer, Static
 
 from .storage import (
+    auto_review,
     get_candidate,
     get_connection,
     init_db,
@@ -693,3 +694,11 @@ def run_ner_review(dataset_name: str | None = None, limit: int | None = None) ->
         f"skipped={summary['skipped']} "
         f"remaining={summary['remaining']}"
     )
+
+
+def run_ner_auto_review(dataset_name: str | None = None) -> None:
+    conn = get_connection()
+    init_db(conn)
+    approved, rejected = auto_review(conn, dataset_name=dataset_name)
+    conn.close()
+    click.echo(f"Auto review complete. approved={approved} rejected={rejected}")

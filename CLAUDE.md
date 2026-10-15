@@ -53,7 +53,7 @@ The CLI (`src/muckrake/cli.py`) also exposes manual entity CRUD — `add`, `get`
 
 ## Environment
 
-`MUCKRAKE_DATABASE_URL` (working DB; SQLite default when unset), `MUCKRAKE_PUBLISHED_DATABASE_URL` (defaults to working DB URL — use a separate DB when testing releases), `MUCKRAKE_DATA_PATH` / `MUCKRAKE_ARTIFACT_PATH` / `MUCKRAKE_DATASET_PATHS` overrides, `OPENROUTER_API_KEY` + `LLM_MODEL` for LLM-based NER. `.env` is loaded from the repo root of the current working directory (`MUCKRAKE_ENV_FILE` overrides); see `.env.example`.
+`MUCKRAKE_DATABASE_URL` (working DB; SQLite default when unset), `MUCKRAKE_PUBLISHED_DATABASE_URL` (defaults to working DB URL — use a separate DB when testing releases), `MUCKRAKE_DATA_PATH` / `MUCKRAKE_ARTIFACT_PATH` / `MUCKRAKE_DATASET_PATHS` overrides, `LLM_MODEL` plus `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY` for LLM-based NER. `.env` is loaded from the repo root of the current working directory (`MUCKRAKE_ENV_FILE` overrides); see `.env.example`.
 
 ## Conventions
 
