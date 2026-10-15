@@ -286,6 +286,11 @@ def refresh_postgres_search(uri: str = SQL_URI) -> None:
 
     engine = get_engine(uri)
     with engine.begin() as conn:
+        # nomenklatura's engines cap every statement at NOMENKLATURA_DB_STMT_TIMEOUT
+        # (10 s by default). Rebuilding the search view scans every statement, which
+        # takes longer than that on a full corpus, so lift the cap for this
+        # transaction only.
+        conn.execute(text("SET LOCAL statement_timeout = 0"))
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS entity_search"))
