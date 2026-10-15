@@ -4,7 +4,11 @@ All notable changes to muckrake are recorded here. Versions follow
 [semantic versioning](https://semver.org/); while muckrake is below 1.0, a minor
 version can change behaviour.
 
-## [Unreleased]
+## [0.3.1] - 2026-10-15
+
+Follow-up to 0.3.0 from the documentation audit: dependency and loading fixes,
+the last consumer-specific values removed from the dedupe code, and checks that
+keep the docs accurate.
 
 ### Changed
 
@@ -133,4 +137,5 @@ See the [GitHub releases](https://github.com/openlobbying/muckrake/releases) for
 0.2.1 and before.
 
 [Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.3.0...develop
+[0.3.1]: https://github.com/openlobbying/muckrake/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/openlobbying/muckrake/compare/v0.2.1...v0.3.0
