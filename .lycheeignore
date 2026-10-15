@@ -1,0 +1,3 @@
+# CHANGELOG compare links for a new version 404 until its tag is pushed,
+# which happens after the release PR merges.
+^https://github\.com/openlobbying/muckrake/compare/

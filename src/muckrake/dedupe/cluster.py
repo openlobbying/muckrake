@@ -446,6 +446,7 @@ def record_dedupe_cluster_judgement(
     judgement_value: str,
     user_id: str,
     user_name: str | None = None,
+    user_prefix: str | None = None,
 ) -> str | None:
     entity_order = list(dict.fromkeys(entity_ids))
     entity_set = set(entity_order)
@@ -491,7 +492,7 @@ def record_dedupe_cluster_judgement(
                 pair["left_id"],
                 pair["right_id"],
                 judgement,
-                user=_resolve_user_label(user_id, user_name),
+                user=_resolve_user_label(user_id, user_name, user_prefix),
             )
             if judgement == Judgement.POSITIVE:
                 canonical_id = str(result)

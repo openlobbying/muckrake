@@ -2,8 +2,6 @@ import logging
 import os
 from typing import Any
 
-from muckrake.env import load_env_file
-
 log = logging.getLogger(__name__)
 
 _LOGFIRE_CONFIGURED = False
@@ -34,9 +32,10 @@ def configure_logging(
 
     # If we haven't configured the global Logfire instance yet, do it now
     if not _LOGFIRE_CONFIGURED:
-        from muckrake.settings import BASE_PATH
-
-        load_env_file(BASE_PATH / ".env")
+        # Importing settings loads .env by the usual rules (nearest file upward,
+        # MUCKRAKE_ENV_FILE, skipped when ENVIRONMENT=production), so
+        # LOGFIRE_TOKEN can come from it.
+        import muckrake.settings  # noqa: F401
 
         logfire.configure(
             send_to_logfire="if-token-present",

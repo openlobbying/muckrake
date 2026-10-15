@@ -45,11 +45,14 @@ def _pair_key(left_id: str, right_id: str) -> str:
     return f"{left}::{right}"
 
 
-def _resolve_user_label(user_id: str, user_name: str | None) -> str:
+def _resolve_user_label(user_id: str, user_name: str | None, user_prefix: str | None) -> str:
+    """The resolver judgement's user: ``[prefix:]user_id[:name]``.
+
+    The calling app supplies the prefix (e.g. its own name) to namespace its
+    reviewers' IDs; muckrake adds none of its own.
+    """
     name = (user_name or "").strip()
-    if name:
-        return f"openlobbying:{user_id}:{name}"
-    return f"openlobbying:{user_id}"
+    return ":".join(part for part in (user_prefix, user_id, name) if part)
 
 
 def _delete_expired_locks(conn: Connection, now: datetime) -> None:
@@ -291,6 +294,7 @@ def record_dedupe_judgement(
     judgement_value: str,
     user_id: str,
     user_name: str | None = None,
+    user_prefix: str | None = None,
 ) -> str:
     try:
         judgement = Judgement(judgement_value)
@@ -316,7 +320,7 @@ def record_dedupe_judgement(
             left_id,
             right_id,
             judgement,
-            user=_resolve_user_label(user_id, user_name),
+            user=_resolve_user_label(user_id, user_name, user_prefix),
         )
         resolver.commit()
 

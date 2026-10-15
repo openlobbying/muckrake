@@ -2,7 +2,7 @@
 
 Muckrake is the reusable FollowTheMoney data pipeline core. It provides dataset discovery, crawl execution, loading, release-building, dedupe, and NER support for application repos such as OpenLobbying.
 
-OpenLobbying-specific crawlers, the FastAPI app, and the Svelte frontend now live in the sibling `../openlobbying/` repository.
+muckrake must stay project-agnostic: crawlers, apps and schema extensions for a particular project live in that project's repository (for OpenLobbying, the sibling `../openlobbying/`). `scripts/litmus.sh` checks this in CI. The only dataset here is the quickstart example in `examples/hello_dataset/`.
 
 ## FollowTheMoney
 
@@ -26,6 +26,6 @@ Keep code simple and tidy. We don't need excessive abstractions and over-enginee
 
 When working with crawlers, remember that `muckrake` discovers dataset configs from `./datasets/` in the current working directory and from `MUCKRAKE_DATASET_PATHS` when explicitly set.
 
-Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes. Leave comments in the code for future developers to understand your thought process.
+Keep documentation (README.md and AGENTS.md files) up to date and accurate when you add new features or make changes. `docs/cli.md` and `docs/env.md` are generated: after changing a command, option or environment variable (`ENV_VARS` in `src/muckrake/settings.py`), run `uv run python scripts/gen_docs.py`. Leave comments in the code for future developers to understand your thought process.
 
 You have access to the `gh` CLI tool, use it to interact with GitHub. However, don't commit, push or create pull requests directly unless directed to do so.

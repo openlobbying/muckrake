@@ -31,7 +31,7 @@ from muckrake.extract.ner.storage import get_connection as get_ner_connection
 from muckrake.load import run_load
 from muckrake.logging import configure_logging
 from muckrake.release import list_releases, run_release_build, run_release_publish
-from muckrake.settings import get_working_sql_uri
+from muckrake.settings import ensure_sqlite_dirs, get_published_sql_uri, get_working_sql_uri
 
 log = logging.getLogger("muckrake")
 
@@ -48,7 +48,7 @@ class MuckrakeGroup(click.Group):
     COMMAND_GROUPS = [
         ("List all available datasets", ["list"]),
         ("Crawl and extract", ["crawl"]),
-        ("Named-entity recognition", ["ner-extract", "ner-review"]),
+        ("Named-entity recognition", ["ner-extract", "ner-review", "ner-export", "ner-import"]),
         (
             "Deduplicate",
             [
@@ -119,6 +119,7 @@ class MuckrakeGroup(click.Group):
 def cli(verbose):
     """Muckrake: A minimal FtM data processing framework."""
     configure_logging(level=_logging_level(verbose))
+    ensure_sqlite_dirs(get_working_sql_uri(), get_published_sql_uri())
 
 
 @cli.command()
@@ -143,7 +144,7 @@ def cli(verbose):
 def crawl(dataset_name, output, clear, retry_failed):
     """Crawl one or all datasets.
 
-    DATASET_NAME should be the dataset name from config.yml (e.g., gb_political_finance).
+    DATASET_NAME should be the dataset name from config.yml (e.g., hello).
     If not provided, crawls all datasets.
     """
     if retry_failed and not dataset_name:
@@ -445,7 +446,7 @@ def dedupe_edges(dataset_name, max_gap_days, dry_run):
 def load(dataset_name, run_id):
     """Load statements into the database.
 
-    DATASET_NAME should be the dataset name from config.yml (e.g., gb_political_finance).
+    DATASET_NAME should be the dataset name from config.yml (e.g., hello).
     If not provided, loads all datasets.
     """
     try:
