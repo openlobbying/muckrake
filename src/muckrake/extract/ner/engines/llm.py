@@ -44,7 +44,7 @@ class LLMExtractor(Extractor):
             model_name,
             output_type=list[LLMEntity],
             system_prompt=_get_system_prompt(),
-            output_retries=3,
+            retries={"output": 3},
         )
 
         @self._agent.output_validator
