@@ -1,0 +1,5 @@
+# A self-contained example dataset for the README quickstart: no network access.
+name: hello
+prefix: hello
+title: Hello muckrake
+summary: Two companies and a director, defined inline in crawler.py.

@@ -57,3 +57,32 @@ jobs:
         run: uv run pytest
         env:
           MUCKRAKE_TEST_POSTGRES_URL: postgresql://muckrake:muckrake@localhost:5432/muckrake_test
+
+      # 🔒 muckrake stays project-agnostic: no consumer project names in src,
+      # tests or dependencies (see the script for the whitelist).
+      - name: Project-agnostic litmus
+        run: bash scripts/litmus.sh
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      # Checks every link in the Markdown docs, including relative file links and
+      # #anchors.
+      # Excluded: the private openlobbying/docs repo and project board, which
+      # 404 without access (CLAUDE.md links them for maintainers), and loopback
+      # URLs from local-setup examples.
+      - name: Check links
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --no-progress
+            --include-fragments
+            --exclude-loopback
+            --exclude '^https://github\.com/openlobbying/docs'
+            --exclude '^https://github\.com/orgs/openlobbying/projects'
+            '**/*.md'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

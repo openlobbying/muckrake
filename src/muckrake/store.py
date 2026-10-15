@@ -42,8 +42,9 @@ class CombinedDataset(Dataset):
 
 def get_level_store(dataset_names: Iterable[str], fresh: bool = False) -> LevelDBStore:
     """Get a LevelDB store for processing."""
-    # Imported here so only xref needs a working plyvel/leveldb install; every
-    # other command (crawl, load, release, ...) runs without it.
+    # Imported here so only the LevelDB commands (xref, dedupe, dedupe-edges,
+    # export) need a working plyvel/leveldb install; every other command (crawl,
+    # load, release, ...) runs without it.
     from nomenklatura.store.level import LevelDBStore
 
     if fresh and LEVEL_PATH.exists():

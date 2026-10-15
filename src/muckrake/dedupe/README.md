@@ -1,52 +1,60 @@
-One of the most important features of muckrake is the ability to deduplicate unique legal entities. For example, if we have a record for "BP" from one source and "British Petroleum" from another source, we want to display information about both records on the same page.
+# Deduplication
 
-Muckrake largely relies on the [`nomenklatura`](https://github.com/opensanctions/nomenklatura) library to generate resolver suggestions for pairs of records that may represent the same entity. We run `uv run muckrake xref` to generate these suggestions, which are stored in the `resolver` table in the database. By default, `nomenklatura` comes with a TUI for reviewing these suggestions, with options to approve, reject, or skip each suggestion.
+Deduplication decides which records from different sources describe the same
+entity, for example "BP" in one dataset and "British Petroleum" in another, so
+that an application can show them together.
 
-We have additionally [implemented](./review.py) a web-based review interface replicating the functionality of the TUI, allowing for this to be done outside of the terminal. One major benefit to this is the deduplication is now available to multiple users at the same time.
+muckrake uses the [`nomenklatura`](https://github.com/opensanctions/nomenklatura)
+resolver. `uv run muckrake xref` generates suggestions for pairs of records that
+may be the same entity and stores them in the `resolver` table in the working
+database. `uv run muckrake dedupe` opens nomenklatura's terminal UI for reviewing
+them (match, no match, unsure or skip). `xref`, the `dedupe` TUI and
+`dedupe-edges` build a LevelDB store first, so they need `plyvel` (see the main
+README's installation notes). Set `MUCKRAKE_PROFILE_URL` to show a link to each
+entity in the TUI.
 
-## Clusters
+## Web review backend
 
-One of the major limitations of the default `nomenklatura` review model is that it is pairwise. This means that if we have three records A, B, and C, and the resolver generates suggestions for A-B and B-C, but not A-C, we would have to approve both A-B and B-C to get all three records into the same cluster. This can be tedious for large clusters.
+[`review.py`](./review.py) provides the functions behind a web review UI with the
+same decisions as the TUI. Several reviewers can work at once: each candidate is
+locked to one reviewer for 30 minutes (the `resolver_lock` table). muckrake
+provides the functions (`get_next_dedupe_candidate`, `record_dedupe_judgement`
+and their cluster equivalents); the consuming application provides the web UI
+and user accounts, and can pass `user_prefix=` to namespace its reviewers' IDs in
+the resolver's `user` column.
 
-We have [implemented](./cluster.py) a basic cluster review system that allows reviewers to review whole clusters of records at once. Ultimately, we want to replace the pairwise review system.
+## Cluster review
 
-The current MVP does not implement a full clustering algorithm. Instead, it:
+Pairwise review is slow for groups of records: if the resolver suggests A-B and
+B-C but not A-C, a reviewer has to judge both pairs to put all three in one
+cluster. [`cluster.py`](./cluster.py) lets a reviewer judge a group of records at
+once. `get_next_dedupe_cluster` does not run a full clustering algorithm. It:
 
 1. takes the next unresolved resolver pair
-2. looks at the current unresolved suggestion rows returned by `resolver.get_candidates(...)`
-3. builds a small local connected group around that seed pair
-4. limits the number of members in the displayed batch
-5. locks all unresolved resolver pairs whose endpoints are inside that displayed batch
+2. looks at the current unresolved suggestions returned by `resolver.get_candidates(...)`
+3. builds a small connected group around that seed pair
+4. limits the group to `max_members` records (default 8)
+5. locks every unresolved pair whose endpoints are both in the group
 
-When the user submits the form:
+The application then calls one of:
 
-- `Match` records positive judgements on locked resolver pairs where both endpoints are selected
-- `No match` records negative judgements on locked resolver pairs where both endpoints are selected
-- `Unsure` records unsure judgements on locked resolver pairs where both endpoints are selected
-- unchecked records remain unresolved
-- `Skip` hides the cluster for that reviewer for a short TTL
+- `record_dedupe_cluster_judgement(..., judgement_value, ...)` with `positive`,
+  `negative` or `unsure`. The judgement is recorded only on locked pairs whose
+  endpoints are both among the selected records; unselected records stay
+  unresolved.
+- `skip_dedupe_cluster(...)`, which hides the cluster from that reviewer for two
+  hours (`SKIP_TTL`). Skips are per reviewer, not global.
 
-Unlike the pairwise review, cluster actions only write judgements for locked suggestion edges that are inside the selected subset.
+## Alternatives considered
 
-Users can also skip clusters. There is a small locking mechanism that hides skipped clusters for a TTL period. The skip list is per-user, not global. `resolver_lock` is still used for concurrency control.
+[Dedupe](https://docs.dedupe.io/en/latest/index.html) is a Python deduplication
+library that also generates pairwise suggestions. Its former web review UI let
+users review clusters and check which records belong together
+([recording](https://youtu.be/9wEA90Fz-lU?si=y4UHS4Ky7yVygJWg&t=689)).
+[According to its docs](https://docs.dedupe.io/en/latest/how-it-works/Grouping-duplicates.html),
+hierarchical clustering with centroid linkage gave the best results
+([code](https://github.com/dedupeio/dedupe/blob/main/dedupe/clustering.py)).
 
-### Dedupe-style review
-
-Beyond the current implementation, there are a few other approaches that could work.
-
-[Dedupe](https://docs.dedupe.io/en/latest/index.html) is a popular Python library for deduplication, I've used it for a few projects in the past. It also generates pairwise suggestions. They used to have a web review UI that is no longer available, but [recordings of it still exist](https://youtu.be/9wEA90Fz-lU?si=y4UHS4Ky7yVygJWg&t=689). In these recordings, users are able to review clusters and check which records belong together. [According to their docs](https://docs.dedupe.io/en/latest/how-it-works/Grouping-duplicates.html), they found that **hierarchical clustering with centroid linkage** gave the best results. [The relevant code is here](https://github.com/dedupeio/dedupe/blob/main/dedupe/clustering.py).
-
-We should explore this approach in the future.
-
-### Next steps
-
-The next improvement I would make is better cluster construction before adding more actions.
-
-Good next options:
-
-- score thresholding before expansion
-- schema-aware grouping
-- canonical-seed grouping instead of plain graph expansion
-- limiting low-confidence bridge edges
-
-The main remaining improvement is better cluster construction, so a single selection is more likely to cover exactly the records a reviewer wants to judge together.
+Possible improvements to cluster construction: score thresholds before
+expanding a group, schema-aware grouping, grouping around a canonical seed
+instead of plain graph expansion, and limiting low-confidence bridge edges.

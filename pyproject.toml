@@ -1,7 +1,7 @@
 [project]
 name = "muckrake"
 version = "0.3.0"
-description = "A framework for creating and storing FollowTheMoney entities, used by OpenLobbying."
+description = "A data-pipeline framework for crawling, deduplicating and publishing FollowTheMoney entities."
 readme = "README.md"
 authors = [
     { name = "Nicu Calcea", email = "mail@nicu.md" }
@@ -12,7 +12,7 @@ dependencies = [
     "click>=8.3.1",
     "datapatch>=1.2.4",
     "followthemoney>=4.4.0",
-    "org-id>=0.1.0",
+    "org-id>=0.1.1",
     "lxml>=6.0.2",
     "nomenklatura>=4.4.1",
     "openpyxl>=3.1.5",
@@ -50,8 +50,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-# Parked, unmaintained crawler stubs from before the openlobbying split.
-extend-exclude = ["datasets_to_do"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -1,25 +1,27 @@
-# Entity Extraction (Prototype)
+# Entity Extraction
 
-This package contains a minimal, extensible named-entity extraction pipeline.
+This package splits text fields that name several entities into separate FtM
+entity candidates, for review before they are applied. Extraction strategies
+share one interface; there are two:
 
-The goal is to support multiple extraction strategies behind one interface.
-Implemented now:
+- `delimiter` (deterministic splitter, no API key needed)
+- `llm` (an OpenRouter or Anthropic model via PydanticAI)
 
-- `delimiter` (deterministic splitter)
-- `llm` (basic OpenRouter-powered extractor via PydanticAI)
+## Components
 
-## What exists now
-
-- CLI command: `muckrake ner-extract`
+- CLI commands: `muckrake ner-extract`, `ner-review`, `ner-export`, `ner-import`
 - Strategy registry under `src/muckrake/extract/ner/engines/`
 - Implemented strategies: `delimiter`, `llm`
-- Candidate persistence into `data/muckrake.db` table: `ner_candidates`
+- Candidate persistence in the working database (`MUCKRAKE_DATABASE_URL`), table `ner_candidates`
 
 Code locations:
 
 - pipeline: `src/muckrake/extract/ner/pipeline.py`
 - engines registry: `src/muckrake/extract/ner/engines/__init__.py`
 - delimiter engine: `src/muckrake/extract/ner/engines/delimited.py`
+- LLM engine and prompt: `src/muckrake/extract/ner/engines/llm.py`, `llm_prompt.py`
+- load-time application: `src/muckrake/extract/ner/materialize.py`
+- review TUI: `src/muckrake/extract/ner/review.py`
 - storage: `src/muckrake/extract/ner/storage.py`
 
 ## Input model
@@ -55,20 +57,26 @@ Each extracted entity is stored as an FtM-style JSON fragment without `id`:
 }
 ```
 
-Using `LegalEntity` is deliberate at this stage because delimiter splitting alone
+Using `LegalEntity` is deliberate, because delimiter splitting alone
 cannot reliably distinguish `Person` vs `Organization`.
 
-## LLM strategy: `llm` (basic)
+## LLM strategy: `llm`
 
 - Uses `pydantic-ai`. `LLM_MODEL` picks the provider and model (from environment, with `.env` fallback):
-  - OpenRouter: `openrouter:stepfun/step-3.5-flash:free` (or just `stepfun/step-3.5-flash:free`), with `OPENROUTER_API_KEY`.
-  - Anthropic: `anthropic:claude-haiku-5-5`, with `ANTHROPIC_API_KEY`.
+  - OpenRouter: `openrouter:<model>`, with `OPENROUTER_API_KEY`.
+  - Anthropic: `anthropic:<model>`, with `ANTHROPIC_API_KEY`.
+  - The provider prefix is required. Without it the extractor fails to start, with
+    `Unknown provider: ...` (for a name containing `/`) or `Unknown model: ...`.
+  - With the current lockfile, `openrouter:` models fail to start with "Please
+    install `openai`": the locked `openai` package is older than the locked
+    `pydantic-ai-slim` requires.
 - Produces FtM-style fragments in the same `entities` format as delimiter.
 - Supports relation links via local keys and `$ref:<key>` values in extracted properties
   (for example `Employment.employee -> "$ref:p1"`).
 - Validates output against FollowTheMoney schemata/properties and retries the model on errors.
-- Centralized Logfire tracing (`configure_logging(app=...)`).
-  Set `LOGFIRE_TOKEN` to send traces to Logfire.
+- Traces each model call with Logfire: the engine calls
+  `configure_logging(enable_logfire=True)`, and setting `LOGFIRE_TOKEN` sends the
+  traces to Logfire.
 
 Prompt configuration:
 
@@ -77,7 +85,7 @@ Prompt configuration:
 
 ## Storage
 
-Candidates are stored in `data/muckrake.db`, table `ner_candidates`.
+Candidates are stored in the working database (SQLite `data/muckrake.db` by default, or `MUCKRAKE_DATABASE_URL`), table `ner_candidates`.
 
 Main columns:
 
@@ -99,40 +107,41 @@ So reruns with unchanged input + extractor configuration are idempotent.
 
 ## Load-time import
 
-`muckrake load` and `muckrake xref` both read `ner_candidates` and apply matching extractions before materializing statements:
+`muckrake load`, `muckrake xref` and `muckrake release-build` read `ner_candidates` and apply matching extractions before materializing statements:
 
 - if a candidate matches `(property_name, fingerprint)`, in any dataset, the original source entity is skipped,
 - extracted fragments from `extraction_json` are materialized as new FtM entities,
 - references to the original entity ID are rewritten to the extracted entity IDs,
-- generated IDs use source dataset prefix + extracted `name` (for example `gb-meet-...`),
+- generated IDs use source dataset prefix + extracted `name` (for example `<prefix>-...`),
 - if there is no matching candidate, loading behaves exactly as before.
 
 Only candidates with `status = approved` are applied.
 
-This mirrors the dedupe philosophy: extraction decisions alter load-time materialization.
-Current implementation applies the latest approved matching candidate.
+As with dedupe decisions, the source statements are left unchanged; approved
+candidates change what is materialized from them. When several approved
+candidates match, the latest is applied.
 
 ## Usage
 
 Run for one dataset:
 
 ```bash
-uv run muckrake ner-extract open_access
+uv run muckrake ner-extract <dataset>
 ```
 
 Choose extractor:
 
 ```bash
-uv run muckrake ner-extract open_access --extractor delimiter --limit 20
+uv run muckrake ner-extract <dataset> --extractor delimiter --limit 20
 
 # basic LLM extraction
-uv run muckrake ner-extract open_access --extractor llm --limit 20
+uv run muckrake ner-extract <dataset> --extractor llm --limit 20
 ```
 
 Extract a single source entity:
 
 ```bash
-uv run muckrake ner-extract open_access --entity-id gb-meetings-12345 --extractor llm
+uv run muckrake ner-extract <dataset> --entity-id <entity-id> --extractor llm
 ```
 
 Run across all datasets:
@@ -149,7 +158,7 @@ Review pending candidates:
 
 ```bash
 # One dataset
-uv run muckrake ner-review open_access
+uv run muckrake ner-review <dataset>
 
 # All datasets
 uv run muckrake ner-review
@@ -202,25 +211,26 @@ export EDITOR=vim
 1. Crawl a dataset so statements exist:
 
 ```bash
-uv run muckrake crawl open_access
+uv run muckrake crawl <dataset>
 ```
 
-2. Run extraction:
+2. Run extraction (the `delimiter` extractor needs no API key; the default,
+   `llm`, needs `LLM_MODEL` and its API key):
 
 ```bash
-uv run muckrake ner-extract open_access --limit 20
+uv run muckrake ner-extract <dataset> --extractor delimiter --limit 20
 ```
 
 3. Review and approve a few candidates:
 
 ```bash
-uv run muckrake ner-review open_access --limit 20
+uv run muckrake ner-review <dataset> --limit 20
 ```
 
 4. Load dataset and verify approved candidates are applied:
 
 ```bash
-uv run muckrake load open_access
+uv run muckrake load <dataset>
 ```
 
 5. Run extraction again with same options and confirm no new rows are inserted.
@@ -228,10 +238,5 @@ uv run muckrake load open_access
 6. Check row count:
 
 ```bash
-uv run python -c "from sqlalchemy import create_engine, text; from muckrake.settings import SQL_URI; e=create_engine(SQL_URI); print(e.connect().execute(text('select count(*) from ner_candidates')).scalar())"
+uv run python -c "import muckrake; from sqlalchemy import create_engine, text; from muckrake.settings import SQL_URI; e=create_engine(SQL_URI); print(e.connect().execute(text('select count(*) from ner_candidates')).scalar())"
 ```
-
-## Next planned pieces
-
-- Add additional extraction engines to `ner/engines/`.
-- Load only approved candidates into FtM entities.

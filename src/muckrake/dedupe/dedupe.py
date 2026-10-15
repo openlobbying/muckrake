@@ -8,7 +8,7 @@ from nomenklatura.xref import xref as nk_xref
 from muckrake.dataset import find_datasets, get_dataset_path, load_config
 from muckrake.db import get_resolver
 from muckrake.extract.ner.materialize import iter_dataset_statements
-from muckrake.settings import DATA_PATH
+from muckrake.settings import DATA_PATH, PROFILE_URL
 from muckrake.store import get_level_store
 
 log = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ def run_dedupe() -> None:
 
     resolver = get_resolver()
     resolver.begin()
-    dedupe_ui(resolver, store, url_base="https://openlobbying.org/profile/%s/")
+    dedupe_ui(resolver, store, url_base=PROFILE_URL)
     resolver.commit()
 
 
