@@ -86,7 +86,7 @@ uv run muckrake release-build
 uv run muckrake release-publish 1
 ```
 
-Publishing is atomic: the previous release is cleared and the new one written in a single transaction, so readers keep seeing the previous release until the new one commits, and a failed publish leaves it in place.
+Publishing is atomic: the new release is written in a single transaction, so readers keep seeing the previous release until it commits, and a failed publish leaves it in place. On Postgres, the release is loaded with `COPY` into a new statement table, indexed and given its own search view, then swapped in with renames, so readers only wait for the swap. A full release of ~5M statements publishes in minutes. On SQLite, the published statements are cleared and rewritten row by row.
 
 
 ## OpenLobbying
