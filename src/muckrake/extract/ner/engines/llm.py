@@ -162,3 +162,12 @@ class LLMExtractor(Extractor):
         except UnexpectedModelBehavior as exc:
             raise RecoverableExtractionError(str(exc)) from exc
         return [e.model_dump(exclude_none=True, by_alias=True) for e in result.output]
+
+    async def extract_async(self, text: str) -> list[dict[str, Any]]:
+        from pydantic_ai.exceptions import UnexpectedModelBehavior
+
+        try:
+            result = await self._agent.run(build_user_prompt(text))
+        except UnexpectedModelBehavior as exc:
+            raise RecoverableExtractionError(str(exc)) from exc
+        return [e.model_dump(exclude_none=True, by_alias=True) for e in result.output]
