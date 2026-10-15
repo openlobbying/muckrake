@@ -7,7 +7,8 @@ version can change behaviour.
 ## [0.3.0] - 2026-10-15
 
 Hardening for full-scale ingests: crawls survive bad sources, loads and publishes
-are atomic, and publishing to Postgres is about 13 times faster.
+are atomic, publishing to Postgres is about 13 times faster, and LLM entity
+extraction runs at full scale with its paid results kept.
 
 ### Added
 
@@ -20,6 +21,18 @@ are atomic, and publishing to Postgres is about 13 times faster.
   skipped data and marks the run `partial`; `release-build` reports the warnings
   of every run it includes.
   ([#37](https://github.com/openlobbying/muckrake/pull/37))
+- Entity extraction at full scale ([#47](https://github.com/openlobbying/muckrake/pull/47)):
+  - `ner-extract --workers N` extracts N texts concurrently, and each distinct
+    text is extracted once across all datasets (approved candidates already
+    applied by text everywhere).
+  - `ner-review --auto` approves every pending split and rejects extractions
+    that only repeat the source text, recorded as reviewer `muckrake/auto`.
+    Decisions made in the review TUI are never overwritten.
+  - `ner-export` / `ner-import` save and restore candidates and review
+    decisions as JSON lines, so paid extractions survive a lost database and
+    are never repeated. Import never overwrites a local decision.
+  - The LLM extractor can use Anthropic models (`LLM_MODEL=anthropic:<model>`
+    with `ANTHROPIC_API_KEY`) as well as OpenRouter.
 - A shared HTTP session for `fetch_*` with retries, backoff and rate limiting.
   ([#22](https://github.com/openlobbying/muckrake/pull/22))
 - A Dockerfile and a standalone compose file (Postgres on port 5433, CLI runner
@@ -42,6 +55,9 @@ are atomic, and publishing to Postgres is about 13 times faster.
   ([#36](https://github.com/openlobbying/muckrake/pull/36))
 - `pydantic-ai-slim` is held below 2, and vulnerable locked dependencies are
   upgraded. ([#42](https://github.com/openlobbying/muckrake/pull/42))
+- `ner-extract` only sends texts containing `,`, `;` or `:`. "and", "&" and
+  brackets alone are nearly always one name, and sending them wasted about a
+  quarter of LLM calls. ([#47](https://github.com/openlobbying/muckrake/pull/47))
 - `org-id` 0.1.1 removes an ID-generation hot loop that dominated crawl time.
 
 ### Fixed

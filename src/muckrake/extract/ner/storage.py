@@ -1,7 +1,9 @@
+import gzip
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from pathlib import Path
+from typing import IO, Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, RowMapping
@@ -88,29 +90,24 @@ def upsert_candidate(conn: Connection, candidate: Candidate) -> bool:
     return True
 
 
-def load_cached_keys(
+def load_extracted_fingerprints(
     conn: Connection,
-    dataset: str,
     extractor: str,
     extractor_version: str,
-) -> set[tuple[str, str, str]]:
+) -> set[tuple[str, str]]:
+    """(property, text fingerprint) pairs already extracted, in any dataset."""
     rows = conn.execute(
         text(
             """
-        SELECT entity_id, property_name, fingerprint
+        SELECT DISTINCT property_name, fingerprint
         FROM ner_candidates
-        WHERE dataset = :dataset
-          AND extractor = :extractor
+        WHERE extractor = :extractor
           AND extractor_version = :extractor_version
         """
         ),
-        {
-            "dataset": dataset,
-            "extractor": extractor,
-            "extractor_version": extractor_version,
-        },
+        {"extractor": extractor, "extractor_version": extractor_version},
     )
-    return {(row[0], row[1], row[2]) for row in rows}
+    return {(row[0], row[1]) for row in rows}
 
 
 def list_candidates(
@@ -179,6 +176,7 @@ def review_candidate(
     candidate_id: int,
     status: str,
     reviewer: str = "muckrake/ner-review",
+    commit: bool = True,
 ) -> None:
     if status not in {"approved", "rejected", "pending"}:
         raise ValueError(f"Invalid review status: {status}")
@@ -202,4 +200,109 @@ def review_candidate(
             "candidate_id": candidate_id,
         },
     )
+    if commit:
+        conn.commit()
+
+
+AUTO_REVIEWER = "muckrake/auto"
+
+
+def is_noop_extraction(source_text: str, extraction: list[dict[str, Any]]) -> bool:
+    """True when the extraction is just the source entity again, unsplit."""
+    if len(extraction) != 1:
+        return False
+    names = extraction[0].get("properties", {}).get("name", [])
+    return names == [source_text]
+
+
+def auto_review(conn: Connection, dataset_name: str | None = None) -> tuple[int, int]:
+    """Decide every pending candidate without a human; returns (approved, rejected).
+
+    Splits are approved. An extraction that only repeats the source text is
+    rejected, so the original entity and its ID are kept. Candidates a human
+    has already decided are not pending, so they are never changed here.
+    """
+    approved = rejected = 0
+    for row in list_candidates(conn, dataset_name=dataset_name, status="pending"):
+        extraction = json.loads(row["extraction_json"])
+        if is_noop_extraction(row["source_text"], extraction):
+            status = "rejected"
+            rejected += 1
+        else:
+            status = "approved"
+            approved += 1
+        review_candidate(conn, row["id"], status, reviewer=AUTO_REVIEWER, commit=False)
     conn.commit()
+    return approved, rejected
+
+
+# Everything but the local row id, so an export can be imported into any database.
+EXPORT_COLUMNS = (
+    "dataset",
+    "entity_id",
+    "schema",
+    "property_name",
+    "source_text",
+    "fingerprint",
+    "extractor",
+    "extractor_version",
+    "status",
+    "reviewer",
+    "reviewed_at",
+    "extraction_json",
+    "created_at",
+    "updated_at",
+)
+KEY_COLUMNS = (
+    "dataset",
+    "entity_id",
+    "property_name",
+    "fingerprint",
+    "extractor",
+    "extractor_version",
+)
+
+
+def _open(path: Path, write: bool) -> IO[str]:
+    if path.suffix == ".gz":
+        return gzip.open(path, "wt" if write else "rt", encoding="utf-8")
+    return path.open("w" if write else "r", encoding="utf-8")
+
+
+def export_candidates(conn: Connection, path: Path) -> int:
+    """Write every candidate, with its review decision, as JSON lines."""
+    rows = conn.execute(
+        text(f"SELECT {', '.join(EXPORT_COLUMNS)} FROM ner_candidates ORDER BY id")
+    ).mappings()
+    count = 0
+    with _open(path, write=True) as fh:
+        for row in rows:
+            fh.write(json.dumps(dict(row), sort_keys=True) + "\n")
+            count += 1
+    return count
+
+
+def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
+    """Add candidates from an export; returns (imported, already_present).
+
+    A candidate already in the database is left as it is, so local review
+    decisions are never overwritten.
+    """
+    exists = text(
+        "SELECT 1 FROM ner_candidates WHERE " + " AND ".join(f"{c} = :{c}" for c in KEY_COLUMNS)
+    )
+    insert = text(
+        f"INSERT INTO ner_candidates({', '.join(EXPORT_COLUMNS)}) "
+        f"VALUES ({', '.join(':' + c for c in EXPORT_COLUMNS)})"
+    )
+    imported = present = 0
+    with _open(path, write=False) as fh:
+        for line in fh:
+            row = json.loads(line)
+            if conn.execute(exists, row).first() is not None:
+                present += 1
+                continue
+            conn.execute(insert, row)
+            imported += 1
+    conn.commit()
+    return imported, present

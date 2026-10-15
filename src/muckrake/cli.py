@@ -24,8 +24,10 @@ from muckrake.entity_query import (
 from muckrake.entity_write import add_entity as run_add_entity
 from muckrake.entity_write import build_entity_spec
 from muckrake.entity_write import update_entity as run_update_entity
-from muckrake.extract.ner import run_ner_extract, run_ner_review
+from muckrake.extract.ner import run_ner_auto_review, run_ner_extract, run_ner_review
 from muckrake.extract.ner.engines import list_extractors
+from muckrake.extract.ner.storage import export_candidates, import_candidates
+from muckrake.extract.ner.storage import get_connection as get_ner_connection
 from muckrake.load import run_load
 from muckrake.logging import configure_logging
 from muckrake.release import list_releases, run_release_build, run_release_publish
@@ -465,7 +467,10 @@ def load(dataset_name, run_id):
     show_default=True,
     help="Extraction strategy",
 )
-def ner_extract(dataset_name, limit, entity_id, extractor_name):
+@click.option(
+    "--workers", type=int, default=1, show_default=True, help="Texts extracted concurrently"
+)
+def ner_extract(dataset_name, limit, entity_id, extractor_name, workers):
     """Extract named entities from statement text fields."""
     try:
         run_ner_extract(
@@ -473,6 +478,7 @@ def ner_extract(dataset_name, limit, entity_id, extractor_name):
             limit=limit,
             entity_id=entity_id,
             extractor_name=extractor_name,
+            workers=workers,
         )
     except Exception as e:
         log.exception(e)
@@ -482,13 +488,45 @@ def ner_extract(dataset_name, limit, entity_id, extractor_name):
 @cli.command("ner-review")
 @click.argument("dataset_name", required=False)
 @click.option("--limit", "limit", type=int, default=None, help="Max pending candidates")
-def ner_review(dataset_name, limit):
+@click.option(
+    "--auto",
+    is_flag=True,
+    default=False,
+    help="Approve every pending split without review; reject unsplit extractions",
+)
+def ner_review(dataset_name, limit, auto):
     """Review pending NER extraction candidates."""
     try:
-        run_ner_review(dataset_name=dataset_name, limit=limit)
+        if auto:
+            run_ner_auto_review(dataset_name=dataset_name)
+        else:
+            run_ner_review(dataset_name=dataset_name, limit=limit)
     except Exception as e:
         log.exception(e)
         sys.exit(1)
+
+
+@cli.command("ner-export")
+@click.argument("path", type=click.Path(dir_okay=False, path_type=Path))
+def ner_export(path):
+    """Save all NER candidates and review decisions to a JSON lines file (.gz to compress)."""
+    conn = get_ner_connection()
+    try:
+        click.echo(f"Exported {export_candidates(conn, path)} candidates to {path}")
+    finally:
+        conn.close()
+
+
+@cli.command("ner-import")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def ner_import(path):
+    """Add NER candidates from an export; candidates already present are kept as they are."""
+    conn = get_ner_connection()
+    try:
+        imported, present = import_candidates(conn, path)
+        click.echo(f"Imported {imported} candidates; {present} were already present.")
+    finally:
+        conn.close()
 
 
 @cli.command("release-build")
