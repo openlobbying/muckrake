@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import psycopg
 from followthemoney.statement.serialize import PackStatementWriter, read_pack_statements
-from nomenklatura.db import get_engine, make_statement_table
+from nomenklatura.db import Session, get_engine, make_statement_table
 from nomenklatura.resolver import Linker, Resolver
 from sqlalchemy import MetaData, delete, desc, select, text, update
 from sqlalchemy.engine import Connection, Engine
@@ -422,22 +422,18 @@ def _rename_indexes(conn: Connection, relation: str, old: str, new: str) -> None
 def _copy_resolver_state() -> None:
     source_engine = get_engine(SQL_URI)
     target_engine = init_published_database(PUBLISHED_SQL_URI)
-    source_resolver: Resolver = Resolver(source_engine, MetaData(), create=False)
-    target_resolver: Resolver = Resolver(target_engine, MetaData(), create=False)
+    # Both databases hold the same resolver table; only its definition is needed.
+    with Session(source_engine) as session:
+        table = Resolver(session)._table
 
     with source_engine.connect() as source_conn:
-        rows = (
-            source_conn.execute(
-                select(source_resolver._table).where(source_resolver._table.c.deleted_at.is_(None))
-            )
-            .mappings()
-            .all()
-        )
+        query = select(table).where(table.c.deleted_at.is_(None))
+        rows = source_conn.execute(query).mappings().all()
 
     with target_engine.begin() as target_conn:
-        target_conn.execute(delete(target_resolver._table))
+        target_conn.execute(delete(table))
         if rows:
-            target_conn.execute(target_resolver._table.insert(), [dict(row) for row in rows])
+            target_conn.execute(table.insert(), [dict(row) for row in rows])
 
 
 def _resolve_dataset_names(dataset_names: Iterable[str] | None) -> list[str]:

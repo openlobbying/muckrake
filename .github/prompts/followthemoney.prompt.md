@@ -53,51 +53,51 @@ from followthemoney import model
 
 ## Schema metadata
 # Access a schema metadata object
-schema = model.get('Person')
+schema = model.get("Person")
 
 # Access a property metadata object
-prop = schema.get('birthDate')
+prop = schema.get("birthDate")
 
 ## Working with entities and entity proxies
 # Next, let's instantiate a proxy object for a new Person entity:
 entity = model.make_entity(schema)
 
 # First, you'll want to assign an ID to the entity. You can do this directly:
-entity.id = 'john-smith'
+entity.id = "john-smith"
 
 # Or you can use a hashing function to make a safe ID:
-entity.make_id('John Smith', '1979')
+entity.make_id("John Smith", "1979")
 
 # Now, let's assign this entity a birthDate property (see above):
-entity.add(prop, '1979-08-23')
+entity.add(prop, "1979-08-23")
 
 # You can also assign properties by name:
-entity.add('firstName', 'John')
-entity.add('lastName', 'Smith')
-entity.add('name', 'John Smith')
+entity.add("firstName", "John")
+entity.add("lastName", "Smith")
+entity.add("name", "John Smith")
 
 # Adding a property value will perform some data normalisation and validation:
-entity.add('nationality', 'Atlantis')
-assert not entity.has('nationality')
-entity.add('nationality', 'Germani', fuzzy=True)
-assert 'de' == entity.first('nationality')
-enttiy.add('nationality', '阿拉伯聯合大公國')
-assert 'ae' in entity.get('nationality')
+entity.add("nationality", "Atlantis")
+assert not entity.has("nationality")
+entity.add("nationality", "Germani", fuzzy=True)
+assert "de" == entity.first("nationality")
+enttiy.add("nationality", "阿拉伯聯合大公國")
+assert "ae" in entity.get("nationality")
 
 # Lets make a second entity, this time for a passport:
-passport_entity = model.make_entity('Passport')
-passport_entity.make_id(entity.id, 'C716818')
-passport_entity.add('number', 'C716818')
+passport_entity = model.make_entity("Passport")
+passport_entity.make_id(entity.id, "C716818")
+passport_entity.add("number", "C716818")
 
 # Entities can link to other entities like this:
-passport_entity.add('holder', entity)
+passport_entity.add("holder", entity)
 # Which is the same as:
-passport_entity.add('holder', entity.id)
+passport_entity.add("holder", entity.id)
 
 # Finally, you can turn the contents of the entity proxy into a plain dictionary
 # that is suitable for JSON serialization or storage in a database:
 data = entity.to_dict()
-assert data.get('id') == entity.id
+assert data.get("id") == entity.id
 
 # If you want to turn this back into an entity proxy:
 entity2 = model.get_proxy(data)
@@ -109,10 +109,11 @@ Besides the contstruction of entities, you can also use the underlying type syst
 ```py
 # You can also import the type registry that lets you access type info easily:
 from followthemoney import registry
+
 assert prop.type == registry.date
 
-assert not registry.date.validate('BANANA')
-assert registry.date.validate('2025')
+assert not registry.date.validate("BANANA")
+assert registry.date.validate("2025")
 ```
 
 ### followthemoney.model.Model

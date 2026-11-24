@@ -41,3 +41,18 @@ def test_build_entity_rejects_invalid_property():
 
     with pytest.raises(ValueError):
         build_entity(spec)
+
+
+def test_build_entity_rejects_missing_required_property():
+    spec = build_entity_spec(
+        schema_name="Ownership",
+        dataset="test",
+        source_ref="source-1",
+        entity_id=None,
+        id_parts=["own-1"],
+        key_prefix=None,
+        property_items=["owner=person-1"],
+    )
+
+    with pytest.raises(ValueError, match="asset"):
+        build_entity(spec)

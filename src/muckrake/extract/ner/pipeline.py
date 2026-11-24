@@ -145,8 +145,8 @@ def run_ner_extract(
         slots = asyncio.Semaphore(workers)
         tasks = [asyncio.create_task(extract(c, slots)) for c in pending]
         try:
-            for done, task in enumerate(asyncio.as_completed(tasks), start=1):
-                result = await task
+            for done, next_done in enumerate(asyncio.as_completed(tasks), start=1):
+                result = await next_done
                 if result is None:
                     skipped += 1
                 elif upsert_candidate(conn, result):

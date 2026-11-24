@@ -1,14 +1,16 @@
 import logging
 
 from followthemoney import model
+from nomenklatura.db import make_session
 from nomenklatura.judgement import Judgement
 from nomenklatura.matching import DefaultAlgorithm, get_algorithm
+from nomenklatura.resolver import Resolver
 from nomenklatura.xref import xref as nk_xref
 
 from muckrake.dataset import find_datasets, get_dataset_path, load_config
-from muckrake.db import get_resolver
+from muckrake.db import open_resolver
 from muckrake.extract.ner.materialize import iter_dataset_statements
-from muckrake.settings import DATA_PATH, PROFILE_URL
+from muckrake.settings import DATA_PATH, PROFILE_URL, SQL_URI
 from muckrake.store import get_level_store
 
 log = logging.getLogger(__name__)
@@ -37,7 +39,6 @@ def run_xref(
     dataset_names = [load_config(c).name for c in all_configs]
 
     store = get_level_store(dataset_names, fresh=True)
-    resolver = get_resolver()
     index_dir = DATA_PATH / "xref-index"
 
     algorithm_type = get_algorithm(algorithm)
@@ -46,19 +47,21 @@ def run_xref(
 
     load_statements(store, dataset_names)
 
-    resolver.begin()
-    nk_xref(
-        resolver,
-        store,
-        index_dir,
-        limit=limit,
-        range=model.get(schema) if schema else None,
-        auto_threshold=threshold,
-        algorithm=algorithm_type,
-        focus_dataset=focus_dataset,
-        user="muckrake/xref",
-    )
-    resolver.commit()
+    # xref commits its suggestions in batches as it goes (session checkpoints).
+    with make_session(SQL_URI) as session:
+        resolver: Resolver = Resolver(session, create=True)
+        nk_xref(
+            resolver,
+            session,
+            store,
+            index_dir,
+            limit=limit,
+            range=model.get(schema) if schema else None,
+            auto_threshold=threshold,
+            algorithm=algorithm_type,
+            focus_datasets={focus_dataset} if focus_dataset else None,
+            user="muckrake/xref",
+        )
     log.info("Xref complete.")
 
 
@@ -73,10 +76,10 @@ def run_dedupe() -> None:
     if not any(store.view(store.dataset).entities()):
         load_statements(store, dataset_names)
 
-    resolver = get_resolver()
-    resolver.begin()
-    dedupe_ui(resolver, store, url_base=PROFILE_URL)
-    resolver.commit()
+    with make_session(SQL_URI) as session:
+        resolver: Resolver = Resolver(session, create=True)
+        resolver.load_into_memory()
+        dedupe_ui(resolver, session, store, url_base=PROFILE_URL)
 
 
 def run_merge(entity_ids: list[str], force: bool = False) -> None:
@@ -84,9 +87,7 @@ def run_merge(entity_ids: list[str], force: bool = False) -> None:
     if len(entity_ids) < 2:
         raise ValueError("Need multiple IDs to merge!")
 
-    resolver = get_resolver()
-    resolver.begin()
-    try:
+    with open_resolver() as resolver:
         canonical_id = resolver.get_canonical(entity_ids[0])
         for other_id in entity_ids[1:]:
             if resolver.get_canonical(other_id) == canonical_id:
@@ -94,37 +95,20 @@ def run_merge(entity_ids: list[str], force: bool = False) -> None:
 
             resolver.decide(canonical_id, other_id, Judgement.POSITIVE, user="muckrake/manual")
 
-        resolver.commit()
-    except Exception:
-        resolver.rollback()
-        raise
-
 
 def run_dedupe_explode(entity_id: str) -> None:
     """Undo deduplication by exploding a resolved entity cluster."""
-    resolver = get_resolver()
-    resolver.begin()
-    try:
+    with open_resolver() as resolver:
         canonical_id = resolver.get_canonical(entity_id)
         restored = 0
         for part_id in resolver.explode(canonical_id):
             restored += 1
             log.info("Restored separate entity: %s", part_id)
-        resolver.commit()
-        log.info("Exploded cluster %s (%s entities)", canonical_id, restored)
-    except Exception:
-        resolver.rollback()
-        raise
+    log.info("Exploded cluster %s (%s entities)", canonical_id, restored)
 
 
 def run_prune() -> None:
     """Remove dedupe candidates from resolver file."""
-    resolver = get_resolver()
-    resolver.begin()
-    try:
+    with open_resolver() as resolver:
         resolver.prune()
-        resolver.commit()
-        log.info("Resolver pruned.")
-    except Exception:
-        resolver.rollback()
-        raise
+    log.info("Resolver pruned.")

@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING, Any
 from followthemoney import DS, SE, Statement
 from followthemoney.dataset import Dataset
 from nomenklatura import settings as nk_settings
-from nomenklatura.store import Store
-from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter, make_statement_table
-from sqlalchemy import MetaData, delete, select
+from nomenklatura.resolver import Linker
+from nomenklatura.store.sql import SQLStore, SQLView, SQLWriter
+from sqlalchemy import delete, select
 from sqlalchemy.engine import create_engine
 
-from muckrake.db import get_database_dialect, get_resolver
+from muckrake.db import get_database_dialect, get_linker
 from muckrake.settings import LEVEL_PATH, SQL_URI
 
 if TYPE_CHECKING:
@@ -52,12 +52,7 @@ def get_level_store(dataset_names: Iterable[str], fresh: bool = False) -> LevelD
 
     LEVEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     dataset = CombinedDataset("all", dataset_names)
-    resolver = get_resolver(begin=True)
-    try:
-        linker = resolver.get_linker()
-    finally:
-        resolver.rollback()
-    return LevelDBStore(dataset, linker, LEVEL_PATH)
+    return LevelDBStore(dataset, get_linker(), LEVEL_PATH)
 
 
 class MergedSQLView(SQLView[DS, SE]):
@@ -94,14 +89,12 @@ class MergedSQLView(SQLView[DS, SE]):
 class MergedSQLStore(SQLStore[DS, SE]):
     """Custom SQL store that uses MergedSQLView."""
 
-    def __init__(self, dataset: DS, linker, uri: str = SQL_URI, **engine_kwargs):
-        Store.__init__(self, dataset, linker)
+    def __init__(self, dataset: DS, linker: Linker[SE], uri: str = SQL_URI, **engine_kwargs: Any):
+        # Its own engine rather than nomenklatura's shared get_engine(uri), which caps
+        # every Postgres statement at NOMENKLATURA_DB_STMT_TIMEOUT.
         if get_database_dialect(uri) != "sqlite" and "pool_size" not in engine_kwargs:
             engine_kwargs["pool_size"] = nk_settings.DB_POOL_SIZE
-        metadata = MetaData()
-        self.engine = create_engine(uri, **engine_kwargs)
-        self.table = make_statement_table(metadata)
-        metadata.create_all(self.engine, tables=[self.table], checkfirst=True)
+        super().__init__(dataset, linker, create_engine(uri, **engine_kwargs))
 
     def view(self, scope: DS, external: bool = False) -> SQLView[DS, SE]:
         return MergedSQLView(self, scope, external=external)
@@ -148,9 +141,4 @@ class MuckrakeSQLWriter(SQLWriter[DS, SE]):
 def get_sql_store(dataset_names: Iterable[str], uri: str = SQL_URI) -> MergedSQLStore:
     """Get a SQL store for serving with proper entity merging."""
     dataset = CombinedDataset("all", dataset_names)
-    resolver = get_resolver(uri=uri, begin=True)
-    try:
-        linker = resolver.get_linker()
-    finally:
-        resolver.rollback()
-    return MergedSQLStore(dataset, linker, uri=uri)
+    return MergedSQLStore(dataset, get_linker(uri), uri=uri)
