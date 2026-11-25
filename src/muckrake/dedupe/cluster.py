@@ -11,7 +11,7 @@ from nomenklatura.judgement import Judgement
 from sqlalchemy import bindparam, text
 from sqlalchemy.engine import Connection
 
-from muckrake.db import get_resolver
+from muckrake.db import open_resolver
 from muckrake.dedupe.review import (
     LOCK_TTL,
     DedupeLockError,
@@ -472,9 +472,7 @@ def record_dedupe_cluster_judgement(
 
     engine = get_lock_engine()
     now = _utc_now()
-    resolver = get_resolver()
-    resolver.begin()
-    try:
+    with open_resolver() as resolver:
         with engine.begin() as conn:
             _delete_expired_locks(conn, now)
             _delete_expired_skips(conn, now)
@@ -497,15 +495,10 @@ def record_dedupe_cluster_judgement(
             if judgement == Judgement.POSITIVE:
                 canonical_id = str(result)
 
-        resolver.commit()
+    with engine.begin() as conn:
+        _release_cluster_locks(conn, locked_pairs)
 
-        with engine.begin() as conn:
-            _release_cluster_locks(conn, locked_pairs)
-
-        return canonical_id
-    except Exception:
-        resolver.rollback()
-        raise
+    return canonical_id
 
 
 def skip_dedupe_cluster(locked_pairs: list[LockedPair], user_id: str) -> None:

@@ -1,6 +1,6 @@
 [project]
 name = "muckrake"
-version = "0.3.1"
+version = "0.4.0"
 description = "A data-pipeline framework for crawling, deduplicating and publishing FollowTheMoney entities."
 readme = "README.md"
 authors = [
@@ -11,10 +11,10 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "click>=8.3.1",
     "datapatch>=1.2.4",
-    "followthemoney>=4.4.0",
+    "followthemoney>=4.11",
     "org-id>=0.1.1",
     "lxml>=6.0.2",
-    "nomenklatura>=4.4.1",
+    "nomenklatura>=4.18",
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
     "pydantic-ai-slim[anthropic,google,openrouter]>=1.0.0,<2",

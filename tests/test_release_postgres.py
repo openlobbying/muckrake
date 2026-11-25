@@ -19,6 +19,8 @@ import muckrake.release as release_module
 from muckrake import settings
 from muckrake.dataset import Dataset, get_dataset_path
 from muckrake.release import run_release_build, run_release_publish
+from muckrake.search import postgres_search_ready as search_postgres_ready
+from muckrake.search import search_entities
 from muckrake.store import get_sql_store
 
 POSTGRES_URL = settings._normalize_database_url(os.environ.get("MUCKRAKE_TEST_POSTGRES_URL"))
@@ -66,6 +68,9 @@ def test_publish_swaps_in_statements_and_search_view(make_dataset, published_pos
     )
     assert leftovers == []
     assert ("statement_pkey",) in _query("SELECT indexname FROM pg_indexes")
+    indexes = _query("SELECT indexname FROM pg_indexes")
+    assert ("ix_statement_value_entity",) in indexes
+    assert ("ix_statement_value_identifier",) in indexes
 
 
 def test_repeated_statements_resolve_like_an_upsert(make_dataset, published_postgres):
@@ -114,3 +119,23 @@ def test_failed_publish_keeps_previous_release(make_dataset, published_postgres,
 
     assert len(_entities(name)) == 2
     assert _query("SELECT to_regclass('statement_new')") == [(None,)]
+
+
+def test_search_matches_through_the_trigram_operators(make_dataset, published_postgres):
+    name, pack_path = make_dataset(
+        [
+            {"schema": "Company", "properties": {"name": ["Acme Widgets Ltd"]}},
+            {"schema": "Company", "properties": {"name": ["Zenith Holdings"]}},
+        ]
+    )
+    _publish(name, pack_path)
+    search_postgres_ready.cache_clear()
+
+    def names(query: str) -> list[str]:
+        response = search_entities(query, ["Company"], 10, 0, uri=POSTGRES_URL)
+        return [row["name"] for row in response.results]
+
+    assert names("acme widgets") == ["Acme Widgets Ltd"]  # full text
+    assert names("Acme Widgts Ltd") == ["Acme Widgets Ltd"]  # trigram similarity
+    assert names("idgets") == ["Acme Widgets Ltd"]  # substring
+    assert names("nothing like it") == []

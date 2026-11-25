@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import psycopg
 from followthemoney.statement.serialize import PackStatementWriter, read_pack_statements
-from nomenklatura.db import get_engine, make_statement_table
+from nomenklatura.db import Session, get_engine, make_statement_table
 from nomenklatura.resolver import Linker, Resolver
 from sqlalchemy import MetaData, delete, desc, select, text, update
 from sqlalchemy.engine import Connection, Engine
@@ -19,6 +19,7 @@ from sqlalchemy.engine import Connection, Engine
 from muckrake.artifacts import get_artifact_store
 from muckrake.dataset import find_datasets, load_config
 from muckrake.db import (
+    create_identifier_index,
     create_search_view,
     get_release_artifacts_table,
     get_release_inputs_table,
@@ -399,6 +400,7 @@ def _swap_in_release_postgres(engine: Engine, linker: Linker[Any], pack_path: Pa
                 "ORDER BY id, seq DESC"
             )
         )
+        create_identifier_index(conn, table="statement_new")
         create_search_view(conn, view="entity_search_new", table="statement_new")
 
         conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS entity_search"))
@@ -422,22 +424,18 @@ def _rename_indexes(conn: Connection, relation: str, old: str, new: str) -> None
 def _copy_resolver_state() -> None:
     source_engine = get_engine(SQL_URI)
     target_engine = init_published_database(PUBLISHED_SQL_URI)
-    source_resolver: Resolver = Resolver(source_engine, MetaData(), create=False)
-    target_resolver: Resolver = Resolver(target_engine, MetaData(), create=False)
+    # Both databases hold the same resolver table; only its definition is needed.
+    with Session(source_engine) as session:
+        table = Resolver(session)._table
 
     with source_engine.connect() as source_conn:
-        rows = (
-            source_conn.execute(
-                select(source_resolver._table).where(source_resolver._table.c.deleted_at.is_(None))
-            )
-            .mappings()
-            .all()
-        )
+        query = select(table).where(table.c.deleted_at.is_(None))
+        rows = source_conn.execute(query).mappings().all()
 
     with target_engine.begin() as target_conn:
-        target_conn.execute(delete(target_resolver._table))
+        target_conn.execute(delete(table))
         if rows:
-            target_conn.execute(target_resolver._table.insert(), [dict(row) for row in rows])
+            target_conn.execute(table.insert(), [dict(row) for row in rows])
 
 
 def _resolve_dataset_names(dataset_names: Iterable[str] | None) -> list[str]:

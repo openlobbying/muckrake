@@ -88,9 +88,13 @@ def build_entity(spec: EntitySpec):
             parts.extend(entity.get("name", quiet=True)[:1])
         entity.make_id(*parts)
 
-    entity_dict = entity.to_dict()
+    # Schema.validate only checks the properties it's given, so a required property
+    # that was never set would pass. Give it as an empty list to fail it as "Required".
+    properties = dict(entity.properties)
+    for name in entity.schema.required:
+        properties.setdefault(name, [])
     try:
-        entity.schema.validate(entity_dict)
+        entity.schema.validate({"properties": properties})
     except Exception as exc:
         details = getattr(exc, "errors", None)
         if details is not None:

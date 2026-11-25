@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Any, cast
 
-from nomenklatura.db import get_engine, get_metadata, make_statement_table
-from nomenklatura.resolver import Identifier, Resolver
+from nomenklatura.db import Session, get_engine, get_metadata, make_session, make_statement_table
+from nomenklatura.resolver import Identifier, Linker, Resolver
 from org_id import is_org_id
 from sqlalchemy import Column, Integer, MetaData, String, Table, Text, inspect, text
 from sqlalchemy.engine import Connection, Engine
@@ -184,12 +186,31 @@ def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
     )
 
 
-def get_resolver(uri: str = SQL_URI, begin: bool = False) -> Resolver:
-    """Get the resolver backed by the main database."""
-    resolver: Resolver = Resolver(get_engine(uri), MetaData(), create=True)
-    if begin:
-        resolver.begin()
-    return resolver
+@contextmanager
+def open_resolver(uri: str = SQL_URI) -> Generator[Resolver]:
+    """Open the resolver backed by the working database, loaded into memory.
+
+    The resolver runs on its own nomenklatura ``Session``: its writes commit when
+    the block exits normally and roll back if it raises.
+    """
+    with make_session(uri) as session:
+        resolver: Resolver = Resolver(session, create=True)
+        resolver.load_into_memory()
+        yield resolver
+
+
+def get_linker(uri: str = SQL_URI) -> Linker[Any]:
+    """Get the resolver's positive merges as a read-only ``Linker``."""
+    with make_session(uri) as session:
+        resolver: Resolver = Resolver(session, create=True)
+        return resolver.get_linker()
+
+
+def _create_resolver_table(engine: Engine) -> Table:
+    """Create the resolver table if it's missing; return it."""
+    with Session(engine) as session:
+        resolver: Resolver = Resolver(session, create=True)
+    return resolver._table
 
 
 def get_database_dialect(uri: str = SQL_URI) -> str:
@@ -208,7 +229,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
     statement_table = make_statement_table(metadata)
-    resolver: Resolver = Resolver(engine, MetaData(), create=True)
+    resolver_table = _create_resolver_table(engine)
     ner_candidates = get_ner_candidates_table(metadata)
     dataset_runs = get_dataset_runs_table(metadata)
     dataset_run_artifacts = get_dataset_run_artifacts_table(metadata)
@@ -241,7 +262,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
     _sync_postgres_sequences(
         engine,
         [
-            resolver._table,
+            resolver_table,
             ner_candidates,
             dataset_runs,
             dataset_run_artifacts,
@@ -256,7 +277,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
 def ensure_resolver_lock_schema(uri: str = SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
-    _ = Resolver(engine, metadata, create=True)
+    _create_resolver_table(engine)
     resolver_lock = get_resolver_lock_table(metadata)
     resolver_cluster_skip = get_resolver_cluster_skip_table(metadata)
     metadata.create_all(
@@ -273,11 +294,29 @@ def init_published_database(uri: str = PUBLISHED_SQL_URI) -> Engine:
     engine = get_engine(uri)
     metadata = MetaData()
     statement_table = make_statement_table(metadata)
-    resolver: Resolver = Resolver(engine, metadata, create=True)
+    resolver_table = _create_resolver_table(engine)
     if not inspect(engine).has_table(statement_table.name):
         statement_table.create(bind=engine, checkfirst=True)
-    _sync_postgres_sequences(engine, [resolver._table])
+    with engine.begin() as conn:
+        create_identifier_index(conn)
+    _sync_postgres_sequences(engine, [resolver_table])
     return engine
+
+
+def create_identifier_index(conn: Connection, table: str = "statement") -> None:
+    """Index identifier values, for finding an entity by its registration, tax or
+    other number (``prop_type = 'identifier' AND value = ...``).
+
+    nomenklatura's statement table only indexes ``value`` for entity references
+    (``ix_<table>_value_entity``), so without this an identifier lookup scans every
+    statement. Partial, so it only covers identifiers; named to match.
+    """
+    conn.execute(
+        text(
+            f"CREATE INDEX IF NOT EXISTS ix_{table}_value_identifier "
+            f"ON {table} (value) WHERE prop_type = 'identifier'"
+        )
+    )
 
 
 def refresh_postgres_search(uri: str = SQL_URI) -> None:

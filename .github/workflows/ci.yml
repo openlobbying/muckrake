@@ -72,7 +72,7 @@ jobs:
       # Checks every link in the Markdown docs, including relative file links and
       # #anchors.
       # Excluded: the private openlobbying/docs repo and project board, which
-      # 404 without access (CLAUDE.md links them for maintainers), and loopback
+      # 404 without access (AGENTS.md links them for maintainers), and loopback
       # URLs from local-setup examples.
       - name: Check links
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
