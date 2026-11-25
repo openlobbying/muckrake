@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from followthemoney.statement.serialize import PackStatementWriter
+from followthemoney.statement.serialize import PackStatementWriter, read_pack_statements
 
 from muckrake.artifacts import LocalArtifactStore, get_artifact_store
 from muckrake.dataset import Dataset, get_dataset_path, load_config, resolve_dataset_root
@@ -19,23 +19,24 @@ from muckrake.runs import (
     make_storage_prefix,
     record_dataset_run_artifact,
 )
+from muckrake.timestamps import FirstSeen
 from muckrake.units import UnitLedger, UnitRecord, read_ledger
 
 log = logging.getLogger(__name__)
 
 
-def load_timestamps(path: Path) -> dict[str, str]:
+def load_timestamps(path: Path) -> FirstSeen:
     """Load previous first_seen timestamps from a pack file."""
-    timestamps = {}
+    timestamps = FirstSeen()
     if path.exists() and path.is_file() and path.stat().st_size > 0:
         log.info(f"Loading previous state from {path}...")
         try:
             with open(path, "rb") as fh:
-                from followthemoney.statement.serialize import read_pack_statements
-
-                for stmt in read_pack_statements(fh):
-                    if stmt.id is not None and stmt.first_seen is not None:
-                        timestamps[stmt.id] = stmt.first_seen
+                timestamps.fill(
+                    (stmt.id, stmt.first_seen)
+                    for stmt in read_pack_statements(fh)
+                    if stmt.id is not None and stmt.first_seen is not None
+                )
         except Exception as e:
             log.warning(f"Failed to load previous state: {e}")
     return timestamps

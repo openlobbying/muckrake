@@ -25,6 +25,7 @@ dependencies = [
     "xlrd>=2.0.2",
     "logfire[httpx,sqlalchemy]>=4.24.0",
     "odfpy>=1.4.1",
+    "numpy>=1.26",
 ]
 
 [project.scripts]

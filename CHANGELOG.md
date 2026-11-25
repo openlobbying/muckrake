@@ -6,6 +6,17 @@ version can change behaviour.
 
 ## [Unreleased]
 
+### Changed
+
+- `crawl` holds the previous run's `first_seen` timestamps in far less memory:
+  `muckrake.timestamps.FirstSeen` keeps each SHA-1 statement ID as a 20-byte
+  digest in a sorted numpy array and each timestamp as an index into the
+  distinct ones, ~24 bytes a statement instead of ~190 in a `dict`. Loading a
+  10.7M-statement pack now peaks at 731 MB and holds 250 MB, down from 2.2 GB
+  and 2.05 GB; the output is unchanged. `load_timestamps` returns a `FirstSeen`,
+  and `Dataset(timestamps=...)` takes one (a mapping still works). numpy is now
+  a direct dependency (it already came with pandas).
+
 ## [0.4.0] - 2026-11-25
 
 muckrake now runs on the current nomenklatura and followthemoney, and the
