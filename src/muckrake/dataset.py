@@ -1,7 +1,7 @@
 import logging
 import os
 import shutil
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -17,6 +17,7 @@ from org_id import make_hashed_id, make_org_id
 
 from muckrake.extract.fetch import fetch_file, fetch_html, fetch_json, fetch_text
 from muckrake.settings import DATA_PATH, SQL_URI
+from muckrake.timestamps import FirstSeen
 from muckrake.units import UnitLedger, UnitRecord
 
 
@@ -91,7 +92,7 @@ class Dataset:
         self,
         config_path: Path,
         writer: Any,
-        timestamps: dict[str, str] | None = None,
+        timestamps: FirstSeen | Mapping[str, str] | None = None,
         units: UnitLedger | None = None,
     ):
         self._data = load_raw_config(config_path)
@@ -104,7 +105,10 @@ class Dataset:
         self.units = units or UnitLedger(None)
         self._unit_statements: list[Statement] | None = None
         self._unit_warnings: list[dict[str, Any]] | None = None
-        self.timestamps = timestamps or {}
+        if isinstance(timestamps, FirstSeen):
+            self.timestamps = timestamps
+        else:
+            self.timestamps = FirstSeen.from_items((timestamps or {}).items())
         self.run_time = datetime.utcnow().isoformat()
 
         # Standardize where resources are kept
