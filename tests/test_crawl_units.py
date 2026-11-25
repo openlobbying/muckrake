@@ -215,6 +215,30 @@ def test_unit_warnings_survive_retry(unit_dataset):
     assert json.loads(run.stats_json)["units"]["warnings_by_reason"] == {"page cap reached": 1}
 
 
+def test_first_seen_carries_over_and_last_seen_moves_on(unit_dataset):
+    ds = unit_dataset()
+
+    def seen() -> dict[str, tuple[str, str]]:
+        pack = get_dataset_path(ds.name) / "statements.pack.csv"
+        with pack.open("rb") as fh:
+            stmts = [s for s in read_pack_statements(fh) if s.prop == "name"]
+        return {s.value: (s.first_seen, s.last_seen) for s in stmts}
+
+    ds.plan(["a", "b"])
+    run_crawl(ds.config)
+    first = seen()
+
+    ds.plan(["a", "c"])
+    run_crawl(ds.config)
+    second = seen()
+
+    assert set(second) == {"a", "c"}
+    assert second["a"][0] == first["a"][0]
+    assert second["a"][1] > first["a"][1]
+    # A statement new in this run was first seen now.
+    assert second["c"][0] == second["c"][1] == second["a"][1]
+
+
 def test_release_build_reports_partial_inputs(unit_dataset):
     ds = unit_dataset()
     ds.plan(["a", "b"], fail=("b",), warn=("a",))
