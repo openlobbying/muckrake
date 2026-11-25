@@ -297,8 +297,26 @@ def init_published_database(uri: str = PUBLISHED_SQL_URI) -> Engine:
     resolver_table = _create_resolver_table(engine)
     if not inspect(engine).has_table(statement_table.name):
         statement_table.create(bind=engine, checkfirst=True)
+    with engine.begin() as conn:
+        create_identifier_index(conn)
     _sync_postgres_sequences(engine, [resolver_table])
     return engine
+
+
+def create_identifier_index(conn: Connection, table: str = "statement") -> None:
+    """Index identifier values, for finding an entity by its registration, tax or
+    other number (``prop_type = 'identifier' AND value = ...``).
+
+    nomenklatura's statement table only indexes ``value`` for entity references
+    (``ix_<table>_value_entity``), so without this an identifier lookup scans every
+    statement. Partial, so it only covers identifiers; named to match.
+    """
+    conn.execute(
+        text(
+            f"CREATE INDEX IF NOT EXISTS ix_{table}_value_identifier "
+            f"ON {table} (value) WHERE prop_type = 'identifier'"
+        )
+    )
 
 
 def refresh_postgres_search(uri: str = SQL_URI) -> None:

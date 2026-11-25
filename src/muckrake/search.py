@@ -36,6 +36,11 @@ class SearchResponse:
         return (self.offset + len(self.results)) < self.total
 
 
+# The match conditions use pg_trgm's operators (`%` similarity, `<%` word
+# similarity) rather than comparing similarity() to a number, because only the
+# operators can use the entity_search trigram indexes; the function form scans
+# every row. Their thresholds are session settings, set per query by
+# _set_trgm_thresholds. NULL names never match, as COALESCE(..., '') never did.
 POSTGRES_SEARCH_SQL = text(
     """
     WITH q AS (
@@ -54,9 +59,9 @@ POSTGRES_SEARCH_SQL = text(
     WHERE
         (
             (q.tsq != ''::tsquery AND es.tsv @@ q.tsq)
-            OR similarity(COALESCE(es.display_name, ''), q.raw) > :similarity
-            OR word_similarity(q.raw, COALESCE(es.names_text, '')) > :word_similarity
-            OR COALESCE(es.names_text, '') ILIKE ('%' || q.raw || '%')
+            OR es.display_name % q.raw
+            OR q.raw <% es.names_text
+            OR es.names_text ILIKE ('%' || q.raw || '%')
         )
         AND es.schema = ANY(:schemas)
     ORDER BY
@@ -85,9 +90,9 @@ POSTGRES_SEARCH_COUNT_SQL = text(
     WHERE
         (
             (q.tsq != ''::tsquery AND es.tsv @@ q.tsq)
-            OR similarity(COALESCE(es.display_name, ''), q.raw) > :similarity
-            OR word_similarity(q.raw, COALESCE(es.names_text, '')) > :word_similarity
-            OR COALESCE(es.names_text, '') ILIKE ('%' || q.raw || '%')
+            OR es.display_name % q.raw
+            OR q.raw <% es.names_text
+            OR es.names_text ILIKE ('%' || q.raw || '%')
         )
         AND es.schema = ANY(:schemas)
     """
@@ -119,6 +124,24 @@ ACTOR_COUNTS_SQL = text(
     GROUP BY schema
     """
 )
+
+
+SIMILARITY_THRESHOLD = 0.25
+WORD_SIMILARITY_THRESHOLD = 0.55
+
+
+def _set_trgm_thresholds(conn: Any) -> None:
+    """Set the pg_trgm thresholds behind `%` and `<%` for this transaction."""
+    conn.execute(
+        text(
+            "SELECT set_config('pg_trgm.similarity_threshold', :similarity, true), "
+            "set_config('pg_trgm.word_similarity_threshold', :word_similarity, true)"
+        ),
+        {
+            "similarity": str(SIMILARITY_THRESHOLD),
+            "word_similarity": str(WORD_SIMILARITY_THRESHOLD),
+        },
+    )
 
 
 def refresh_search_index(uri: str = SQL_URI) -> None:
@@ -227,15 +250,13 @@ def search_entities(
 ) -> SearchResponse:
     if postgres_search_ready(uri):
         engine = get_engine(uri)
-        with engine.connect() as conn:
+        # A transaction, so the thresholds set for `%` and `<%` apply to these
+        # two queries only.
+        with engine.begin() as conn:
+            _set_trgm_thresholds(conn)
             total = conn.execute(
                 POSTGRES_SEARCH_COUNT_SQL,
-                {
-                    "query": query,
-                    "similarity": 0.25,
-                    "word_similarity": 0.55,
-                    "schemas": list(schema_filter),
-                },
+                {"query": query, "schemas": list(schema_filter)},
             ).scalar()
             rows = conn.execute(
                 POSTGRES_SEARCH_SQL,
@@ -243,8 +264,6 @@ def search_entities(
                     "query": query,
                     "limit": limit,
                     "offset": offset,
-                    "similarity": 0.25,
-                    "word_similarity": 0.55,
                     "schemas": list(schema_filter),
                 },
             )

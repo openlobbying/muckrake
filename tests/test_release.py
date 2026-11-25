@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from nomenklatura.db import get_engine
+from sqlalchemy import text
 
 from muckrake import settings
 from muckrake.artifacts import get_artifact_store
@@ -60,6 +62,24 @@ def test_release_build_then_publish_copies_statements(make_dataset):
     assert len(published) == 1
     assert published[0].schema.name == "Company"
     assert published[0].get("name") == ["ACME Ltd"]
+
+
+def test_publish_indexes_references_and_identifiers(make_dataset):
+    name, pack_path = make_dataset([{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}])
+    _register_successful_run(name, pack_path)
+    run_release_publish(run_release_build([name]))
+
+    engine = get_engine(settings.PUBLISHED_SQL_URI)
+    # Entity references are indexed by nomenklatura, identifiers by muckrake.
+    for prop_type in ("entity", "identifier"):
+        with engine.connect() as conn:
+            plan = conn.execute(
+                text(
+                    "EXPLAIN QUERY PLAN SELECT canonical_id FROM statement "
+                    f"WHERE prop_type = '{prop_type}' AND value = 'x'"
+                )
+            ).all()
+        assert any(f"ix_statement_value_{prop_type}" in str(row) for row in plan)
 
 
 def test_release_build_fails_with_nothing_to_build(make_dataset):

@@ -6,6 +6,14 @@ version can change behaviour.
 
 ## [Unreleased]
 
+### Added
+
+- `release-publish` gives the published database a partial index on
+  `statement(value)` for identifiers (`ix_statement_value_identifier`, SQLite
+  and Postgres), which serves lookups by registration or tax number
+  (`prop_type = 'identifier' AND value = ...`). They used to scan every
+  statement.
+
 ### Changed
 
 - Ported to nomenklatura 4.18 and followthemoney 4.11, now the minimum versions
@@ -27,6 +35,12 @@ version can change behaviour.
   points at this entity?" queries. It is created in new databases, in each
   Postgres release publish, and in an existing database the first time a SQL
   store opens it (a one-off index build on a large database).
+- Postgres search (`search_entities`, the `search` command, applications' search
+  endpoints) is about ten times faster on large releases: its fuzzy-match
+  conditions use pg_trgm's `%` and `<%` operators, which the `entity_search`
+  trigram indexes serve, instead of comparing `similarity()` to a threshold,
+  which scanned every row. Results are the same, except that a similarity
+  exactly equal to a threshold (0.25, or 0.55 for word similarity) now matches.
 
 ### Fixed
 

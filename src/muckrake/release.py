@@ -19,6 +19,7 @@ from sqlalchemy.engine import Connection, Engine
 from muckrake.artifacts import get_artifact_store
 from muckrake.dataset import find_datasets, load_config
 from muckrake.db import (
+    create_identifier_index,
     create_search_view,
     get_release_artifacts_table,
     get_release_inputs_table,
@@ -399,6 +400,7 @@ def _swap_in_release_postgres(engine: Engine, linker: Linker[Any], pack_path: Pa
                 "ORDER BY id, seq DESC"
             )
         )
+        create_identifier_index(conn, table="statement_new")
         create_search_view(conn, view="entity_search_new", table="statement_new")
 
         conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS entity_search"))
