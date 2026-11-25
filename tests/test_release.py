@@ -141,3 +141,19 @@ def test_failed_publish_keeps_previous_release(make_dataset, monkeypatch):
 
     # The published DB still serves the previous release in full.
     assert len(_published_entities(name)) == 2
+
+
+def test_artifacts_over_2_gib_are_recorded():
+    """Release packs grow past 2 GiB, which overflowed a 32-bit size_bytes column."""
+    init_database()
+    run = create_dataset_run(dataset_name="big")
+    record_dataset_run_artifact(
+        run.id,
+        artifact_type="statements_pack",
+        storage_backend="local",
+        storage_key="dataset-runs/big/1/statements.pack.csv",
+        content_type="text/csv",
+        sha256="0" * 64,
+        size_bytes=3_082_170_143,
+    )
+    finish_dataset_run(run.id, "succeeded")

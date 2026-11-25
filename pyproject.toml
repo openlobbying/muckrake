@@ -1,6 +1,6 @@
 [project]
 name = "muckrake"
-version = "0.5.0"
+version = "0.5.1"
 description = "A data-pipeline framework for crawling, deduplicating and publishing FollowTheMoney entities."
 readme = "README.md"
 authors = [

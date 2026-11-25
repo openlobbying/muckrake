@@ -139,3 +139,30 @@ def test_search_matches_through_the_trigram_operators(make_dataset, published_po
     assert names("Acme Widgts Ltd") == ["Acme Widgets Ltd"]  # trigram similarity
     assert names("idgets") == ["Acme Widgets Ltd"]  # substring
     assert names("nothing like it") == []
+
+
+def test_init_database_widens_artifact_sizes(monkeypatch):
+    """Tables made when size_bytes was INTEGER are altered to BIGINT."""
+    assert POSTGRES_URL is not None
+    with get_engine(POSTGRES_URL).begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS release_artifacts, dataset_run_artifacts"))
+        conn.execute(
+            text(
+                """CREATE TABLE release_artifacts (
+                    id SERIAL PRIMARY KEY, release_id INTEGER NOT NULL,
+                    artifact_type VARCHAR NOT NULL, storage_backend VARCHAR NOT NULL,
+                    storage_key VARCHAR NOT NULL, content_type VARCHAR, sha256 VARCHAR NOT NULL,
+                    size_bytes INTEGER NOT NULL, metadata_json TEXT, created_at VARCHAR NOT NULL)"""
+            )
+        )
+    from muckrake.db import init_database
+
+    init_database(POSTGRES_URL)
+    types = dict(
+        _query(
+            """SELECT table_name, data_type FROM information_schema.columns
+               WHERE column_name = 'size_bytes'
+               AND table_name IN ('release_artifacts', 'dataset_run_artifacts')"""
+        )
+    )
+    assert types == {"release_artifacts": "bigint", "dataset_run_artifacts": "bigint"}

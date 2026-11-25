@@ -6,6 +6,17 @@ version can change behaviour.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-25
+
+A patch release: a release over 2 GiB can be built.
+
+### Fixed
+
+- `release-build` no longer fails on a release pack over 2 GiB: `size_bytes` in
+  `dataset_run_artifacts` and `release_artifacts` is now `BIGINT`. On Postgres,
+  `init_database` widens the column in existing tables (SQLite's integers are
+  already 64-bit).
+
 ## [0.5.0] - 2026-11-25
 
 `crawl` needs far less memory for large datasets. A minor version:
@@ -202,7 +213,8 @@ extraction runs at full scale with its paid results kept.
 See the [GitHub releases](https://github.com/openlobbying/muckrake/releases) for
 0.2.1 and before.
 
-[Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.5.0...develop
+[Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.5.1...develop
+[0.5.1]: https://github.com/openlobbying/muckrake/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/openlobbying/muckrake/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/openlobbying/muckrake/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/openlobbying/muckrake/compare/v0.3.0...v0.3.1
