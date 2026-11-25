@@ -6,6 +6,11 @@ version can change behaviour.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-25
+
+`crawl` needs far less memory for large datasets. A minor version:
+`load_timestamps` returns a `FirstSeen` instead of a `dict`.
+
 ### Changed
 
 - `crawl` holds the previous run's `first_seen` timestamps in far less memory:
@@ -197,7 +202,8 @@ extraction runs at full scale with its paid results kept.
 See the [GitHub releases](https://github.com/openlobbying/muckrake/releases) for
 0.2.1 and before.
 
-[Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.4.0...develop
+[Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.5.0...develop
+[0.5.0]: https://github.com/openlobbying/muckrake/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/openlobbying/muckrake/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/openlobbying/muckrake/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/openlobbying/muckrake/compare/v0.2.1...v0.3.0
