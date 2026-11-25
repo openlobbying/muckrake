@@ -6,6 +6,13 @@ version can change behaviour.
 
 ## [Unreleased]
 
+### Fixed
+
+- `release-build` no longer fails on a release pack over 2 GiB: `size_bytes` in
+  `dataset_run_artifacts` and `release_artifacts` is now `BIGINT`. On Postgres,
+  `init_database` widens the column in existing tables (SQLite's integers are
+  already 64-bit).
+
 ## [0.5.0] - 2026-11-25
 
 `crawl` needs far less memory for large datasets. A minor version:

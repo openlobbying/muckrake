@@ -8,7 +8,7 @@ from typing import Any, cast
 from nomenklatura.db import Session, get_engine, get_metadata, make_session, make_statement_table
 from nomenklatura.resolver import Identifier, Linker, Resolver
 from org_id import is_org_id
-from sqlalchemy import Column, Integer, MetaData, String, Table, Text, inspect, text
+from sqlalchemy import BigInteger, Column, Integer, MetaData, String, Table, Text, inspect, text
 from sqlalchemy.engine import Connection, Engine
 
 from muckrake.settings import PUBLISHED_SQL_URI, SQL_URI
@@ -97,7 +97,7 @@ def get_dataset_run_artifacts_table(metadata: MetaData | None = None) -> Table:
         Column("storage_key", String(), nullable=False),
         Column("content_type", String(), nullable=True),
         Column("sha256", String(), nullable=False),
-        Column("size_bytes", Integer(), nullable=False),
+        Column("size_bytes", BigInteger(), nullable=False),
         Column("metadata_json", Text(), nullable=True),
         Column("created_at", String(), nullable=False),
         extend_existing=True,
@@ -179,7 +179,7 @@ def get_release_artifacts_table(metadata: MetaData | None = None) -> Table:
         Column("storage_key", String(), nullable=False),
         Column("content_type", String(), nullable=True),
         Column("sha256", String(), nullable=False),
-        Column("size_bytes", Integer(), nullable=False),
+        Column("size_bytes", BigInteger(), nullable=False),
         Column("metadata_json", Text(), nullable=True),
         Column("created_at", String(), nullable=False),
         extend_existing=True,
@@ -254,6 +254,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
         if inspector.has_table(table.name):
             continue
         table.create(bind=engine, checkfirst=True)
+    _ensure_artifact_sizes(engine, [dataset_run_artifacts, release_artifacts])
     _ensure_ner_candidates_constraints(engine)
     _ensure_dataset_run_constraints(engine)
     _ensure_release_constraints(engine)
@@ -425,6 +426,23 @@ def _ensure_dataset_run_constraints(engine: Engine) -> None:
                 """
             )
         )
+
+
+def _ensure_artifact_sizes(engine: Engine, tables: list[Table]) -> None:
+    """Widen ``size_bytes`` to BIGINT in tables made when it was INTEGER.
+
+    A 32-bit integer stops at 2 GiB, and release packs grow past it. SQLite's
+    integers are already 64-bit, so only Postgres needs the change.
+    """
+    if engine.dialect.name != "postgresql":
+        return
+    inspector = inspect(engine)
+    for table in tables:
+        columns = {c["name"]: c for c in inspector.get_columns(table.name)}
+        column = columns.get("size_bytes")
+        if column is not None and not isinstance(column["type"], BigInteger):
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE {table.name} ALTER COLUMN size_bytes TYPE BIGINT"))
 
 
 def _ensure_release_constraints(engine: Engine) -> None:
