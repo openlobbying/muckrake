@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from nomenklatura.db import get_engine
+from sqlalchemy import inspect
 
 from muckrake import settings
 from muckrake.artifacts import get_artifact_store
@@ -60,6 +62,19 @@ def test_release_build_then_publish_copies_statements(make_dataset):
     assert len(published) == 1
     assert published[0].schema.name == "Company"
     assert published[0].get("name") == ["ACME Ltd"]
+
+
+def test_publish_indexes_references_and_identifiers(make_dataset):
+    name, pack_path = make_dataset([{"schema": "Company", "properties": {"name": ["ACME Ltd"]}}])
+    _register_successful_run(name, pack_path)
+    run_release_publish(run_release_build([name]))
+
+    # Entity references are indexed by nomenklatura, identifiers by muckrake.
+    # (Which index SQLite's planner picks for a tiny table varies by version, so
+    # check that they exist rather than that a query uses them.)
+    indexes = inspect(get_engine(settings.PUBLISHED_SQL_URI)).get_indexes("statement")
+    names = {index["name"] for index in indexes}
+    assert {"ix_statement_value_entity", "ix_statement_value_identifier"} <= names
 
 
 def test_release_build_fails_with_nothing_to_build(make_dataset):
