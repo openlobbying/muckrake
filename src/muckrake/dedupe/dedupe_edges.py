@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from nomenklatura.judgement import Judgement
 
 from muckrake.dataset import find_datasets, load_config
-from muckrake.db import get_resolver
+from muckrake.db import open_resolver
 from muckrake.dedupe.dedupe import load_statements
 from muckrake.store import get_level_store
 from muckrake.util import parse_date_token
@@ -162,10 +162,7 @@ def run_dedupe_edges(
     load_statements(store, dataset_names)
     view = store.view(store.dataset)
 
-    resolver = get_resolver()
-    resolver.begin()
-
-    try:
+    with open_resolver() as resolver:
         records: list[EdgeRecord] = []
         for entity in view.entities():
             record = _extract_edge_record(entity, resolver)
@@ -180,7 +177,6 @@ def run_dedupe_edges(
                 len(clusters),
                 merged_entities,
             )
-            resolver.rollback()
             return
 
         merged_entities = 0
@@ -198,12 +194,8 @@ def run_dedupe_edges(
                 ).id
                 merged_entities += 1
 
-        resolver.commit()
         log.info(
             "Edge dedupe complete: merged %s clusters (%s edge entities)",
             len(clusters),
             merged_entities,
         )
-    except Exception:
-        resolver.rollback()
-        raise

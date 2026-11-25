@@ -10,7 +10,7 @@ from nomenklatura.judgement import Judgement
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from muckrake.db import ensure_resolver_lock_schema, get_resolver
+from muckrake.db import ensure_resolver_lock_schema, open_resolver
 from muckrake.view import get_view, serialize_view_entity
 
 LOCK_TTL = timedelta(minutes=30)
@@ -189,12 +189,9 @@ def _load_candidate_payload(
 ) -> dict[str, Any] | None:
     view = get_view()
     if verify_candidate:
-        resolver = get_resolver(begin=True)
-        try:
+        with open_resolver() as resolver:
             if not resolver.check_candidate(left_id, right_id):
                 return None
-        finally:
-            resolver.rollback()
 
     left = view.get_entity(left_id)
     right = view.get_entity(right_id)
@@ -226,11 +223,8 @@ def _load_candidate_payload(
 
 
 def _list_candidate_rows(limit: int) -> list[tuple[str, str, float | None]]:
-    resolver = get_resolver(begin=True)
-    try:
+    with open_resolver() as resolver:
         return list(resolver.get_candidates(limit=limit))
-    finally:
-        resolver.rollback()
 
 
 def get_next_dedupe_candidate(
@@ -304,9 +298,7 @@ def record_dedupe_judgement(
     engine = get_lock_engine()
     now = _utc_now()
     pair_key = _pair_key(left_id, right_id)
-    resolver = get_resolver()
-    resolver.begin()
-    try:
+    with open_resolver() as resolver:
         with engine.begin() as conn:
             _delete_expired_locks(conn, now)
             lock = _get_lock_owner(conn, pair_key, now)
@@ -322,12 +314,8 @@ def record_dedupe_judgement(
             judgement,
             user=_resolve_user_label(user_id, user_name, user_prefix),
         )
-        resolver.commit()
 
-        with engine.begin() as conn:
-            _release_lock(conn, pair_key)
+    with engine.begin() as conn:
+        _release_lock(conn, pair_key)
 
-        return str(canonical)
-    except Exception:
-        resolver.rollback()
-        raise
+    return str(canonical)

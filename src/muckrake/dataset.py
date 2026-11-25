@@ -12,7 +12,7 @@ from followthemoney.statement import Statement
 from followthemoney.statement.entity import StatementEntity
 from lxml.html import HtmlElement
 from nomenklatura.cache import Cache
-from nomenklatura.db import get_engine, get_metadata
+from nomenklatura.db import Session, make_session
 from org_id import make_hashed_id, make_org_id
 
 from muckrake.extract.fetch import fetch_file, fetch_html, fetch_json, fetch_text
@@ -111,12 +111,15 @@ class Dataset:
         self.data_path = get_dataset_path(self.name)
         self.resources_path = self.data_path / "resources"
         self.log = logging.getLogger(self.name)
+        self._cache_session: Session | None = None
         self._cache: Cache | None = None
 
     @property
     def cache(self) -> Cache:
         if self._cache is None:
-            self._cache = Cache(get_engine(SQL_URI), get_metadata(), self.ftm, create=True)
+            # One session for the whole run, committed by close().
+            self._cache_session = make_session(SQL_URI)
+            self._cache = Cache(self._cache_session, self.ftm, create=True)
         return self._cache
 
     @property
@@ -231,8 +234,10 @@ class Dataset:
 
     def close(self) -> None:
         """Close the dataset and persist any cached data."""
-        if self._cache is not None:
-            self._cache.close()
+        if self._cache_session is not None:
+            self._cache_session.commit()
+            self._cache_session = None
+            self._cache = None
 
 
 def find_datasets(name: str | None = None) -> list[Path]:

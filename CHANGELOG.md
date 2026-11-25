@@ -4,6 +4,36 @@ All notable changes to muckrake are recorded here. Versions follow
 [semantic versioning](https://semver.org/); while muckrake is below 1.0, a minor
 version can change behaviour.
 
+## [Unreleased]
+
+### Changed
+
+- Ported to nomenklatura 4.18 and followthemoney 4.11, now the minimum versions
+  (`nomenklatura>=4.18`, `followthemoney>=4.11`), so consumers no longer need to
+  pin `nomenklatura<4.6`. nomenklatura's `Resolver` and `Cache` now run on a
+  `nomenklatura.db.Session` and `SQLStore` takes an engine; muckrake follows.
+- `muckrake.db.get_resolver()` is replaced by `open_resolver()`, a context
+  manager that yields a loaded resolver and commits its writes when the block
+  exits (rolling back if it raises), and `get_linker()` for read-only access to
+  the merges.
+- `xref` commits its suggestions in batches as it runs (nomenklatura's own
+  checkpoints), so an interrupted run keeps what it suggested so far. It used to
+  run in one transaction.
+- Suggestions that a judgement supersedes are now soft-deleted and stay in the
+  `resolver` table until `xref-prune`; nomenklatura used to hard-delete them on
+  every commit.
+- The statement table gets nomenklatura's partial index on `value` for
+  entity-typed statements (`ix_statement_value_entity`), which serves "what
+  points at this entity?" queries. It is created in new databases, in each
+  Postgres release publish, and in an existing database the first time a SQL
+  store opens it (a one-off index build on a large database).
+
+### Fixed
+
+- `muckrake add` still rejects an entity missing a required property:
+  followthemoney 4.11's `Schema.validate` only checks the properties it is
+  given, so muckrake now passes the required ones too.
+
 ## [0.3.1] - 2026-10-15
 
 Follow-up to 0.3.0 from the documentation audit: dependency and loading fixes,
@@ -136,6 +166,6 @@ extraction runs at full scale with its paid results kept.
 See the [GitHub releases](https://github.com/openlobbying/muckrake/releases) for
 0.2.1 and before.
 
-[Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.3.0...develop
+[Unreleased]: https://github.com/openlobbying/muckrake/compare/v0.3.1...develop
 [0.3.1]: https://github.com/openlobbying/muckrake/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/openlobbying/muckrake/compare/v0.2.1...v0.3.0
