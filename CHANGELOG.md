@@ -6,6 +6,17 @@ version can change behaviour.
 
 ## [Unreleased]
 
+### Changed
+
+- The `ner-review` screen is rebuilt. Entities are in a table you move through
+  with the arrow keys, with references shown as the entity they point to. Every
+  edit happens on the screen, with no external editor: `Enter` edits an entity in
+  a form, `a` adds one, `d` deletes one and the references to it, `s` splits one
+  into a Person, a body and an Employment, and `e` edits the JSON with checks as
+  you type. `z` undoes the last decision, and a progress line shows your place
+  and, for a sample, its running counts. The prompt review used without a
+  terminal still opens `$EDITOR` for `e`.
+
 ### Added
 
 - `ner-review --sample N` reviews a sample of N random candidates that `--auto`

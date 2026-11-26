@@ -212,6 +212,34 @@ def review_candidate(
         conn.commit()
 
 
+def restore_review(
+    conn: Connection,
+    candidate_id: int,
+    status: str,
+    reviewer: str | None,
+    reviewed_at: str | None,
+) -> None:
+    """Put a candidate's decision back as it was, to undo a review decision."""
+    conn.execute(
+        text(
+            """
+            UPDATE ner_candidates
+            SET status = :status, reviewer = :reviewer,
+                reviewed_at = :reviewed_at, updated_at = :updated_at
+            WHERE id = :candidate_id
+            """
+        ),
+        {
+            "status": status,
+            "reviewer": reviewer,
+            "reviewed_at": reviewed_at,
+            "updated_at": datetime.now(UTC).isoformat(),
+            "candidate_id": candidate_id,
+        },
+    )
+    conn.commit()
+
+
 AUTO_REVIEWER = "muckrake/auto"
 
 
