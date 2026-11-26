@@ -236,6 +236,96 @@ def auto_review(conn: Connection, dataset_name: str | None = None) -> tuple[int,
     return approved, rejected
 
 
+SAMPLE_POOLS = ("approved", "rejected")
+
+
+def draw_sample(
+    conn: Connection, size: int, pool: str = "approved", dataset_name: str | None = None
+) -> int:
+    """Draw up to ``size`` random candidates from one pool into the review sample.
+
+    The pool is the automatic decision being checked: ``approved`` measures how
+    many of ``AUTO_REVIEWER``'s splits are right, ``rejected`` how often it left
+    a composite name whole. Only candidates decided by ``AUTO_REVIEWER`` and never
+    sampled before are drawn. Each gets ``sampled_at`` and ``sampled_status`` (the
+    pool), committed at once, so an interrupted review keeps its sample. Returns
+    how many were drawn.
+    """
+    if pool not in SAMPLE_POOLS:
+        raise ValueError(f"Invalid sample pool: {pool}")
+    clauses = ["status = :pool", "reviewer = :reviewer", "sampled_at IS NULL"]
+    params: dict[str, Any] = {"pool": pool, "reviewer": AUTO_REVIEWER, "size": size}
+    if dataset_name is not None:
+        clauses.append("dataset = :dataset_name")
+        params["dataset_name"] = dataset_name
+    ids = [
+        row[0]
+        for row in conn.execute(
+            text(
+                f"SELECT id FROM ner_candidates WHERE {' AND '.join(clauses)} "
+                "ORDER BY random() LIMIT :size"
+            ),
+            params,
+        )
+    ]
+    sampled_at = datetime.now(UTC).isoformat()
+    for candidate_id in ids:
+        conn.execute(
+            text(
+                "UPDATE ner_candidates SET sampled_at = :sampled_at, sampled_status = :pool "
+                "WHERE id = :candidate_id"
+            ),
+            {"sampled_at": sampled_at, "pool": pool, "candidate_id": candidate_id},
+        )
+    conn.commit()
+    return len(ids)
+
+
+def list_sample_awaiting_review(
+    conn: Connection, pool: str = "approved", dataset_name: str | None = None
+) -> list[RowMapping]:
+    """A pool's sampled candidates no person has decided yet (still ``AUTO_REVIEWER``'s)."""
+    clauses = ["sampled_status = :pool", "reviewer = :reviewer"]
+    params: dict[str, Any] = {"pool": pool, "reviewer": AUTO_REVIEWER}
+    if dataset_name is not None:
+        clauses.append("dataset = :dataset_name")
+        params["dataset_name"] = dataset_name
+    sql = f"SELECT * FROM ner_candidates WHERE {' AND '.join(clauses)} ORDER BY sampled_at, id"
+    return list(conn.execute(text(sql), params).mappings())
+
+
+def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[str, dict[str, int]]:
+    """Per pool: candidates sampled, decided by a person, and approved by that person.
+
+    For the ``approved`` pool, approved / decided is the precision of the automatic
+    splits. For the ``rejected`` pool, approved / decided is how often a name left
+    whole was really composite (the reviewer splits it with an edit, then approves).
+    """
+    clause = "AND dataset = :dataset_name" if dataset_name is not None else ""
+    rows = conn.execute(
+        text(
+            f"""
+            SELECT sampled_status,
+                   COUNT(*),
+                   SUM(CASE WHEN reviewer <> :reviewer THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN reviewer <> :reviewer AND status = 'approved' THEN 1 ELSE 0 END)
+            FROM ner_candidates
+            WHERE sampled_status IS NOT NULL {clause}
+            GROUP BY sampled_status
+            """
+        ),
+        {"reviewer": AUTO_REVIEWER, "dataset_name": dataset_name},
+    )
+    results = {pool: {"sampled": 0, "decided": 0, "approved": 0} for pool in SAMPLE_POOLS}
+    for pool, sampled, decided, approved in rows:
+        results[pool] = {
+            "sampled": int(sampled),
+            "decided": int(decided or 0),
+            "approved": int(approved or 0),
+        }
+    return results
+
+
 # Everything but the local row id, so an export can be imported into any database.
 EXPORT_COLUMNS = (
     "dataset",
@@ -249,6 +339,8 @@ EXPORT_COLUMNS = (
     "status",
     "reviewer",
     "reviewed_at",
+    "sampled_at",
+    "sampled_status",
     "extraction_json",
     "created_at",
     "updated_at",
@@ -286,7 +378,8 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
     """Add candidates from an export; returns (imported, already_present).
 
     A candidate already in the database is left as it is, so local review
-    decisions are never overwritten.
+    decisions and samples are never overwritten. Exports made before
+    the sample columns existed import with them unset.
     """
     exists = text(
         "SELECT 1 FROM ner_candidates WHERE " + " AND ".join(f"{c} = :{c}" for c in KEY_COLUMNS)
@@ -299,6 +392,8 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
     with _open(path, write=False) as fh:
         for line in fh:
             row = json.loads(line)
+            row.setdefault("sampled_at", None)
+            row.setdefault("sampled_status", None)
             if conn.execute(exists, row).first() is not None:
                 present += 1
                 continue

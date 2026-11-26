@@ -6,6 +6,17 @@ version can change behaviour.
 
 ## [Unreleased]
 
+### Added
+
+- `ner-review --sample N` draws N random candidates that `--auto` approved into
+  a review sample and reviews them, so the precision of its splits can be
+  measured. With `--rejected` it samples the candidates `--auto` rejected
+  instead, to measure how often a composite name was left whole. After the
+  review it prints the pool's counts; `sample_results` returns them for both
+  pools. `ner_candidates` gains nullable `sampled_at` and `sampled_status`
+  columns, which `init_database` adds to existing tables, and `ner-export` /
+  `ner-import` carry them (older exports import with them unset).
+
 ## [0.5.1] - 2026-11-25
 
 A patch release: a release over 2 GiB can be built.

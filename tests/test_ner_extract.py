@@ -1,22 +1,30 @@
 from __future__ import annotations
 
+import gzip
+import json
 import uuid
 from typing import Any
 
 import pytest
-from sqlalchemy import text
+from click.testing import CliRunner
+from sqlalchemy import create_engine, inspect, text
 
+from muckrake.cli import cli
+from muckrake.db import init_database
 from muckrake.extract.ner import pipeline
 from muckrake.extract.ner.engines.base import Extractor
 from muckrake.extract.ner.pipeline import run_ner_extract
 from muckrake.extract.ner.storage import (
     AUTO_REVIEWER,
     auto_review,
+    draw_sample,
     export_candidates,
     get_connection,
     import_candidates,
     list_candidates,
+    list_sample_awaiting_review,
     review_candidate,
+    sample_results,
 )
 
 
@@ -138,3 +146,194 @@ def test_export_then_import_restores_candidates_and_decisions(
     extractor.calls.clear()
     run_ner_extract(name, extractor_name="llm")
     assert extractor.calls == []
+
+
+def _auto_reviewed_dataset(
+    make_dataset, composites: list[str], whole: list[str] | None = None
+) -> str:
+    """A dataset whose splits are auto-approved and whose unsplit names are auto-rejected."""
+    entities = [
+        {"schema": "Person", "properties": {"name": [c]}, "id": f"p{i}"}
+        for i, c in enumerate(composites)
+    ]
+    entities += [
+        {"schema": "Organization", "properties": {"name": [w]}, "id": f"o{i}"}
+        for i, w in enumerate(whole or [])
+    ]
+    name, _ = make_dataset(entities)
+    run_ner_extract(name, extractor_name="llm")
+    conn = get_connection()
+    try:
+        auto_review(conn, dataset_name=name)
+    finally:
+        conn.close()
+    return name
+
+
+def test_sample_draws_only_unsampled_auto_approved_candidates(make_dataset, extractor) -> None:
+    composites = [_unique(f"Annabel Archer {i}, Benjamin Baker {i}") for i in range(4)]
+    whole = [_unique("Department for Levelling Up: Housing")]
+    name = _auto_reviewed_dataset(make_dataset, composites, whole=whole)
+    conn = get_connection()
+    try:
+        # A person's decision takes a candidate out of what can be sampled.
+        human = list_candidates(conn, dataset_name=name, status="approved")[0]
+        review_candidate(conn, human["id"], "approved")
+
+        assert draw_sample(conn, 2, dataset_name=name) == 2
+        sampled = list_sample_awaiting_review(conn, dataset_name=name)
+        assert len(sampled) == 2
+        assert all(row["sampled_at"] for row in sampled)
+        assert all(row["status"] == "approved" for row in sampled)
+        assert human["id"] not in {row["id"] for row in sampled}
+
+        # Only one eligible candidate is left, so a bigger draw takes just that one.
+        assert draw_sample(conn, 10, dataset_name=name) == 1
+        assert draw_sample(conn, 10, dataset_name=name) == 0
+        assert len(list_sample_awaiting_review(conn, dataset_name=name)) == 3
+        [rejected] = list_candidates(conn, dataset_name=name, status="rejected")
+        assert rejected["sampled_at"] is None
+        assert {row["sampled_status"] for row in sampled} == {"approved"}
+    finally:
+        conn.close()
+
+
+def test_rejected_pool_samples_only_auto_rejected_candidates(make_dataset, extractor) -> None:
+    whole = [_unique(f"Department number {i}: Housing") for i in range(3)]
+    name = _auto_reviewed_dataset(make_dataset, [_unique("Ivy Irons, Jack Jones")], whole=whole)
+    conn = get_connection()
+    try:
+        assert draw_sample(conn, 2, pool="rejected", dataset_name=name) == 2
+        sampled = list_sample_awaiting_review(conn, pool="rejected", dataset_name=name)
+        assert len(sampled) == 2
+        assert {row["status"] for row in sampled} == {"rejected"}
+        assert {row["sampled_status"] for row in sampled} == {"rejected"}
+        # The pools are kept apart: the approved queue is still empty.
+        assert list_sample_awaiting_review(conn, pool="approved", dataset_name=name) == []
+        assert draw_sample(conn, 5, pool="rejected", dataset_name=name) == 1
+        with pytest.raises(ValueError):
+            draw_sample(conn, 1, pool="pending", dataset_name=name)
+    finally:
+        conn.close()
+
+
+def test_sample_results_count_both_pools_after_human_review(make_dataset, extractor) -> None:
+    composites = [_unique(f"Karl Kent {i}, Lena Lyle {i}") for i in range(3)]
+    whole = [_unique(f"Ministry number {i}: Defence") for i in range(2)]
+    name = _auto_reviewed_dataset(make_dataset, composites, whole=whole)
+    conn = get_connection()
+    try:
+        draw_sample(conn, 3, pool="approved", dataset_name=name)
+        draw_sample(conn, 2, pool="rejected", dataset_name=name)
+        first, second, _ = list_sample_awaiting_review(conn, pool="approved", dataset_name=name)
+        # A person keeps one split and rejects another; the third is not decided yet.
+        review_candidate(conn, first["id"], "approved")
+        review_candidate(conn, second["id"], "rejected")
+        # One name left whole was really composite (split, then approved); one was right.
+        missed, kept = list_sample_awaiting_review(conn, pool="rejected", dataset_name=name)
+        review_candidate(conn, missed["id"], "approved")
+        review_candidate(conn, kept["id"], "rejected")
+
+        results = sample_results(conn, dataset_name=name)
+    finally:
+        conn.close()
+    assert results == {
+        "approved": {"sampled": 3, "decided": 2, "approved": 1},
+        "rejected": {"sampled": 2, "decided": 2, "approved": 1},
+    }
+
+
+def test_reviewed_sample_candidates_leave_the_queue(make_dataset, extractor) -> None:
+    name = _auto_reviewed_dataset(make_dataset, [_unique("Cyril Cole, Diana Dee")])
+    conn = get_connection()
+    try:
+        assert draw_sample(conn, 1, dataset_name=name) == 1
+        [row] = list_sample_awaiting_review(conn, dataset_name=name)
+        review_candidate(conn, row["id"], "rejected")
+        assert list_sample_awaiting_review(conn, dataset_name=name) == []
+        [decided] = list_candidates(conn, dataset_name=name, status="rejected")
+        assert decided["sampled_at"] == row["sampled_at"]
+    finally:
+        conn.close()
+
+
+def test_export_and_import_carry_sampled_at(make_dataset, extractor, tmp_path) -> None:
+    name = _auto_reviewed_dataset(make_dataset, [_unique("Edward Eel, Florence Fox")])
+    export = tmp_path / "ner.jsonl.gz"
+    conn = get_connection()
+    try:
+        draw_sample(conn, 1, dataset_name=name)
+        [before] = list_sample_awaiting_review(conn, dataset_name=name)
+        export_candidates(conn, export)
+        conn.execute(text("DELETE FROM ner_candidates WHERE dataset = :d"), {"d": name})
+        conn.commit()
+        import_candidates(conn, export)
+        [after] = list_sample_awaiting_review(conn, dataset_name=name)
+    finally:
+        conn.close()
+    assert after["sampled_at"] == before["sampled_at"]
+    assert after["sampled_status"] == before["sampled_status"] == "approved"
+
+
+def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_path) -> None:
+    name = _auto_reviewed_dataset(make_dataset, [_unique("Gustav Gray, Helena Hope")])
+    export = tmp_path / "ner.jsonl.gz"
+    conn = get_connection()
+    try:
+        export_candidates(conn, export)
+        conn.execute(text("DELETE FROM ner_candidates WHERE dataset = :d"), {"d": name})
+        conn.commit()
+        old = tmp_path / "old.jsonl.gz"
+        with gzip.open(export, "rt") as src, gzip.open(old, "wt") as dst:
+            for line in src:
+                row = json.loads(line)
+                del row["sampled_at"], row["sampled_status"]
+                dst.write(json.dumps(row) + "\n")
+        imported, _ = import_candidates(conn, old)
+        assert imported >= 1
+        [restored] = list_candidates(conn, dataset_name=name, status="approved")
+    finally:
+        conn.close()
+    assert restored["sampled_at"] is None
+    assert restored["sampled_status"] is None
+
+
+def test_init_database_adds_the_sample_columns_to_an_existing_table(tmp_path) -> None:
+    uri = f"sqlite:///{tmp_path / 'old.db'}"
+    old = create_engine(uri)
+    with old.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE ner_candidates (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    dataset VARCHAR NOT NULL, entity_id VARCHAR NOT NULL,
+                    schema VARCHAR NOT NULL, property_name VARCHAR NOT NULL,
+                    source_text TEXT NOT NULL, fingerprint VARCHAR NOT NULL,
+                    extractor VARCHAR NOT NULL, extractor_version VARCHAR NOT NULL,
+                    status VARCHAR NOT NULL, reviewer VARCHAR, reviewed_at VARCHAR,
+                    extraction_json TEXT NOT NULL, created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+        )
+    old.dispose()
+
+    engine = init_database(uri)
+    columns = {c["name"] for c in inspect(engine).get_columns("ner_candidates")}
+    engine.dispose()
+    assert {"sampled_at", "sampled_status"} <= columns
+
+
+@pytest.mark.parametrize("other", [["--auto"], ["--limit", "5"]])
+def test_sample_cannot_be_combined_with_auto_or_limit(other: list[str]) -> None:
+    result = CliRunner().invoke(cli, ["ner-review", "--sample", "5", *other])
+    assert result.exit_code != 0
+    assert "--sample can't be combined" in result.output
+
+
+def test_rejected_needs_sample() -> None:
+    result = CliRunner().invoke(cli, ["ner-review", "--rejected"])
+    assert result.exit_code != 0
+    assert "--rejected needs --sample" in result.output

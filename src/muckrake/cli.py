@@ -495,13 +495,40 @@ def ner_extract(dataset_name, limit, entity_id, extractor_name, workers):
     default=False,
     help="Approve every pending split without review; reject unsplit extractions",
 )
-def ner_review(dataset_name, limit, auto):
+@click.option(
+    "--sample",
+    "sample",
+    type=click.IntRange(min=0),
+    default=None,
+    help=(
+        "Draw N random auto-approved candidates into the review sample, then review "
+        "every sampled candidate not yet decided by a person (0 resumes only)"
+    ),
+)
+@click.option(
+    "--rejected",
+    is_flag=True,
+    default=False,
+    help="With --sample, sample auto-rejected candidates instead of auto-approved ones",
+)
+def ner_review(dataset_name, limit, auto, sample, rejected):
     """Review pending NER extraction candidates."""
+    if rejected and sample is None:
+        raise click.UsageError("--rejected needs --sample.")
+    if sample is not None and auto:
+        raise click.UsageError("--sample can't be combined with --auto.")
+    if sample is not None and limit is not None:
+        raise click.UsageError("--sample can't be combined with --limit.")
     try:
         if auto:
             run_ner_auto_review(dataset_name=dataset_name)
         else:
-            run_ner_review(dataset_name=dataset_name, limit=limit)
+            run_ner_review(
+                dataset_name=dataset_name,
+                limit=limit,
+                sample=sample,
+                pool="rejected" if rejected else "approved",
+            )
     except Exception as e:
         log.exception(e)
         sys.exit(1)

@@ -18,11 +18,14 @@ from textual.widgets import Footer, Static
 
 from .storage import (
     auto_review,
+    draw_sample,
     get_candidate,
     get_connection,
     init_db,
     list_candidates,
+    list_sample_awaiting_review,
     review_candidate,
+    sample_results,
     update_candidate_extraction,
 )
 
@@ -671,13 +674,34 @@ def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
     return result
 
 
-def run_ner_review(dataset_name: str | None = None, limit: int | None = None) -> None:
+def run_ner_review(
+    dataset_name: str | None = None,
+    limit: int | None = None,
+    sample: int | None = None,
+    pool: str = "approved",
+) -> None:
+    """Review pending candidates, or, with ``sample``, a sample of automatic decisions.
+
+    ``sample`` draws that many new candidates from ``pool`` (``approved`` or
+    ``rejected`` by ``muckrake/auto``) into the sample, then reviews every
+    candidate sampled from that pool that no person has decided yet, including
+    any left from an earlier session (``sample=0`` only resumes).
+    """
     conn = get_connection()
     init_db(conn)
-    rows = list_candidates(conn, dataset_name=dataset_name, status="pending", limit=limit)
+    if sample is None:
+        rows = list_candidates(conn, dataset_name=dataset_name, status="pending", limit=limit)
+        empty = "No pending NER candidates to review."
+    else:
+        drawn = draw_sample(conn, sample, pool=pool, dataset_name=dataset_name)
+        rows = list_sample_awaiting_review(conn, pool=pool, dataset_name=dataset_name)
+        click.echo(
+            f"Drew {drawn} new auto-{pool} candidates; {len(rows)} sampled candidates to review."
+        )
+        empty = f"No sampled auto-{pool} NER candidates to review."
 
     if not rows:
-        click.echo("No pending NER candidates to review.")
+        click.echo(empty)
         conn.close()
         return
 
@@ -694,6 +718,14 @@ def run_ner_review(dataset_name: str | None = None, limit: int | None = None) ->
         f"skipped={summary['skipped']} "
         f"remaining={summary['remaining']}"
     )
+    if sample is not None:
+        conn = get_connection()
+        counts = sample_results(conn, dataset_name=dataset_name)[pool]
+        conn.close()
+        click.echo(
+            f"Auto-{pool} sample so far: sampled={counts['sampled']} "
+            f"decided={counts['decided']} approved={counts['approved']}"
+        )
 
 
 def run_ner_auto_review(dataset_name: str | None = None) -> None:

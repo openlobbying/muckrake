@@ -94,6 +94,8 @@ Main columns:
 - `extractor`
 - `status` (`pending`, `approved`, `rejected`)
 - `reviewer`, `reviewed_at`
+- `sampled_at` and `sampled_status`, set when the candidate is drawn into a review
+  sample: when, and the automatic status it had then (its pool)
 - `extraction_json`, `created_at`, `updated_at`
 
 `extractor_version` still exists internally in the table for compatibility,
@@ -182,6 +184,38 @@ decisions are kept.
 the source text (so the original entity and its ID are kept). It records the
 reviewer as `muckrake/auto` and only touches pending candidates, so decisions
 made in the review TUI are never overwritten.
+
+### Measuring precision
+
+`--auto` decides candidates nobody has checked. To measure how good those
+decisions are, review a random sample of them by hand. There are two pools:
+
+```bash
+uv run muckrake ner-review --sample 100             # auto-approved splits
+uv run muckrake ner-review --sample 100 --rejected  # names auto-rejected as whole
+uv run muckrake ner-review <dataset> --sample 100   # one dataset
+```
+
+`--sample N` draws up to N random candidates from the pool that `muckrake/auto`
+decided and that were never sampled before, sets their `sampled_at` and
+`sampled_status`, and opens the review on every candidate sampled from that pool
+that no person has decided yet. Candidates skipped, or left when you quit, stay
+in the sample: `--sample 0` draws nothing new and resumes them. `--rejected`
+needs `--sample`, and `--sample` can't be combined with `--auto` or `--limit`.
+
+After a sample review, the command prints the pool's counts: sampled, decided by
+a person, and approved by that person (`sample_results` in
+`muckrake.extract.ner.storage` returns them for both pools).
+
+- Approved pool: approved / decided is the precision of the automatic splits.
+  Approve a split that is right, and reject one that is wrong.
+- Rejected pool: approved / decided is how often a name left whole was really
+  composite. Reject a name that is one entity, so the original entity is kept.
+  Split a composite name with `e`, then approve it.
+
+A split fixed with `e` and then approved counts as approved, so in the approved
+pool note edits separately if they matter. `ner-export` and `ner-import` carry
+`sampled_at` and `sampled_status`, so a sample is kept with the decisions.
 
 Review controls:
 
