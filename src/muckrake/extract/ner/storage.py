@@ -1,5 +1,6 @@
 import gzip
 import json
+from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -154,13 +155,18 @@ def get_candidate(conn: Connection, candidate_id: int) -> RowMapping | None:
 def update_candidate_extraction(
     conn: Connection, candidate_id: int, extraction: list[dict[str, Any]]
 ) -> None:
-    """Save a reviewer's edited extraction, and record when it was edited."""
+    """Save a reviewer's edited extraction, and record when it was edited.
+
+    The first edit also keeps the extraction as it was in
+    ``original_extraction_json``; later edits never overwrite it.
+    """
     now = datetime.now(UTC).isoformat()
     conn.execute(
         text(
             """
             UPDATE ner_candidates
-            SET extraction_json = :extraction_json, edited_at = :now, updated_at = :now
+            SET original_extraction_json = COALESCE(original_extraction_json, extraction_json),
+                extraction_json = :extraction_json, edited_at = :now, updated_at = :now
             WHERE id = :candidate_id
             """
         ),
@@ -296,39 +302,116 @@ def list_sample_awaiting_review(
     return list(conn.execute(text(sql), params).mappings())
 
 
-def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[str, dict[str, int]]:
-    """Per pool: candidates sampled, decided by a person, and how they were decided.
+def entity_forms(extraction: list[dict[str, Any]]) -> Counter[tuple[Any, ...]]:
+    """Each extracted entity as a comparable form: its schema and properties.
 
-    ``approved_unedited`` counts candidates the person approved as they were, and
-    ``approved_edited`` those the person edited after the candidate was sampled and
-    then approved. For the ``approved`` pool, approved_unedited / decided is the
-    precision of the automatic splits, and approved_edited counts the splits the
-    person had to correct. For the ``rejected`` pool, approved_edited / decided is
-    how often a name left whole was really composite (the person split it).
+    ``key`` and the order of entities and values are ignored. A ``$ref:<key>``
+    value is compared as the schema and first name of the entity it points to,
+    since keys are local to one extraction and a reviewer may rename them.
+    """
+    targets = {
+        entity.get("key"): (
+            entity.get("schema"),
+            (entity.get("properties", {}).get("name") or [""])[0],
+        )
+        for entity in extraction
+        if entity.get("key")
+    }
+
+    def value(raw: Any) -> Any:
+        if isinstance(raw, str) and raw.startswith("$ref:"):
+            return ("ref", *targets.get(raw[5:], ("?", "?")))
+        return raw
+
+    forms: Counter[tuple[Any, ...]] = Counter()
+    for entity in extraction:
+        props = entity.get("properties", {})
+        forms[
+            (
+                entity.get("schema"),
+                tuple(
+                    sorted((p, tuple(sorted(map(value, vs), key=str))) for p, vs in props.items())
+                ),
+            )
+        ] += 1
+    return forms
+
+
+def compare_extractions(
+    original: list[dict[str, Any]], final: list[dict[str, Any]]
+) -> tuple[int, int, int]:
+    """(kept, removed, added): original entities left unchanged, and the reviewer's changes."""
+    before, after = entity_forms(original), entity_forms(final)
+    kept = sum((before & after).values())
+    return kept, sum(before.values()) - kept, sum(after.values()) - kept
+
+
+def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[str, dict[str, Any]]:
+    """Per pool: how the sampled candidates were decided, per split and per entity.
+
+    Per split: ``sampled``, ``decided`` by a person, ``approved_unedited`` and
+    ``approved_edited`` (edited after the candidate was sampled, then approved).
+    For the ``approved`` pool, approved_unedited / decided is the precision of the
+    automatic splits; for the ``rejected`` pool, approved_edited / decided is how
+    often a name left whole was really composite.
+
+    Per entity, under ``entities``, relative to what the automatic decision
+    produced: ``checked`` entities, ``kept`` unchanged, ``removed`` and ``added``
+    by the reviewer. An unedited approval keeps every entity; an edited one is
+    compared with the extraction before its first edit. A person's rejection
+    removes every entity of an auto-approved split, and keeps the single entity of
+    an auto-rejected one. Candidates edited before originals were kept are left
+    out of the entity counts and counted in ``edited_without_original``.
     """
     clause = "AND dataset = :dataset_name" if dataset_name is not None else ""
-    edited = "edited_at IS NOT NULL AND edited_at >= sampled_at"
     rows = conn.execute(
         text(
             f"""
-            SELECT sampled_status,
-                   COUNT(*),
-                   SUM(CASE WHEN reviewer <> :reviewer THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN reviewer <> :reviewer AND status = 'approved'
-                            AND NOT ({edited}) THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN reviewer <> :reviewer AND status = 'approved'
-                            AND {edited} THEN 1 ELSE 0 END)
+            SELECT sampled_status, status, reviewer, sampled_at, edited_at,
+                   extraction_json, original_extraction_json
             FROM ner_candidates
             WHERE sampled_status IS NOT NULL {clause}
-            GROUP BY sampled_status
             """
         ),
-        {"reviewer": AUTO_REVIEWER, "dataset_name": dataset_name},
-    )
-    keys = ("sampled", "decided", "approved_unedited", "approved_edited")
-    results = {pool: dict.fromkeys(keys, 0) for pool in SAMPLE_POOLS}
-    for pool, *counts in rows:
-        results[pool] = {key: int(count or 0) for key, count in zip(keys, counts, strict=True)}
+        {"dataset_name": dataset_name},
+    ).mappings()
+    results: dict[str, dict[str, Any]] = {
+        pool: {
+            "sampled": 0,
+            "decided": 0,
+            "approved_unedited": 0,
+            "approved_edited": 0,
+            "edited_without_original": 0,
+            "entities": {"checked": 0, "kept": 0, "removed": 0, "added": 0},
+        }
+        for pool in SAMPLE_POOLS
+    }
+    for row in rows:
+        counts = results[row["sampled_status"]]
+        counts["sampled"] += 1
+        if row["reviewer"] == AUTO_REVIEWER:
+            continue
+        counts["decided"] += 1
+        edited = row["edited_at"] is not None and row["edited_at"] >= row["sampled_at"]
+        approved = row["status"] == "approved"
+        if approved:
+            counts["approved_edited" if edited else "approved_unedited"] += 1
+        if edited and row["original_extraction_json"] is None:
+            counts["edited_without_original"] += 1
+            continue
+        final = json.loads(row["extraction_json"])
+        original = json.loads(row["original_extraction_json"]) if edited else final
+        entities = counts["entities"]
+        entities["checked"] += len(original)
+        if approved:
+            kept, removed, added = compare_extractions(original, final)
+        elif row["sampled_status"] == "approved":
+            kept, removed, added = 0, len(original), 0
+        else:
+            kept, removed, added = len(original), 0, 0
+        entities["kept"] += kept
+        entities["removed"] += removed
+        entities["added"] += added
     return results
 
 
@@ -348,6 +431,7 @@ EXPORT_COLUMNS = (
     "sampled_at",
     "sampled_status",
     "edited_at",
+    "original_extraction_json",
     "extraction_json",
     "created_at",
     "updated_at",
@@ -402,6 +486,7 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
             row.setdefault("sampled_at", None)
             row.setdefault("sampled_status", None)
             row.setdefault("edited_at", None)
+            row.setdefault("original_extraction_json", None)
             if conn.execute(exists, row).first() is not None:
                 present += 1
                 continue

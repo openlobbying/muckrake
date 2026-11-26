@@ -17,7 +17,9 @@ from muckrake.extract.ner.pipeline import run_ner_extract
 from muckrake.extract.ner.storage import (
     AUTO_REVIEWER,
     auto_review,
+    compare_extractions,
     draw_sample,
+    entity_forms,
     export_candidates,
     get_connection,
     import_candidates,
@@ -269,9 +271,25 @@ def test_sample_results_count_both_pools_after_human_review(make_dataset, extrac
         results = sample_results(conn, dataset_name=name)
     finally:
         conn.close()
-    assert results == {
-        "approved": {"sampled": 4, "decided": 3, "approved_unedited": 1, "approved_edited": 1},
-        "rejected": {"sampled": 3, "decided": 3, "approved_unedited": 1, "approved_edited": 1},
+    split_counts = {
+        pool: {k: v for k, v in counts.items() if k != "entities"}
+        for pool, counts in results.items()
+    }
+    assert split_counts == {
+        "approved": {
+            "sampled": 4,
+            "decided": 3,
+            "approved_unedited": 1,
+            "approved_edited": 1,
+            "edited_without_original": 0,
+        },
+        "rejected": {
+            "sampled": 3,
+            "decided": 3,
+            "approved_unedited": 1,
+            "approved_edited": 1,
+            "edited_without_original": 0,
+        },
     }
 
 
@@ -311,6 +329,105 @@ def test_reviewed_sample_candidates_leave_the_queue(make_dataset, extractor) -> 
         conn.close()
 
 
+def _person(name: str) -> dict[str, Any]:
+    return {"schema": "Person", "properties": {"name": [name]}}
+
+
+def test_first_edit_keeps_the_original_and_later_edits_do_not(make_dataset, extractor) -> None:
+    name = _auto_reviewed_dataset(make_dataset, [_unique("Sara Shaw, Tom Todd")])
+    conn = get_connection()
+    try:
+        [row] = list_candidates(conn, dataset_name=name, status="approved")
+        assert row["original_extraction_json"] is None
+        update_candidate_extraction(conn, row["id"], [_person("Sara Shaw")])
+        update_candidate_extraction(conn, row["id"], [_person("Tom Todd")])
+        [after] = list_candidates(conn, dataset_name=name, status="approved")
+    finally:
+        conn.close()
+    assert json.loads(after["original_extraction_json"]) == json.loads(row["extraction_json"])
+    assert json.loads(after["extraction_json"]) == [_person("Tom Todd")]
+
+
+def test_entity_forms_compare_refs_by_target_not_key() -> None:
+    def employment(person_key: str, org_key: str, org_name: str) -> list[dict[str, Any]]:
+        return [
+            {"key": person_key, "schema": "Person", "properties": {"name": ["Ann Ash"]}},
+            {"key": org_key, "schema": "PublicBody", "properties": {"name": [org_name]}},
+            {
+                "schema": "Employment",
+                "properties": {
+                    "employee": [f"$ref:{person_key}"],
+                    "employer": [f"$ref:{org_key}"],
+                    "role": ["Leader"],
+                },
+            },
+        ]
+
+    original = employment("p1", "c1", "Avon Council")
+    # Same entities with renamed keys and in another order: nothing changed.
+    assert compare_extractions(original, list(reversed(employment("a", "b", "Avon Council")))) == (
+        3,
+        0,
+        0,
+    )
+    # Renaming the body changes it and the Employment that points to it.
+    assert compare_extractions(original, employment("p1", "c1", "Avon County Council")) == (1, 2, 2)
+    assert sum(entity_forms(original).values()) == 3
+
+
+def test_sample_results_count_entities(make_dataset, extractor) -> None:
+    composites = [_unique(f"Uma Underwood {i}, Vic Vance {i}") for i in range(3)]
+    whole = [_unique(f"Agency number {i}: Transport") for i in range(2)]
+    name = _auto_reviewed_dataset(make_dataset, composites, whole=whole)
+    conn = get_connection()
+    try:
+        draw_sample(conn, 3, pool="approved", dataset_name=name)
+        draw_sample(conn, 2, pool="rejected", dataset_name=name)
+        right, corrected, wrong = list_sample_awaiting_review(
+            conn, pool="approved", dataset_name=name
+        )
+        # Two entities kept as they are.
+        review_candidate(conn, right["id"], "approved")
+        # One of two kept, one changed, one more added: kept 1, removed 1, added 2.
+        first = json.loads(corrected["extraction_json"])[0]
+        update_candidate_extraction(conn, corrected["id"], [first, _person("X1"), _person("X2")])
+        review_candidate(conn, corrected["id"], "approved")
+        # Rejecting an auto-approved split removes both its entities.
+        review_candidate(conn, wrong["id"], "rejected")
+        missed, kept_whole = list_sample_awaiting_review(conn, pool="rejected", dataset_name=name)
+        # A name left whole that the person splits in two: removed 1, added 2.
+        update_candidate_extraction(conn, missed["id"], [_person("Part A"), _person("Part B")])
+        review_candidate(conn, missed["id"], "approved")
+        # Rejecting an auto-rejected name keeps its single entity.
+        review_candidate(conn, kept_whole["id"], "rejected")
+        results = sample_results(conn, dataset_name=name)
+    finally:
+        conn.close()
+    assert results["approved"]["entities"] == {"checked": 6, "kept": 3, "removed": 3, "added": 2}
+    assert results["rejected"]["entities"] == {"checked": 2, "kept": 1, "removed": 1, "added": 2}
+
+
+def test_edits_without_an_original_count_per_split_only(make_dataset, extractor) -> None:
+    name = _auto_reviewed_dataset(make_dataset, [_unique("Wes Webb, Xena Xu")])
+    conn = get_connection()
+    try:
+        draw_sample(conn, 1, dataset_name=name)
+        [row] = list_sample_awaiting_review(conn, dataset_name=name)
+        # As if edited before original extractions were kept: edited_at, no original.
+        conn.execute(
+            text("UPDATE ner_candidates SET edited_at = :now WHERE id = :id"),
+            {"now": "9999-01-01T00:00:00+00:00", "id": row["id"]},
+        )
+        conn.commit()
+        review_candidate(conn, row["id"], "approved")
+        results = sample_results(conn, dataset_name=name)
+    finally:
+        conn.close()
+    assert results["approved"]["approved_edited"] == 1
+    assert results["approved"]["edited_without_original"] == 1
+    assert results["approved"]["entities"] == {"checked": 0, "kept": 0, "removed": 0, "added": 0}
+
+
 def test_export_and_import_carry_sampled_at(make_dataset, extractor, tmp_path) -> None:
     name = _auto_reviewed_dataset(make_dataset, [_unique("Edward Eel, Florence Fox")])
     export = tmp_path / "ner.jsonl.gz"
@@ -322,6 +439,7 @@ def test_export_and_import_carry_sampled_at(make_dataset, extractor, tmp_path) -
             conn, before["id"], [{"schema": "Person", "properties": {"name": ["Edward Eel"]}}]
         )
         [before] = list_sample_awaiting_review(conn, dataset_name=name)
+        assert before["original_extraction_json"] is not None
         export_candidates(conn, export)
         conn.execute(text("DELETE FROM ner_candidates WHERE dataset = :d"), {"d": name})
         conn.commit()
@@ -332,6 +450,7 @@ def test_export_and_import_carry_sampled_at(make_dataset, extractor, tmp_path) -
     assert after["sampled_at"] == before["sampled_at"]
     assert after["sampled_status"] == before["sampled_status"] == "approved"
     assert after["edited_at"] == before["edited_at"] is not None
+    assert after["original_extraction_json"] == before["original_extraction_json"]
 
 
 def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_path) -> None:
@@ -346,7 +465,9 @@ def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_pat
         with gzip.open(export, "rt") as src, gzip.open(old, "wt") as dst:
             for line in src:
                 row = json.loads(line)
-                del row["sampled_at"], row["sampled_status"], row["edited_at"]
+                for column in ("sampled_at", "sampled_status", "edited_at"):
+                    del row[column]
+                del row["original_extraction_json"]
                 dst.write(json.dumps(row) + "\n")
         imported, _ = import_candidates(conn, old)
         assert imported >= 1
@@ -356,6 +477,7 @@ def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_pat
     assert restored["sampled_at"] is None
     assert restored["sampled_status"] is None
     assert restored["edited_at"] is None
+    assert restored["original_extraction_json"] is None
 
 
 def test_init_database_adds_the_sample_columns_to_an_existing_table(tmp_path) -> None:
@@ -383,7 +505,7 @@ def test_init_database_adds_the_sample_columns_to_an_existing_table(tmp_path) ->
     engine = init_database(uri)
     columns = {c["name"] for c in inspect(engine).get_columns("ner_candidates")}
     engine.dispose()
-    assert {"sampled_at", "sampled_status", "edited_at"} <= columns
+    assert {"sampled_at", "sampled_status", "edited_at", "original_extraction_json"} <= columns
 
 
 @pytest.mark.parametrize("other", [["--auto"], ["--limit", "5"]])

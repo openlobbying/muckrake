@@ -727,6 +727,12 @@ def run_ner_review(
             f"decided={counts['decided']} approved_unedited={counts['approved_unedited']} "
             f"approved_edited={counts['approved_edited']}"
         )
+        entities = counts["entities"]
+        click.echo(
+            f"Entities: checked={entities['checked']} kept={entities['kept']} "
+            f"removed={entities['removed']} added={entities['added']}"
+            f" (edited without an original: {counts['edited_without_original']})"
+        )
 
 
 def run_ner_auto_review(dataset_name: str | None = None) -> None:

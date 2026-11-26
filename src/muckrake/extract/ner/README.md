@@ -96,7 +96,8 @@ Main columns:
 - `reviewer`, `reviewed_at`
 - `sampled_at` and `sampled_status`, set when the candidate is drawn into a review
   sample: when, and the automatic status it had then (its pool)
-- `edited_at`, set whenever a reviewer saves an edited extraction with `e`
+- `edited_at`, set whenever a reviewer saves an edited extraction with `e`, and
+  `original_extraction_json`, the extraction as it was before the first edit
 - `extraction_json`, `created_at`, `updated_at`
 
 `extractor_version` still exists internally in the table for compatibility,
@@ -204,11 +205,13 @@ that no person has decided yet. Candidates skipped, or left when you quit, stay
 in the sample: `--sample 0` draws nothing new and resumes them. `--rejected`
 needs `--sample`, and `--sample` can't be combined with `--auto` or `--limit`.
 
-After a sample review, the command prints the pool's counts: sampled, decided by
-a person, approved as it was (`approved_unedited`), and edited then approved
-(`approved_edited`). `sample_results` in `muckrake.extract.ner.storage` returns
-them for both pools. An edit counts only if it was saved after the candidate was
-sampled.
+After a sample review, the command prints the pool's counts, per split and per
+entity. `sample_results` in `muckrake.extract.ner.storage` returns them for both
+pools. An edit counts only if it was saved after the candidate was sampled.
+
+Per split, each candidate is one unit: sampled, decided by a person, approved as
+it was (`approved_unedited`), and edited then approved (`approved_edited`). This
+answers how often an automatic decision was right as a whole.
 
 - Approved pool: approved_unedited / decided is the precision of the automatic
   splits. approved_edited counts the splits you had to correct, which are errors
@@ -218,8 +221,27 @@ sampled.
   really composite. Split such a name with `e`, then approve it. Reject a name
   that is one entity, so the original entity is kept.
 
-`ner-export` and `ner-import` carry `sampled_at`, `sampled_status` and
-`edited_at`, so a sample and its edits are kept with the decisions.
+Per entity, under `entities`, each extracted entity is one unit, relative to what
+the automatic decision produced: `checked`, `kept` unchanged, and `removed` and
+`added` by you. This answers how much of the extracted data was right, since a
+split with one wrong entity out of three is mostly right.
+
+- An unedited approval keeps every entity.
+- An edited approval is compared with the extraction before its first edit
+  (`original_extraction_json`). Entities match on schema and properties, ignoring
+  `key` and order; a `$ref` value is compared as the schema and first name of the
+  entity it points to, so renaming a body also changes the relationship to it.
+- Rejecting an auto-approved split removes all its entities. Rejecting an
+  auto-rejected name keeps its single entity.
+- Candidates edited before originals were kept have no original to compare with.
+  They count per split only, and in `edited_without_original`.
+
+In the approved pool, kept / checked is the entity-level precision. In the
+rejected pool, added counts the entities the automatic decision missed.
+
+`ner-export` and `ner-import` carry `sampled_at`, `sampled_status`, `edited_at`
+and `original_extraction_json`, so a sample and its edits are kept with the
+decisions.
 
 Review controls:
 

@@ -17,8 +17,14 @@ version can change behaviour.
   isn't counted as right. `ner_candidates` gains nullable `sampled_at` and
   `sampled_status` columns.
 - The review UI records when a reviewer saves an edited extraction, in a new
-  nullable `ner_candidates.edited_at` column.
-- `init_database` adds the three new columns to existing tables, and
+  nullable `ner_candidates.edited_at` column, and keeps the extraction from
+  before the first edit in `original_extraction_json`.
+- `sample_results` also counts per entity (checked, kept, removed, added),
+  comparing an edited extraction with its original, so the accuracy of the
+  extracted entities can be measured as well as that of whole splits.
+  Candidates edited before originals were kept count per split only, as
+  `edited_without_original`.
+- `init_database` adds the four new columns to existing tables, and
   `ner-export` / `ner-import` carry them (older exports import with them unset).
 
 ## [0.5.1] - 2026-11-25
