@@ -241,6 +241,13 @@ split with one wrong entity out of three is mostly right.
 In the approved pool, kept / checked is the entity-level precision. In the
 rejected pool, added counts the entities the automatic decision missed.
 
+Decisions by different reviewers are reported separately, as well as in the
+totals: `sample_results` gives each pool a `by_reviewer` breakdown keyed by the
+`reviewer` name, with the same per-split and per-entity counts, and the command
+prints a line per reviewer. A model checking a model's output isn't an
+independent check, so a sample reviewed partly by a person and partly by a model
+should be read reviewer by reviewer. Record each reviewer under their own name.
+
 `ner-export` and `ner-import` carry `sampled_at`, `sampled_status`, `edited_at`
 and `original_extraction_json`, so a sample and its edits are kept with the
 decisions.

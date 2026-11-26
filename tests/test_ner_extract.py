@@ -311,7 +311,7 @@ def test_sample_results_count_both_pools_after_human_review(make_dataset, extrac
     finally:
         conn.close()
     split_counts = {
-        pool: {k: v for k, v in counts.items() if k != "entities"}
+        pool: {k: v for k, v in counts.items() if k not in ("entities", "by_reviewer")}
         for pool, counts in results.items()
     }
     assert split_counts == {
@@ -444,6 +444,45 @@ def test_sample_results_count_entities(make_dataset, extractor) -> None:
         conn.close()
     assert results["approved"]["entities"] == {"checked": 6, "kept": 3, "removed": 3, "added": 2}
     assert results["rejected"]["entities"] == {"checked": 2, "kept": 1, "removed": 1, "added": 2}
+
+
+def test_sample_results_split_by_reviewer(make_dataset, extractor) -> None:
+    composites = [_unique(f"Cara Cobb {i}, Dex Dunn {i}") for i in range(3)]
+    name = _auto_reviewed_dataset(make_dataset, composites)
+    conn = get_connection()
+    try:
+        draw_sample(conn, 3, dataset_name=name)
+        person, model, _ = list_sample_awaiting_review(conn, dataset_name=name)
+        # A person approves one split as it was.
+        review_candidate(conn, person["id"], "approved")
+        # A model corrects the other: keeps one of its two entities, adds one.
+        first = json.loads(model["extraction_json"])[0]
+        update_candidate_extraction(conn, model["id"], [first, _person("Ed Eames")])
+        review_candidate(conn, model["id"], "approved", reviewer="claude/ner-review")
+        results = sample_results(conn, dataset_name=name)["approved"]
+    finally:
+        conn.close()
+
+    # The pool's counts stay totals; the third candidate is sampled but undecided.
+    assert (results["sampled"], results["decided"]) == (3, 2)
+    assert (results["approved_unedited"], results["approved_edited"]) == (1, 1)
+    assert results["entities"] == {"checked": 4, "kept": 3, "removed": 1, "added": 1}
+    assert results["by_reviewer"] == {
+        "muckrake/ner-review": {
+            "decided": 1,
+            "approved_unedited": 1,
+            "approved_edited": 0,
+            "edited_without_original": 0,
+            "entities": {"checked": 2, "kept": 2, "removed": 0, "added": 0},
+        },
+        "claude/ner-review": {
+            "decided": 1,
+            "approved_unedited": 0,
+            "approved_edited": 1,
+            "edited_without_original": 0,
+            "entities": {"checked": 2, "kept": 1, "removed": 1, "added": 1},
+        },
+    }
 
 
 def test_edits_without_an_original_count_per_split_only(make_dataset, extractor) -> None:

@@ -398,6 +398,11 @@ def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[st
     removes every entity of an auto-approved split, and keeps the single entity of
     an auto-rejected one. Candidates edited before originals were kept are left
     out of the entity counts and counted in ``edited_without_original``.
+
+    The pool's counts are totals over every person. ``by_reviewer`` repeats the
+    decision counts (everything but ``sampled``) for each reviewer name, so
+    decisions by different reviewers, such as a person and a model, can be told
+    apart.
     """
     clause = "AND dataset = :dataset_name" if dataset_name is not None else ""
     rows = conn.execute(
@@ -412,43 +417,52 @@ def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[st
         {"dataset_name": dataset_name},
     ).mappings()
     results: dict[str, dict[str, Any]] = {
-        pool: {
-            "sampled": 0,
-            "decided": 0,
-            "approved_unedited": 0,
-            "approved_edited": 0,
-            "edited_without_original": 0,
-            "entities": {"checked": 0, "kept": 0, "removed": 0, "added": 0},
-        }
-        for pool in SAMPLE_POOLS
+        pool: {"sampled": 0, **_decision_counts(), "by_reviewer": {}} for pool in SAMPLE_POOLS
     }
     for row in rows:
-        counts = results[row["sampled_status"]]
-        counts["sampled"] += 1
+        pool = results[row["sampled_status"]]
+        pool["sampled"] += 1
         if row["reviewer"] == AUTO_REVIEWER:
             continue
-        counts["decided"] += 1
-        edited = row["edited_at"] is not None and row["edited_at"] >= row["sampled_at"]
-        approved = row["status"] == "approved"
-        if approved:
-            counts["approved_edited" if edited else "approved_unedited"] += 1
-        if edited and row["original_extraction_json"] is None:
-            counts["edited_without_original"] += 1
-            continue
-        final = json.loads(row["extraction_json"])
-        original = json.loads(row["original_extraction_json"]) if edited else final
-        entities = counts["entities"]
-        entities["checked"] += len(original)
-        if approved:
-            kept, removed, added = compare_extractions(original, final)
-        elif row["sampled_status"] == "approved":
-            kept, removed, added = 0, len(original), 0
-        else:
-            kept, removed, added = len(original), 0, 0
-        entities["kept"] += kept
-        entities["removed"] += removed
-        entities["added"] += added
+        reviewer = pool["by_reviewer"].setdefault(row["reviewer"] or "unknown", _decision_counts())
+        for counts in (pool, reviewer):
+            _count_decision(counts, row)
     return results
+
+
+def _decision_counts() -> dict[str, Any]:
+    return {
+        "decided": 0,
+        "approved_unedited": 0,
+        "approved_edited": 0,
+        "edited_without_original": 0,
+        "entities": {"checked": 0, "kept": 0, "removed": 0, "added": 0},
+    }
+
+
+def _count_decision(counts: dict[str, Any], row: RowMapping) -> None:
+    """Add one sampled candidate a person decided to ``counts``."""
+    counts["decided"] += 1
+    edited = row["edited_at"] is not None and row["edited_at"] >= row["sampled_at"]
+    approved = row["status"] == "approved"
+    if approved:
+        counts["approved_edited" if edited else "approved_unedited"] += 1
+    if edited and row["original_extraction_json"] is None:
+        counts["edited_without_original"] += 1
+        return
+    final = json.loads(row["extraction_json"])
+    original = json.loads(row["original_extraction_json"]) if edited else final
+    entities = counts["entities"]
+    entities["checked"] += len(original)
+    if approved:
+        kept, removed, added = compare_extractions(original, final)
+    elif row["sampled_status"] == "approved":
+        kept, removed, added = 0, len(original), 0
+    else:
+        kept, removed, added = len(original), 0, 0
+    entities["kept"] += kept
+    entities["removed"] += removed
+    entities["added"] += added
 
 
 # Everything but the local row id, so an export can be imported into any database.
