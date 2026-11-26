@@ -248,30 +248,38 @@ SAMPLE_POOLS = ("approved", "rejected")
 
 
 def draw_sample(
-    conn: Connection, size: int, pool: str = "approved", dataset_name: str | None = None
+    conn: Connection, target: int, pool: str = "approved", dataset_name: str | None = None
 ) -> int:
-    """Draw up to ``size`` random candidates from one pool into the review sample.
+    """Bring one pool's review sample up to ``target`` candidates; returns how many were drawn.
 
     The pool is the automatic decision being checked: ``approved`` measures how
     many of ``AUTO_REVIEWER``'s splits are right, ``rejected`` how often it left
-    a composite name whole. Only candidates decided by ``AUTO_REVIEWER`` and never
-    sampled before are drawn. Each gets ``sampled_at`` and ``sampled_status`` (the
-    pool), committed at once, so an interrupted review keeps its sample. Returns
-    how many were drawn.
+    a composite name whole. Only enough random candidates to reach ``target`` are
+    drawn, from those decided by ``AUTO_REVIEWER`` and never sampled before, so
+    running it again with the same target draws nothing. Each drawn candidate
+    gets ``sampled_at`` and ``sampled_status`` (the pool), committed at once, so an
+    interrupted review keeps its sample.
     """
     if pool not in SAMPLE_POOLS:
         raise ValueError(f"Invalid sample pool: {pool}")
-    clauses = ["status = :pool", "reviewer = :reviewer", "sampled_at IS NULL"]
-    params: dict[str, Any] = {"pool": pool, "reviewer": AUTO_REVIEWER, "size": size}
+    scope = ""
+    params: dict[str, Any] = {"pool": pool, "reviewer": AUTO_REVIEWER}
     if dataset_name is not None:
-        clauses.append("dataset = :dataset_name")
+        scope = " AND dataset = :dataset_name"
         params["dataset_name"] = dataset_name
+    sampled = conn.execute(
+        text(f"SELECT COUNT(*) FROM ner_candidates WHERE sampled_status = :pool{scope}"),
+        params,
+    ).scalar_one()
+    params["size"] = max(0, target - sampled)
+    if params["size"] == 0:
+        return 0
     ids = [
         row[0]
         for row in conn.execute(
             text(
-                f"SELECT id FROM ner_candidates WHERE {' AND '.join(clauses)} "
-                "ORDER BY random() LIMIT :size"
+                "SELECT id FROM ner_candidates WHERE status = :pool AND reviewer = :reviewer "
+                f"AND sampled_at IS NULL{scope} ORDER BY random() LIMIT :size"
             ),
             params,
         )

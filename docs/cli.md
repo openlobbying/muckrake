@@ -107,9 +107,9 @@ Options:
   --limit INTEGER         Max pending candidates
   --auto                  Approve every pending split without review; reject unsplit
                           extractions
-  --sample INTEGER RANGE  Draw N random auto-approved candidates into the review sample,
-                          then review every sampled candidate not yet decided by a
-                          person (0 resumes only)  [x>=0]
+  --sample INTEGER RANGE  Review a sample of N random auto-approved candidates: draw
+                          only enough to bring the sample up to N, then review those not
+                          yet decided by a person (rerun to resume)  [x>=1]
   --rejected              With --sample, sample auto-rejected candidates instead of
                           auto-approved ones
   --help                  Show this message and exit.

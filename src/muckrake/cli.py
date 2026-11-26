@@ -498,11 +498,11 @@ def ner_extract(dataset_name, limit, entity_id, extractor_name, workers):
 @click.option(
     "--sample",
     "sample",
-    type=click.IntRange(min=0),
+    type=click.IntRange(min=1),
     default=None,
     help=(
-        "Draw N random auto-approved candidates into the review sample, then review "
-        "every sampled candidate not yet decided by a person (0 resumes only)"
+        "Review a sample of N random auto-approved candidates: draw only enough to bring "
+        "the sample up to N, then review those not yet decided by a person (rerun to resume)"
     ),
 )
 @click.option(

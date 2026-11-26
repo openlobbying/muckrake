@@ -8,9 +8,10 @@ version can change behaviour.
 
 ### Added
 
-- `ner-review --sample N` draws N random candidates that `--auto` approved into
-  a review sample and reviews them, so the precision of its splits can be
-  measured. With `--rejected` it samples the candidates `--auto` rejected
+- `ner-review --sample N` reviews a sample of N random candidates that `--auto`
+  approved, so the precision of its splits can be measured. N is the sample's
+  size: only enough candidates to reach it are drawn, so running the same
+  command again resumes the review. With `--rejected` it samples the candidates `--auto` rejected
   instead, to measure how often a composite name was left whole. After the
   review it prints the pool's counts; `sample_results` returns them for both
   pools, with approvals split into unedited and edited, so a corrected split

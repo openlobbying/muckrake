@@ -198,12 +198,14 @@ uv run muckrake ner-review --sample 100 --rejected  # names auto-rejected as who
 uv run muckrake ner-review <dataset> --sample 100   # one dataset
 ```
 
-`--sample N` draws up to N random candidates from the pool that `muckrake/auto`
-decided and that were never sampled before, sets their `sampled_at` and
-`sampled_status`, and opens the review on every candidate sampled from that pool
-that no person has decided yet. Candidates skipped, or left when you quit, stay
-in the sample: `--sample 0` draws nothing new and resumes them. `--rejected`
-needs `--sample`, and `--sample` can't be combined with `--auto` or `--limit`.
+`--sample N` is the size of the pool's sample. It draws only enough random
+candidates to bring the pool's sample up to N, from those `muckrake/auto`
+decided and never sampled before, sets their `sampled_at` and `sampled_status`,
+and opens the review on every candidate sampled from that pool that no person
+has decided yet. Running the same command again draws nothing new and resumes
+the candidates you skipped or left when you quit; a bigger N tops the sample
+up. With a dataset, N counts that dataset's sample only. `--rejected` needs
+`--sample`, and `--sample` can't be combined with `--auto` or `--limit`.
 
 After a sample review, the command prints the pool's counts, per split and per
 entity. `sample_results` in `muckrake.extract.ner.storage` returns them for both

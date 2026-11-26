@@ -682,10 +682,10 @@ def run_ner_review(
 ) -> None:
     """Review pending candidates, or, with ``sample``, a sample of automatic decisions.
 
-    ``sample`` draws that many new candidates from ``pool`` (``approved`` or
-    ``rejected`` by ``muckrake/auto``) into the sample, then reviews every
-    candidate sampled from that pool that no person has decided yet, including
-    any left from an earlier session (``sample=0`` only resumes).
+    ``sample`` is the size of the sample for ``pool`` (``approved`` or ``rejected``
+    by ``muckrake/auto``): only enough candidates to reach it are drawn, then every
+    candidate sampled from that pool that no person has decided yet is reviewed.
+    Running the same command again resumes the sample.
     """
     conn = get_connection()
     init_db(conn)
@@ -696,7 +696,8 @@ def run_ner_review(
         drawn = draw_sample(conn, sample, pool=pool, dataset_name=dataset_name)
         rows = list_sample_awaiting_review(conn, pool=pool, dataset_name=dataset_name)
         click.echo(
-            f"Drew {drawn} new auto-{pool} candidates; {len(rows)} sampled candidates to review."
+            f"Auto-{pool} sample of {sample}: drew {drawn} new candidates; "
+            f"{len(rows)} sampled candidates to review."
         )
         empty = f"No sampled auto-{pool} NER candidates to review."
 

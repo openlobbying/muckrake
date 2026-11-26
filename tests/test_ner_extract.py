@@ -201,6 +201,45 @@ def test_sample_draws_only_unsampled_auto_approved_candidates(make_dataset, extr
         conn.close()
 
 
+def test_sample_target_is_not_overdrawn_on_rerun(make_dataset, extractor) -> None:
+    composites = [_unique(f"Yara Young {i}, Zed Zane {i}") for i in range(5)]
+    name = _auto_reviewed_dataset(make_dataset, composites)
+    conn = get_connection()
+    try:
+        assert draw_sample(conn, 2, dataset_name=name) == 2
+        # The same target again draws nothing, so rerunning the command resumes.
+        assert draw_sample(conn, 2, dataset_name=name) == 0
+        # A smaller target never shrinks the sample.
+        assert draw_sample(conn, 1, dataset_name=name) == 0
+        assert len(list_sample_awaiting_review(conn, dataset_name=name)) == 2
+        # A bigger target tops it up to the target.
+        assert draw_sample(conn, 4, dataset_name=name) == 2
+        assert len(list_sample_awaiting_review(conn, dataset_name=name)) == 4
+        # Decided candidates still count towards the target.
+        [first, *_] = list_sample_awaiting_review(conn, dataset_name=name)
+        review_candidate(conn, first["id"], "approved")
+        assert draw_sample(conn, 4, dataset_name=name) == 0
+    finally:
+        conn.close()
+
+
+def test_sample_targets_are_per_pool(make_dataset, extractor) -> None:
+    composites = [_unique(f"Abel Ames {i}, Bea Bell {i}") for i in range(3)]
+    whole = [_unique(f"Office number {i}: Rail") for i in range(3)]
+    name = _auto_reviewed_dataset(make_dataset, composites, whole=whole)
+    conn = get_connection()
+    try:
+        assert draw_sample(conn, 2, pool="approved", dataset_name=name) == 2
+        assert draw_sample(conn, 2, pool="rejected", dataset_name=name) == 2
+        assert draw_sample(conn, 2, pool="rejected", dataset_name=name) == 0
+        assert draw_sample(conn, 3, pool="rejected", dataset_name=name) == 1
+        assert draw_sample(conn, 2, pool="approved", dataset_name=name) == 0
+        assert len(list_sample_awaiting_review(conn, pool="approved", dataset_name=name)) == 2
+        assert len(list_sample_awaiting_review(conn, pool="rejected", dataset_name=name)) == 3
+    finally:
+        conn.close()
+
+
 def test_rejected_pool_samples_only_auto_rejected_candidates(make_dataset, extractor) -> None:
     whole = [_unique(f"Department number {i}: Housing") for i in range(3)]
     name = _auto_reviewed_dataset(make_dataset, [_unique("Ivy Irons, Jack Jones")], whole=whole)
