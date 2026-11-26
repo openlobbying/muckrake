@@ -46,6 +46,10 @@ from .storage import (
     update_candidate_extraction,
 )
 
+DIALOG_HINT = "Tab / Shift+Tab: next / previous field · Ctrl+S: save · Esc: cancel"
+# Strip these from both sides of a split at the cursor.
+SPLIT_TRIM = " \t,-–:;"
+
 ACTION_LABELS = {
     "x": ("approve", "green"),
     "n": ("reject", "red"),
@@ -224,6 +228,11 @@ def entity_details(extraction: Extraction, entity: dict[str, Any]) -> str:
     return "; ".join(parts)
 
 
+def field_row(label: str, widget: Input | Select[str]) -> Horizontal:
+    """One labelled field on a single line, so a dialog fits a small terminal."""
+    return Horizontal(Label(label, classes="field-label"), widget, classes="field-row")
+
+
 class EntityForm(ModalScreen[dict[str, Any] | None]):
     """Edit or add one entity: its schema, and a field for each property."""
 
@@ -240,44 +249,55 @@ class EntityForm(ModalScreen[dict[str, Any] | None]):
         schemas = list(EXTRACTION_SCHEMAS)
         if schema not in schemas:
             schemas.append(schema)
-        with Vertical(id="form-dialog"):
-            yield Label(self.heading, id="title")
-            yield Select([(s, s) for s in schemas], value=schema, allow_blank=False, id="schema")
-            yield VerticalScroll(id="fields")
-            yield Label("Separate several values with |. ctrl+s saves, Esc cancels.")
-            yield Label("", id="error")
-            with Horizontal(id="buttons"):
-                yield Button("Save", variant="primary", id="save")
-                yield Button("Cancel", id="cancel")
+        with Vertical(id="form-dialog", classes="dialog"):
+            yield Label(self.heading, classes="dialog-title")
+            yield field_row(
+                "schema",
+                Select(
+                    [(s, s) for s in schemas],
+                    value=schema,
+                    allow_blank=False,
+                    compact=True,
+                    id="form-schema",
+                ),
+            )
+            yield VerticalScroll(id="form-fields")
+            yield Label("Separate several values with |.")
+            yield Label("", id="form-error", classes="dialog-error")
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Save", variant="primary", id="form-save")
+                yield Button("Cancel", id="form-cancel")
+            yield Label(DIALOG_HINT, classes="dialog-hint")
 
     async def on_mount(self) -> None:
         await self._show_fields(self.entity)
 
     async def _show_fields(self, entity: dict[str, Any]) -> None:
-        fields = self.query_one("#fields", VerticalScroll)
+        fields = self.query_one("#form-fields", VerticalScroll)
         await fields.remove_children()
         schema = entity.get("schema", "Person")
         props = entity.get("properties", {})
-        widgets: list[Label | Select[str] | Input] = []
+        rows: list[Horizontal] = []
         for prop in form_fields(entity):
-            widgets.append(Label(prop))
             values = props.get(prop, [])
+            widget: Input | Select[str]
             if is_ref_property(schema, prop):
                 keys = [v[5:] for v in values if v.startswith("$ref:")]
                 known = {key for _, key in self.refs}
                 current = keys[0] if keys and keys[0] in known else Select.NULL
-                widgets.append(Select(self.refs, value=current, id=f"field-{prop}"))
+                widget = Select(self.refs, value=current, compact=True, id=f"form-field-{prop}")
             else:
-                widgets.append(Input(" | ".join(values), id=f"field-{prop}"))
-        await fields.mount_all(widgets)
+                widget = Input(" | ".join(values), compact=True, id=f"form-field-{prop}")
+            rows.append(field_row(prop, widget))
+        await fields.mount_all(rows)
 
     def _entity(self) -> dict[str, Any]:
-        schema = self.query_one("#schema", Select).value
+        schema = self.query_one("#form-schema", Select).value
         props: dict[str, list[str]] = {}
-        for widget in self.query_one("#fields", VerticalScroll).children:
-            if widget.id is None or not widget.id.startswith("field-"):
+        for widget in self.query_one("#form-fields", VerticalScroll).query("Input, Select"):
+            if widget.id is None or not widget.id.startswith("form-field-"):
                 continue
-            prop = widget.id[len("field-") :]
+            prop = widget.id[len("form-field-") :]
             if isinstance(widget, Select):
                 if widget.value is not Select.NULL:
                     props[prop] = [f"$ref:{widget.value}"]
@@ -291,11 +311,11 @@ class EntityForm(ModalScreen[dict[str, Any] | None]):
         return entity
 
     async def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id == "schema":
+        if event.select.id == "form-schema":
             await self._show_fields(self._entity())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "save":
+        if event.button.id == "form-save":
             self.action_save()
         else:
             self.action_cancel()
@@ -303,7 +323,7 @@ class EntityForm(ModalScreen[dict[str, Any] | None]):
     def action_save(self) -> None:
         entity = self._entity()
         if not entity["properties"]:
-            self.query_one("#error", Label).update("Fill in at least one property.")
+            self.query_one("#form-error", Label).update("Fill in at least one property.")
             return
         self.dismiss(entity)
 
@@ -314,49 +334,71 @@ class EntityForm(ModalScreen[dict[str, Any] | None]):
 class SplitForm(ModalScreen[tuple[str, str, str, str] | None]):
     """Split one entity into a Person, a body and the Employment linking them."""
 
-    BINDINGS = [("ctrl+s", "save", "Split"), ("escape", "cancel", "Cancel")]
+    BINDINGS = [
+        ("ctrl+s", "save", "Split"),
+        ("ctrl+t", "move_to_body", "Move to body"),
+        ("escape", "cancel", "Cancel"),
+    ]
 
     def __init__(self, entity: dict[str, Any]):
         super().__init__()
         self.entity = entity
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="dialog"):
+        with Vertical(id="split-dialog", classes="dialog"):
             yield Label(
-                f"Split {self.entity.get('schema')}: {entity_name(self.entity)}", id="title"
+                f"Split {self.entity.get('schema')}: {entity_name(self.entity)}",
+                classes="dialog-title",
             )
-            yield Label("Person's name")
-            yield Input(entity_name(self.entity), id="person")
-            yield Label("Body's name")
-            yield Input("", id="body")
-            yield Label("Body's schema")
-            yield Select(
-                [(s, s) for s in BODY_SCHEMAS],
-                value="PublicBody",
-                allow_blank=False,
-                id="body-schema",
+            yield field_row(
+                "Person's name", Input(entity_name(self.entity), compact=True, id="split-person")
             )
-            yield Label("Role (optional)")
-            yield Input("", id="role")
-            yield Label("", id="error")
-            with Horizontal(id="buttons"):
-                yield Button("Split", variant="primary", id="save")
-                yield Button("Cancel", id="cancel")
+            yield Button("Move text after cursor to body", compact=True, id="split-move")
+            yield field_row("Body's name", Input("", compact=True, id="split-body"))
+            yield field_row(
+                "Body's schema",
+                Select(
+                    [(s, s) for s in BODY_SCHEMAS],
+                    value="PublicBody",
+                    allow_blank=False,
+                    compact=True,
+                    id="split-body-schema",
+                ),
+            )
+            yield field_row("Role (optional)", Input("", compact=True, id="split-role"))
+            yield Label("", id="split-error", classes="dialog-error")
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Split", variant="primary", id="split-save")
+                yield Button("Cancel", id="split-cancel")
+            yield Label(
+                f"{DIALOG_HINT} · Ctrl+T: move text after cursor to body", classes="dialog-hint"
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "save":
+        if event.button.id == "split-save":
             self.action_save()
+        elif event.button.id == "split-move":
+            self.action_move_to_body()
         else:
             self.action_cancel()
 
+    def action_move_to_body(self) -> None:
+        """Move the person's name from the cursor on into the body's name."""
+        person = self.query_one("#split-person", Input)
+        cut = person.cursor_position
+        before, after = person.value[:cut], person.value[cut:]
+        self.query_one("#split-body", Input).value = after.strip(SPLIT_TRIM)
+        person.value = before.strip(SPLIT_TRIM)
+        person.focus()
+
     def action_save(self) -> None:
-        person = self.query_one("#person", Input).value.strip()
-        body = self.query_one("#body", Input).value.strip()
+        person = self.query_one("#split-person", Input).value.strip()
+        body = self.query_one("#split-body", Input).value.strip()
         if not person or not body:
-            self.query_one("#error", Label).update("Fill in both names.")
+            self.query_one("#split-error", Label).update("Fill in both names.")
             return
-        schema = str(self.query_one("#body-schema", Select).value)
-        self.dismiss((person, body, schema, self.query_one("#role", Input).value))
+        schema = str(self.query_one("#split-body-schema", Select).value)
+        self.dismiss((person, body, schema, self.query_one("#split-role", Input).value))
 
     def action_cancel(self) -> None:
         self.dismiss(None)
@@ -370,15 +412,19 @@ class ConfirmDelete(ModalScreen[bool]):
         self.message = message
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="dialog"):
-            yield Label(self.message, id="title")
+        with Vertical(id="confirm-dialog", classes="dialog"):
+            yield Label(self.message, classes="dialog-title")
             yield Label("Anything that points to it loses that reference.")
-            with Horizontal(id="buttons"):
-                yield Button("Delete (y)", variant="error", id="confirm")
-                yield Button("Keep (n)", id="cancel")
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Delete (y)", variant="error", id="confirm-delete")
+                yield Button("Keep (n)", id="confirm-keep")
+            yield Label(
+                "Tab / Shift+Tab: next / previous button · y: delete · n / Esc: keep",
+                classes="dialog-hint",
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.dismiss(event.button.id == "confirm")
+        self.dismiss(event.button.id == "confirm-delete")
 
     def action_confirm(self) -> None:
         self.dismiss(True)
@@ -397,14 +443,15 @@ class JsonEditor(ModalScreen[Extraction | None]):
         self.initial = json.dumps(extraction, indent=2, sort_keys=True)
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="json-dialog"):
-            yield Label("Extraction JSON. ctrl+s saves, Esc cancels.", id="title")
-            yield TextArea(self.initial, id="json")
-            yield Label("Valid", id="error")
+        with Vertical(id="json-dialog", classes="dialog"):
+            yield Label("Extraction JSON", classes="dialog-title")
+            yield TextArea(self.initial, id="json-text")
+            yield Label("Valid", id="json-error", classes="dialog-error")
+            yield Label(DIALOG_HINT, classes="dialog-hint")
 
     def _parse(self) -> tuple[Extraction | None, str]:
         try:
-            payload = json.loads(self.query_one("#json", TextArea).text)
+            payload = json.loads(self.query_one("#json-text", TextArea).text)
             validate_extraction(payload)
         except (json.JSONDecodeError, ValueError) as exc:
             return None, str(exc)
@@ -412,12 +459,12 @@ class JsonEditor(ModalScreen[Extraction | None]):
 
     def on_text_area_changed(self, event: TextArea.Changed) -> None:
         _, error = self._parse()
-        self.query_one("#error", Label).update(error or "Valid")
+        self.query_one("#json-error", Label).update(error or "Valid")
 
     def action_save(self) -> None:
         payload, error = self._parse()
         if payload is None:
-            self.query_one("#error", Label).update(error)
+            self.query_one("#json-error", Label).update(error)
             return
         self.dismiss(payload)
 
@@ -462,23 +509,31 @@ MAIN_ACTIONS = {binding.action for binding in REVIEW_BINDINGS if isinstance(bind
 class NERReviewApp(App[dict[str, int]]):
     TITLE = "NER review"
     CSS = """
-    #progress { height: auto; padding: 0 1; background: $boost; }
-    #candidate { height: auto; max-height: 50%; padding: 0 1; border-bottom: solid $panel; }
-    #body { height: 1fr; }
-    #entities { width: 1fr; height: 1fr; }
+    #review-progress { height: auto; padding: 0 1; background: $boost; }
+    #review-candidate {
+        height: auto; max-height: 50%; padding: 0 1; border-bottom: solid $panel;
+    }
+    #review-body { height: 1fr; }
+    #review-entities { width: 1fr; height: 1fr; }
     HistoryPanel { width: 52; border-left: solid $panel; padding: 0 1; display: none; }
     HistoryPanel.shown { display: block; }
-    #dialog, #form-dialog, #json-dialog {
+    EntityForm, SplitForm, ConfirmDelete, JsonEditor { align: center middle; }
+    .dialog {
         background: $surface; border: thick $primary; padding: 1 2;
         width: 90; height: auto; max-height: 90%;
     }
     #form-dialog { height: 90%; }
+    #form-fields { height: 1fr; }
     #json-dialog { width: 95%; height: 90%; }
-    #json { height: 1fr; }
-    #fields { height: 1fr; }
-    #error { color: $error; }
-    #buttons { height: auto; margin-top: 1; }
-    EntityForm, SplitForm, ConfirmDelete, JsonEditor { align: center middle; }
+    #json-text { height: 1fr; }
+    .field-row { height: auto; margin-bottom: 1; }
+    .field-label { width: 17; color: $text-muted; }
+    .field-row > Input, .field-row > Select { width: 1fr; }
+    #split-move { margin: 0 0 1 17; }
+    .dialog-error { color: $error; }
+    .dialog-buttons { height: auto; margin-top: 1; }
+    .dialog-title { margin-bottom: 1; }
+    .dialog-hint { width: 100%; color: $text-muted; margin-top: 1; }
     """
 
     BINDINGS = REVIEW_BINDINGS
@@ -494,15 +549,15 @@ class NERReviewApp(App[dict[str, int]]):
         return True
 
     def compose(self) -> ComposeResult:
-        yield Static(id="progress")
-        yield Static(id="candidate")
-        with Horizontal(id="body"):
-            yield DataTable(id="entities", cursor_type="row", zebra_stripes=True)
+        yield Static(id="review-progress")
+        yield Static(id="review-candidate")
+        with Horizontal(id="review-body"):
+            yield DataTable(id="review-entities", cursor_type="row", zebra_stripes=True)
             yield HistoryPanel()
         yield Footer()
 
     def on_mount(self) -> None:
-        table = self.query_one("#entities", DataTable)
+        table = self.query_one("#review-entities", DataTable)
         table.add_columns("#", "Schema", "Name", "Details")
         self.refresh_view()
         table.focus()
@@ -512,12 +567,14 @@ class NERReviewApp(App[dict[str, int]]):
         from .review import _collect_highlight_terms, _highlight_text
 
         session = self.session
-        self.query_one("#progress", Static).update(session.progress())
+        self.query_one("#review-progress", Static).update(session.progress())
         row = session.current
-        table = self.query_one("#entities", DataTable)
+        table = self.query_one("#review-entities", DataTable)
         table.clear()
         if row is None:
-            self.query_one("#candidate", Static).update(Text("No candidates left to review."))
+            self.query_one("#review-candidate", Static).update(
+                Text("No candidates left to review.")
+            )
             return
         extraction = session.extraction
         terms = [t for entity in extraction for t in _collect_highlight_terms(entity)]
@@ -525,7 +582,7 @@ class NERReviewApp(App[dict[str, int]]):
             (f"Candidate #{row['id']}", "bold"),
             (f"   {row['dataset']} · {row['entity_id']} · {row['property_name']}", "bright_black"),
         )
-        self.query_one("#candidate", Static).update(
+        self.query_one("#review-candidate", Static).update(
             Group(meta, _highlight_text(str(row["source_text"]), terms))
         )
         for index, entity in enumerate(extraction, start=1):
@@ -540,7 +597,7 @@ class NERReviewApp(App[dict[str, int]]):
         self.query_one(HistoryPanel).reload(session.events)
 
     def _selected(self) -> int | None:
-        table = self.query_one("#entities", DataTable)
+        table = self.query_one("#review-entities", DataTable)
         if self.session.current is None or table.row_count == 0:
             return None
         return table.cursor_row

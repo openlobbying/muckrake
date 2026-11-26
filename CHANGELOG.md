@@ -12,8 +12,8 @@ version can change behaviour.
   with the arrow keys, with references shown as the entity they point to. Every
   edit happens on the screen, with no external editor: `Enter` edits an entity in
   a form, `a` adds one, `d` deletes one and the references to it, `s` splits one
-  into a Person, a body and an Employment, and `e` edits the JSON with checks as
-  you type. `z` undoes the last decision, and a progress line shows your place
+  into a Person, a body and an Employment (`Ctrl+T` moves the text after the
+  cursor into the body's name), and `e` edits the JSON with checks as you type. `z` undoes the last decision, and a progress line shows your place
   and, for a sample, its running counts. The prompt review used without a
   terminal still opens `$EDITOR` for `e`.
 

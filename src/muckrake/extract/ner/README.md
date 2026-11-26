@@ -278,7 +278,17 @@ Undo puts a decision back as it was; an edit saved before it stays.
 
 `s` is for the most common fix: a person and the body they work for read as
 one name, as in "Heather Sandy Lincolnshire". It asks for the person's name,
-the body's name and schema, and an optional role.
+the body's name and schema, and an optional role. The person's name starts as
+the whole name: put the cursor after "Sandy" and press `Ctrl+T` (or the "Move
+text after cursor to body" button) to move "Lincolnshire" into the body's name.
+Spaces and `, - – : ;` at the cut are dropped.
+
+In every dialog, `Tab` and `Shift+Tab` move between fields, `Ctrl+S` saves and
+`Esc` cancels. In a field or the JSON editor, `Shift` with the arrow keys
+selects text, `Ctrl+X` cuts, `Ctrl+C` copies and `Ctrl+V` pastes what was cut
+or copied in the review screen. Pasting from the system clipboard uses your
+terminal's paste (`Cmd+V` in macOS terminals). Copied text also goes to the
+system clipboard in terminals that allow it.
 
 Without a terminal, as when piped, `ner-review` asks for a decision on each
 candidate in turn instead, and `e` opens the extraction in your `$EDITOR`.
