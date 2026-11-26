@@ -66,6 +66,46 @@ Releases go to PyPI from tags on `main` only:
 3. Tag the merge commit on `main` as `vX.Y.Z` and push the tag. The `Publish`
    workflow tests and uploads the package.
 
+Projects then pick the release up by bumping their pin
+([Developing muckrake with a project](#developing-muckrake-with-a-project)).
+
+## Developing muckrake with a project
+
+A project built on muckrake pins a released version, for example `muckrake==0.5.1` in its `pyproject.toml`. Work on the two falls into two modes:
+
+| Mode | What you're changing | Where the project gets muckrake |
+|---|---|---|
+| Project development | The project only | The release it pins |
+| Framework development | muckrake, usually checked through a project | Your local muckrake checkout |
+
+For framework development, clone muckrake next to the project and run the project's commands with your checkout layered over the pinned release:
+
+```bash
+cd ../<project>
+uv run --with-editable ../muckrake pytest
+uv run --with-editable ../muckrake muckrake <command>
+```
+
+Edits in this repo apply on the project's next command. The project's `pyproject.toml` and `uv.lock` don't change, and a plain `uv run` uses the pinned release again. The Docker image this repo builds (`docker compose run --build --rm muckrake <command>`) also runs your local code.
+
+Test muckrake changes here first, with this repo's own tests. A change you can only check through a project usually means a test is missing here.
+
+### Shipping a change a project uses
+
+Framework first, then project:
+
+1. Merge the muckrake change into `develop` and release it ([Releases](#releases)).
+2. In the project, open a pull request that bumps the pin to that release, together with the project changes that use it.
+
+A release merges all of `develop` into `main`, so it ships everything merged since the last release, not only your change. To use a merged change before it's released, a project can pin the commit on its own development branch:
+
+```toml
+[tool.uv.sources]
+muckrake = { git = "https://github.com/openlobbying/muckrake", rev = "<full commit SHA>" }
+```
+
+While that override is in place, uv installs the commit and ignores the project's `muckrake==` version. The project replaces it with a release before its own release.
+
 ## Project-agnostic code
 
 muckrake must not import or reference Django, Popolo, Wagtail or any specific

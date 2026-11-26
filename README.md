@@ -10,7 +10,9 @@ It is partly inspired by [`zavod`](https://zavod.opensanctions.org/) and
 > This is a work in progress. Expect breaking changes and incomplete features.
 
 muckrake ships no datasets of its own: a project keeps its crawlers in its own
-repository and runs muckrake from there. [OpenLobbying](https://github.com/openlobbying/openlobbying)
+repository, pins a muckrake release and runs muckrake from there. Working on
+muckrake and a project together is in
+[CONTRIBUTING](CONTRIBUTING.md#developing-muckrake-with-a-project). [OpenLobbying](https://github.com/openlobbying/openlobbying)
 (UK lobbying and political finance) is the main project built on it.
 
 - [Quickstart](#quickstart)
