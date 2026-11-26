@@ -20,6 +20,9 @@ version can change behaviour.
 - The review UI records when a reviewer saves an edited extraction, in a new
   nullable `ner_candidates.edited_at` column, and keeps the extraction from
   before the first edit in `original_extraction_json`.
+- `sample_results` also breaks each pool's counts down by reviewer, under
+  `by_reviewer`, so decisions by a person and by a model are reported apart; the
+  pool's own counts stay the totals. The command prints a line per reviewer.
 - `sample_results` also counts per entity (checked, kept, removed, added),
   comparing an edited extraction with its original, so the accuracy of the
   extracted entities can be measured as well as that of whole splits.
