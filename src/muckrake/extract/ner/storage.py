@@ -154,17 +154,19 @@ def get_candidate(conn: Connection, candidate_id: int) -> RowMapping | None:
 def update_candidate_extraction(
     conn: Connection, candidate_id: int, extraction: list[dict[str, Any]]
 ) -> None:
+    """Save a reviewer's edited extraction, and record when it was edited."""
+    now = datetime.now(UTC).isoformat()
     conn.execute(
         text(
             """
             UPDATE ner_candidates
-            SET extraction_json = :extraction_json, updated_at = :updated_at
+            SET extraction_json = :extraction_json, edited_at = :now, updated_at = :now
             WHERE id = :candidate_id
             """
         ),
         {
             "extraction_json": json.dumps(extraction, sort_keys=True),
-            "updated_at": datetime.now(UTC).isoformat(),
+            "now": now,
             "candidate_id": candidate_id,
         },
     )
@@ -295,20 +297,27 @@ def list_sample_awaiting_review(
 
 
 def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[str, dict[str, int]]:
-    """Per pool: candidates sampled, decided by a person, and approved by that person.
+    """Per pool: candidates sampled, decided by a person, and how they were decided.
 
-    For the ``approved`` pool, approved / decided is the precision of the automatic
-    splits. For the ``rejected`` pool, approved / decided is how often a name left
-    whole was really composite (the reviewer splits it with an edit, then approves).
+    ``approved_unedited`` counts candidates the person approved as they were, and
+    ``approved_edited`` those the person edited after the candidate was sampled and
+    then approved. For the ``approved`` pool, approved_unedited / decided is the
+    precision of the automatic splits, and approved_edited counts the splits the
+    person had to correct. For the ``rejected`` pool, approved_edited / decided is
+    how often a name left whole was really composite (the person split it).
     """
     clause = "AND dataset = :dataset_name" if dataset_name is not None else ""
+    edited = "edited_at IS NOT NULL AND edited_at >= sampled_at"
     rows = conn.execute(
         text(
             f"""
             SELECT sampled_status,
                    COUNT(*),
                    SUM(CASE WHEN reviewer <> :reviewer THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN reviewer <> :reviewer AND status = 'approved' THEN 1 ELSE 0 END)
+                   SUM(CASE WHEN reviewer <> :reviewer AND status = 'approved'
+                            AND NOT ({edited}) THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN reviewer <> :reviewer AND status = 'approved'
+                            AND {edited} THEN 1 ELSE 0 END)
             FROM ner_candidates
             WHERE sampled_status IS NOT NULL {clause}
             GROUP BY sampled_status
@@ -316,13 +325,10 @@ def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[st
         ),
         {"reviewer": AUTO_REVIEWER, "dataset_name": dataset_name},
     )
-    results = {pool: {"sampled": 0, "decided": 0, "approved": 0} for pool in SAMPLE_POOLS}
-    for pool, sampled, decided, approved in rows:
-        results[pool] = {
-            "sampled": int(sampled),
-            "decided": int(decided or 0),
-            "approved": int(approved or 0),
-        }
+    keys = ("sampled", "decided", "approved_unedited", "approved_edited")
+    results = {pool: dict.fromkeys(keys, 0) for pool in SAMPLE_POOLS}
+    for pool, *counts in rows:
+        results[pool] = {key: int(count or 0) for key, count in zip(keys, counts, strict=True)}
     return results
 
 
@@ -341,6 +347,7 @@ EXPORT_COLUMNS = (
     "reviewed_at",
     "sampled_at",
     "sampled_status",
+    "edited_at",
     "extraction_json",
     "created_at",
     "updated_at",
@@ -379,7 +386,7 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
 
     A candidate already in the database is left as it is, so local review
     decisions and samples are never overwritten. Exports made before
-    the sample columns existed import with them unset.
+    the sample and edit columns existed import with them unset.
     """
     exists = text(
         "SELECT 1 FROM ner_candidates WHERE " + " AND ".join(f"{c} = :{c}" for c in KEY_COLUMNS)
@@ -394,6 +401,7 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
             row = json.loads(line)
             row.setdefault("sampled_at", None)
             row.setdefault("sampled_status", None)
+            row.setdefault("edited_at", None)
             if conn.execute(exists, row).first() is not None:
                 present += 1
                 continue

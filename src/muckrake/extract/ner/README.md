@@ -96,6 +96,7 @@ Main columns:
 - `reviewer`, `reviewed_at`
 - `sampled_at` and `sampled_status`, set when the candidate is drawn into a review
   sample: when, and the automatic status it had then (its pool)
+- `edited_at`, set whenever a reviewer saves an edited extraction with `e`
 - `extraction_json`, `created_at`, `updated_at`
 
 `extractor_version` still exists internally in the table for compatibility,
@@ -204,18 +205,21 @@ in the sample: `--sample 0` draws nothing new and resumes them. `--rejected`
 needs `--sample`, and `--sample` can't be combined with `--auto` or `--limit`.
 
 After a sample review, the command prints the pool's counts: sampled, decided by
-a person, and approved by that person (`sample_results` in
-`muckrake.extract.ner.storage` returns them for both pools).
+a person, approved as it was (`approved_unedited`), and edited then approved
+(`approved_edited`). `sample_results` in `muckrake.extract.ner.storage` returns
+them for both pools. An edit counts only if it was saved after the candidate was
+sampled.
 
-- Approved pool: approved / decided is the precision of the automatic splits.
-  Approve a split that is right, and reject one that is wrong.
-- Rejected pool: approved / decided is how often a name left whole was really
-  composite. Reject a name that is one entity, so the original entity is kept.
-  Split a composite name with `e`, then approve it.
+- Approved pool: approved_unedited / decided is the precision of the automatic
+  splits. approved_edited counts the splits you had to correct, which are errors
+  too. Approve a split that is right as it is, fix one that is nearly right with
+  `e` and approve it, and reject one that is wrong.
+- Rejected pool: approved_edited / decided is how often a name left whole was
+  really composite. Split such a name with `e`, then approve it. Reject a name
+  that is one entity, so the original entity is kept.
 
-A split fixed with `e` and then approved counts as approved, so in the approved
-pool note edits separately if they matter. `ner-export` and `ner-import` carry
-`sampled_at` and `sampled_status`, so a sample is kept with the decisions.
+`ner-export` and `ner-import` carry `sampled_at`, `sampled_status` and
+`edited_at`, so a sample and its edits are kept with the decisions.
 
 Review controls:
 

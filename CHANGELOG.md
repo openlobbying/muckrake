@@ -13,9 +13,13 @@ version can change behaviour.
   measured. With `--rejected` it samples the candidates `--auto` rejected
   instead, to measure how often a composite name was left whole. After the
   review it prints the pool's counts; `sample_results` returns them for both
-  pools. `ner_candidates` gains nullable `sampled_at` and `sampled_status`
-  columns, which `init_database` adds to existing tables, and `ner-export` /
-  `ner-import` carry them (older exports import with them unset).
+  pools, with approvals split into unedited and edited, so a corrected split
+  isn't counted as right. `ner_candidates` gains nullable `sampled_at` and
+  `sampled_status` columns.
+- The review UI records when a reviewer saves an edited extraction, in a new
+  nullable `ner_candidates.edited_at` column.
+- `init_database` adds the three new columns to existing tables, and
+  `ner-export` / `ner-import` carry them (older exports import with them unset).
 
 ## [0.5.1] - 2026-11-25
 

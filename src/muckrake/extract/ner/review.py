@@ -724,7 +724,8 @@ def run_ner_review(
         conn.close()
         click.echo(
             f"Auto-{pool} sample so far: sampled={counts['sampled']} "
-            f"decided={counts['decided']} approved={counts['approved']}"
+            f"decided={counts['decided']} approved_unedited={counts['approved_unedited']} "
+            f"approved_edited={counts['approved_edited']}"
         )
 
 

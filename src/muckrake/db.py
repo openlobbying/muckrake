@@ -61,6 +61,8 @@ def get_ner_candidates_table(metadata: MetaData | None = None) -> Table:
         # its automatic status then, which says which pool it was drawn from.
         Column("sampled_at", String(), nullable=True),
         Column("sampled_status", String(), nullable=True),
+        # When a reviewer last saved an edited extraction in the review UI.
+        Column("edited_at", String(), nullable=True),
         Column("extraction_json", Text(), nullable=False),
         Column("created_at", String(), nullable=False),
         Column("updated_at", String(), nullable=False),
@@ -259,7 +261,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
             continue
         table.create(bind=engine, checkfirst=True)
     _ensure_artifact_sizes(engine, [dataset_run_artifacts, release_artifacts])
-    _ensure_ner_candidates_sample_columns(engine)
+    _ensure_ner_candidates_review_columns(engine)
     _ensure_ner_candidates_constraints(engine)
     _ensure_dataset_run_constraints(engine)
     _ensure_release_constraints(engine)
@@ -391,10 +393,10 @@ def create_search_view(
     )
 
 
-def _ensure_ner_candidates_sample_columns(engine: Engine) -> None:
-    """Add the sample columns to ``ner_candidates`` tables made before they existed."""
+def _ensure_ner_candidates_review_columns(engine: Engine) -> None:
+    """Add the sample and edit columns to ``ner_candidates`` tables made before them."""
     columns = {c["name"] for c in inspect(engine).get_columns("ner_candidates")}
-    for name in ("sampled_at", "sampled_status"):
+    for name in ("sampled_at", "sampled_status", "edited_at"):
         if name not in columns:
             with engine.begin() as conn:
                 conn.execute(text(f"ALTER TABLE ner_candidates ADD COLUMN {name} VARCHAR"))

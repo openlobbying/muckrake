@@ -25,6 +25,7 @@ from muckrake.extract.ner.storage import (
     list_sample_awaiting_review,
     review_candidate,
     sample_results,
+    update_candidate_extraction,
 )
 
 
@@ -217,30 +218,83 @@ def test_rejected_pool_samples_only_auto_rejected_candidates(make_dataset, extra
         conn.close()
 
 
-def test_sample_results_count_both_pools_after_human_review(make_dataset, extractor) -> None:
-    composites = [_unique(f"Karl Kent {i}, Lena Lyle {i}") for i in range(3)]
-    whole = [_unique(f"Ministry number {i}: Defence") for i in range(2)]
-    name = _auto_reviewed_dataset(make_dataset, composites, whole=whole)
+def test_edit_records_edited_at_and_a_plain_approve_does_not(make_dataset, extractor) -> None:
+    name = _auto_reviewed_dataset(
+        make_dataset, [_unique("Mona Moss, Ned Nash"), _unique("Olga Oak, Pete Pine")]
+    )
     conn = get_connection()
     try:
-        draw_sample(conn, 3, pool="approved", dataset_name=name)
-        draw_sample(conn, 2, pool="rejected", dataset_name=name)
-        first, second, _ = list_sample_awaiting_review(conn, pool="approved", dataset_name=name)
-        # A person keeps one split and rejects another; the third is not decided yet.
-        review_candidate(conn, first["id"], "approved")
-        review_candidate(conn, second["id"], "rejected")
-        # One name left whole was really composite (split, then approved); one was right.
-        missed, kept = list_sample_awaiting_review(conn, pool="rejected", dataset_name=name)
+        edited, plain = list_candidates(conn, dataset_name=name, status="approved")
+        update_candidate_extraction(
+            conn, edited["id"], [{"schema": "Person", "properties": {"name": ["Mona Moss"]}}]
+        )
+        review_candidate(conn, edited["id"], "approved")
+        review_candidate(conn, plain["id"], "approved")
+        rows = {
+            row["id"]: row for row in list_candidates(conn, dataset_name=name, status="approved")
+        }
+    finally:
+        conn.close()
+    assert rows[edited["id"]]["edited_at"]
+    assert rows[plain["id"]]["edited_at"] is None
+
+
+def test_sample_results_count_both_pools_after_human_review(make_dataset, extractor) -> None:
+    composites = [_unique(f"Karl Kent {i}, Lena Lyle {i}") for i in range(4)]
+    whole = [_unique(f"Ministry number {i}: Defence") for i in range(3)]
+    name = _auto_reviewed_dataset(make_dataset, composites, whole=whole)
+    split = [{"schema": "Person", "properties": {"name": ["Someone"]}}]
+    conn = get_connection()
+    try:
+        draw_sample(conn, 4, pool="approved", dataset_name=name)
+        draw_sample(conn, 3, pool="rejected", dataset_name=name)
+        right, corrected, wrong, _ = list_sample_awaiting_review(
+            conn, pool="approved", dataset_name=name
+        )
+        # A split kept as it was, one corrected and kept, one rejected; one not decided yet.
+        review_candidate(conn, right["id"], "approved")
+        update_candidate_extraction(conn, corrected["id"], split)
+        review_candidate(conn, corrected["id"], "approved")
+        review_candidate(conn, wrong["id"], "rejected")
+        # A name left whole that was really composite (split, then approved), one that was
+        # one entity (rejected), and one approved without an edit (not a miss).
+        missed, whole_right, unedited = list_sample_awaiting_review(
+            conn, pool="rejected", dataset_name=name
+        )
+        update_candidate_extraction(conn, missed["id"], split)
         review_candidate(conn, missed["id"], "approved")
-        review_candidate(conn, kept["id"], "rejected")
+        review_candidate(conn, whole_right["id"], "rejected")
+        review_candidate(conn, unedited["id"], "approved")
 
         results = sample_results(conn, dataset_name=name)
     finally:
         conn.close()
     assert results == {
-        "approved": {"sampled": 3, "decided": 2, "approved": 1},
-        "rejected": {"sampled": 2, "decided": 2, "approved": 1},
+        "approved": {"sampled": 4, "decided": 3, "approved_unedited": 1, "approved_edited": 1},
+        "rejected": {"sampled": 3, "decided": 3, "approved_unedited": 1, "approved_edited": 1},
     }
+
+
+def test_an_edit_before_sampling_does_not_count_as_a_correction(make_dataset, extractor) -> None:
+    composite = _unique("Quin Quail, Rosa Reed")
+    name, _ = make_dataset([{"schema": "Person", "properties": {"name": [composite]}}])
+    run_ner_extract(name, extractor_name="llm")
+    conn = get_connection()
+    try:
+        [pending] = list_candidates(conn, dataset_name=name)
+        # Edited while still pending, then decided by --auto, then sampled.
+        update_candidate_extraction(
+            conn, pending["id"], [{"schema": "Person", "properties": {"name": ["Quin Quail"]}}]
+        )
+        auto_review(conn, dataset_name=name)
+        draw_sample(conn, 1, dataset_name=name)
+        [sampled] = list_sample_awaiting_review(conn, dataset_name=name)
+        review_candidate(conn, sampled["id"], "approved")
+        results = sample_results(conn, dataset_name=name)
+    finally:
+        conn.close()
+    assert results["approved"]["approved_unedited"] == 1
+    assert results["approved"]["approved_edited"] == 0
 
 
 def test_reviewed_sample_candidates_leave_the_queue(make_dataset, extractor) -> None:
@@ -264,6 +318,10 @@ def test_export_and_import_carry_sampled_at(make_dataset, extractor, tmp_path) -
     try:
         draw_sample(conn, 1, dataset_name=name)
         [before] = list_sample_awaiting_review(conn, dataset_name=name)
+        update_candidate_extraction(
+            conn, before["id"], [{"schema": "Person", "properties": {"name": ["Edward Eel"]}}]
+        )
+        [before] = list_sample_awaiting_review(conn, dataset_name=name)
         export_candidates(conn, export)
         conn.execute(text("DELETE FROM ner_candidates WHERE dataset = :d"), {"d": name})
         conn.commit()
@@ -273,6 +331,7 @@ def test_export_and_import_carry_sampled_at(make_dataset, extractor, tmp_path) -
         conn.close()
     assert after["sampled_at"] == before["sampled_at"]
     assert after["sampled_status"] == before["sampled_status"] == "approved"
+    assert after["edited_at"] == before["edited_at"] is not None
 
 
 def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_path) -> None:
@@ -287,7 +346,7 @@ def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_pat
         with gzip.open(export, "rt") as src, gzip.open(old, "wt") as dst:
             for line in src:
                 row = json.loads(line)
-                del row["sampled_at"], row["sampled_status"]
+                del row["sampled_at"], row["sampled_status"], row["edited_at"]
                 dst.write(json.dumps(row) + "\n")
         imported, _ = import_candidates(conn, old)
         assert imported >= 1
@@ -296,6 +355,7 @@ def test_import_of_an_export_without_sampled_at(make_dataset, extractor, tmp_pat
         conn.close()
     assert restored["sampled_at"] is None
     assert restored["sampled_status"] is None
+    assert restored["edited_at"] is None
 
 
 def test_init_database_adds_the_sample_columns_to_an_existing_table(tmp_path) -> None:
@@ -323,7 +383,7 @@ def test_init_database_adds_the_sample_columns_to_an_existing_table(tmp_path) ->
     engine = init_database(uri)
     columns = {c["name"] for c in inspect(engine).get_columns("ner_candidates")}
     engine.dispose()
-    assert {"sampled_at", "sampled_status"} <= columns
+    assert {"sampled_at", "sampled_status", "edited_at"} <= columns
 
 
 @pytest.mark.parametrize("other", [["--auto"], ["--limit", "5"]])
