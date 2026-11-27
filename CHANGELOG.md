@@ -50,6 +50,11 @@ version can change behaviour.
 
 ### Fixed
 
+- `xref` removes open suggestions whose source or target is no longer in the store before
+  it writes new ones, and logs how many. They pointed at entities that had gone, such as
+  composites replaced by NER splits, inflated the review queue, and would have become
+  judgements about nothing under an auto-merge threshold. Judgements are never removed
+  ([xref keeps suggestions for entities that no longer exist](https://github.com/openlobbying/muckrake/issues/55)).
 - Applying an approved NER split no longer merges relationships from different
   splits. A fragment without a name, such as an `Employment`, was given an ID
   hashed from its properties before its `$ref:` values were resolved, so every
