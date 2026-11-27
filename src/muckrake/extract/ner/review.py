@@ -289,9 +289,10 @@ def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType
 
 
 class NERReviewState:
-    def __init__(self, conn: Connection, rows: list[RowMapping]):
+    def __init__(self, conn: Connection, rows: list[RowMapping], reviewer: str):
         self.conn = conn
         self.rows = rows
+        self.reviewer = reviewer
         self.index = 0
         self.approved = 0
         self.rejected = 0
@@ -319,10 +320,10 @@ class NERReviewState:
 
         status = ACTION_TO_STATUS.get(action)
         if status == "approved":
-            review_candidate(self.conn, row["id"], status=status)
+            review_candidate(self.conn, row["id"], status=status, reviewer=self.reviewer)
             self.approved += 1
         elif status == "rejected":
-            review_candidate(self.conn, row["id"], status=status)
+            review_candidate(self.conn, row["id"], status=status, reviewer=self.reviewer)
             self.rejected += 1
         else:
             self.skipped += 1
@@ -608,7 +609,7 @@ def _print_candidate(row: RowMapping, index: int, total: int) -> None:
             click.echo(f"  {entity_idx}. {entity}")
 
 
-def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
+def _run_prompt_review(conn: Connection, rows: list[RowMapping], reviewer: str) -> dict[str, int]:
     approved = 0
     rejected = 0
     skipped = 0
@@ -648,10 +649,10 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, in
 
         status = ACTION_TO_STATUS[action]
         if status == "approved":
-            review_candidate(conn, row["id"], status=status)
+            review_candidate(conn, row["id"], status=status, reviewer=reviewer)
             approved += 1
         elif status == "rejected":
-            review_candidate(conn, row["id"], status=status)
+            review_candidate(conn, row["id"], status=status, reviewer=reviewer)
             rejected += 1
         else:
             skipped += 1
@@ -665,8 +666,8 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, in
     }
 
 
-def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
-    state = NERReviewState(conn, rows)
+def _run_tui_review(conn: Connection, rows: list[RowMapping], reviewer: str) -> dict[str, int]:
+    state = NERReviewState(conn, rows, reviewer)
     app = NERReviewApp(state)
     result = app.run()
     if result is None:
@@ -675,6 +676,7 @@ def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
 
 
 def run_ner_review(
+    reviewer: str,
     dataset_name: str | None = None,
     limit: int | None = None,
     sample: int | None = None,
@@ -707,9 +709,9 @@ def run_ner_review(
         return
 
     if sys.stdout.isatty() and sys.stdin.isatty():
-        summary = _run_tui_review(conn, rows)
+        summary = _run_tui_review(conn, rows, reviewer)
     else:
-        summary = _run_prompt_review(conn, rows)
+        summary = _run_prompt_review(conn, rows, reviewer)
 
     conn.close()
     click.echo(

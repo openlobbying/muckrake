@@ -111,13 +111,13 @@ def test_auto_review_keeps_human_decisions(make_dataset, extractor) -> None:
 
     conn = get_connection()
     try:
-        review_candidate(conn, candidate["id"], "rejected")
+        review_candidate(conn, candidate["id"], "rejected", reviewer="tester")
         assert auto_review(conn, dataset_name=name) == (0, 0)
     finally:
         conn.close()
 
     [rejected] = _candidates(name, "rejected")
-    assert rejected["reviewer"] == "muckrake/ner-review"
+    assert rejected["reviewer"] == "tester"
 
 
 def test_export_then_import_restores_candidates_and_decisions(
@@ -129,7 +129,7 @@ def test_export_then_import_restores_candidates_and_decisions(
     conn = get_connection()
     try:
         [candidate] = list_candidates(conn, dataset_name=name)
-        review_candidate(conn, candidate["id"], "approved")
+        review_candidate(conn, candidate["id"], "approved", reviewer="tester")
         export = tmp_path / "ner.jsonl.gz"
         assert export_candidates(conn, export) >= 1
 
@@ -143,7 +143,7 @@ def test_export_then_import_restores_candidates_and_decisions(
 
     [restored] = _candidates(name, "approved")
     assert restored["source_text"] == composite
-    assert restored["reviewer"] == "muckrake/ner-review"
+    assert restored["reviewer"] == "tester"
 
     # Restored texts count as extracted, so they are never sent to the model again.
     extractor.calls.clear()
@@ -181,7 +181,7 @@ def test_sample_draws_only_unsampled_auto_approved_candidates(make_dataset, extr
     try:
         # A person's decision takes a candidate out of what can be sampled.
         human = list_candidates(conn, dataset_name=name, status="approved")[0]
-        review_candidate(conn, human["id"], "approved")
+        review_candidate(conn, human["id"], "approved", reviewer="tester")
 
         assert draw_sample(conn, 2, dataset_name=name) == 2
         sampled = list_sample_awaiting_review(conn, dataset_name=name)
@@ -217,7 +217,7 @@ def test_sample_target_is_not_overdrawn_on_rerun(make_dataset, extractor) -> Non
         assert len(list_sample_awaiting_review(conn, dataset_name=name)) == 4
         # Decided candidates still count towards the target.
         [first, *_] = list_sample_awaiting_review(conn, dataset_name=name)
-        review_candidate(conn, first["id"], "approved")
+        review_candidate(conn, first["id"], "approved", reviewer="tester")
         assert draw_sample(conn, 4, dataset_name=name) == 0
     finally:
         conn.close()
@@ -269,8 +269,8 @@ def test_edit_records_edited_at_and_a_plain_approve_does_not(make_dataset, extra
         update_candidate_extraction(
             conn, edited["id"], [{"schema": "Person", "properties": {"name": ["Mona Moss"]}}]
         )
-        review_candidate(conn, edited["id"], "approved")
-        review_candidate(conn, plain["id"], "approved")
+        review_candidate(conn, edited["id"], "approved", reviewer="tester")
+        review_candidate(conn, plain["id"], "approved", reviewer="tester")
         rows = {
             row["id"]: row for row in list_candidates(conn, dataset_name=name, status="approved")
         }
@@ -293,25 +293,25 @@ def test_sample_results_count_both_pools_after_human_review(make_dataset, extrac
             conn, pool="approved", dataset_name=name
         )
         # A split kept as it was, one corrected and kept, one rejected; one not decided yet.
-        review_candidate(conn, right["id"], "approved")
+        review_candidate(conn, right["id"], "approved", reviewer="tester")
         update_candidate_extraction(conn, corrected["id"], split)
-        review_candidate(conn, corrected["id"], "approved")
-        review_candidate(conn, wrong["id"], "rejected")
+        review_candidate(conn, corrected["id"], "approved", reviewer="tester")
+        review_candidate(conn, wrong["id"], "rejected", reviewer="tester")
         # A name left whole that was really composite (split, then approved), one that was
         # one entity (rejected), and one approved without an edit (not a miss).
         missed, whole_right, unedited = list_sample_awaiting_review(
             conn, pool="rejected", dataset_name=name
         )
         update_candidate_extraction(conn, missed["id"], split)
-        review_candidate(conn, missed["id"], "approved")
-        review_candidate(conn, whole_right["id"], "rejected")
-        review_candidate(conn, unedited["id"], "approved")
+        review_candidate(conn, missed["id"], "approved", reviewer="tester")
+        review_candidate(conn, whole_right["id"], "rejected", reviewer="tester")
+        review_candidate(conn, unedited["id"], "approved", reviewer="tester")
 
         results = sample_results(conn, dataset_name=name)
     finally:
         conn.close()
     split_counts = {
-        pool: {k: v for k, v in counts.items() if k not in ("entities", "by_reviewer")}
+        pool: {k: v for k, v in counts.items() if k not in ("entities", "by_reviewer", "by_kind")}
         for pool, counts in results.items()
     }
     assert split_counts == {
@@ -346,7 +346,7 @@ def test_an_edit_before_sampling_does_not_count_as_a_correction(make_dataset, ex
         auto_review(conn, dataset_name=name)
         draw_sample(conn, 1, dataset_name=name)
         [sampled] = list_sample_awaiting_review(conn, dataset_name=name)
-        review_candidate(conn, sampled["id"], "approved")
+        review_candidate(conn, sampled["id"], "approved", reviewer="tester")
         results = sample_results(conn, dataset_name=name)
     finally:
         conn.close()
@@ -360,7 +360,7 @@ def test_reviewed_sample_candidates_leave_the_queue(make_dataset, extractor) -> 
     try:
         assert draw_sample(conn, 1, dataset_name=name) == 1
         [row] = list_sample_awaiting_review(conn, dataset_name=name)
-        review_candidate(conn, row["id"], "rejected")
+        review_candidate(conn, row["id"], "rejected", reviewer="tester")
         assert list_sample_awaiting_review(conn, dataset_name=name) == []
         [decided] = list_candidates(conn, dataset_name=name, status="rejected")
         assert decided["sampled_at"] == row["sampled_at"]
@@ -426,19 +426,19 @@ def test_sample_results_count_entities(make_dataset, extractor) -> None:
             conn, pool="approved", dataset_name=name
         )
         # Two entities kept as they are.
-        review_candidate(conn, right["id"], "approved")
+        review_candidate(conn, right["id"], "approved", reviewer="tester")
         # One of two kept, one changed, one more added: kept 1, removed 1, added 2.
         first = json.loads(corrected["extraction_json"])[0]
         update_candidate_extraction(conn, corrected["id"], [first, _person("X1"), _person("X2")])
-        review_candidate(conn, corrected["id"], "approved")
+        review_candidate(conn, corrected["id"], "approved", reviewer="tester")
         # Rejecting an auto-approved split removes both its entities.
-        review_candidate(conn, wrong["id"], "rejected")
+        review_candidate(conn, wrong["id"], "rejected", reviewer="tester")
         missed, kept_whole = list_sample_awaiting_review(conn, pool="rejected", dataset_name=name)
         # A name left whole that the person splits in two: removed 1, added 2.
         update_candidate_extraction(conn, missed["id"], [_person("Part A"), _person("Part B")])
-        review_candidate(conn, missed["id"], "approved")
+        review_candidate(conn, missed["id"], "approved", reviewer="tester")
         # Rejecting an auto-rejected name keeps its single entity.
-        review_candidate(conn, kept_whole["id"], "rejected")
+        review_candidate(conn, kept_whole["id"], "rejected", reviewer="tester")
         results = sample_results(conn, dataset_name=name)
     finally:
         conn.close()
@@ -454,7 +454,7 @@ def test_sample_results_split_by_reviewer(make_dataset, extractor) -> None:
         draw_sample(conn, 3, dataset_name=name)
         person, model, _ = list_sample_awaiting_review(conn, dataset_name=name)
         # A person approves one split as it was.
-        review_candidate(conn, person["id"], "approved")
+        review_candidate(conn, person["id"], "approved", reviewer="tester")
         # A model corrects the other: keeps one of its two entities, adds one.
         first = json.loads(model["extraction_json"])[0]
         update_candidate_extraction(conn, model["id"], [first, _person("Ed Eames")])
@@ -468,7 +468,7 @@ def test_sample_results_split_by_reviewer(make_dataset, extractor) -> None:
     assert (results["approved_unedited"], results["approved_edited"]) == (1, 1)
     assert results["entities"] == {"checked": 4, "kept": 3, "removed": 1, "added": 1}
     assert results["by_reviewer"] == {
-        "muckrake/ner-review": {
+        "tester": {
             "decided": 1,
             "approved_unedited": 1,
             "approved_edited": 0,
@@ -497,7 +497,7 @@ def test_edits_without_an_original_count_per_split_only(make_dataset, extractor)
             {"now": "9999-01-01T00:00:00+00:00", "id": row["id"]},
         )
         conn.commit()
-        review_candidate(conn, row["id"], "approved")
+        review_candidate(conn, row["id"], "approved", reviewer="tester")
         results = sample_results(conn, dataset_name=name)
     finally:
         conn.close()
@@ -597,3 +597,59 @@ def test_rejected_needs_sample() -> None:
     result = CliRunner().invoke(cli, ["ner-review", "--rejected"])
     assert result.exit_code != 0
     assert "--rejected needs --sample" in result.output
+
+
+def test_review_kind_classifies_reviewers():
+    from muckrake.extract.ner.storage import AUTO_REVIEWER, review_kind
+
+    assert review_kind(AUTO_REVIEWER) == "automatic"
+    assert review_kind("model:claude") == "model"
+    assert review_kind("warren") == "human"
+
+
+def test_sample_results_are_broken_down_by_kind(make_dataset):
+    from muckrake.extract.ner.pipeline import text_fingerprint
+    from muckrake.extract.ner.storage import (
+        Candidate,
+        auto_review,
+        draw_sample,
+        get_connection,
+        list_sample_awaiting_review,
+        review_candidate,
+        sample_results,
+        upsert_candidate,
+    )
+
+    conn = get_connection()
+    try:
+        for i in range(3):
+            source = f"Kind Person {i} and Kind Org {i}"
+            upsert_candidate(
+                conn,
+                Candidate(
+                    dataset="kinds",
+                    entity_id=f"kinds-{i}",
+                    schema="LegalEntity",
+                    property_name="name",
+                    source_text=source,
+                    fingerprint=text_fingerprint(source),
+                    extractor="test",
+                    extractor_version="1",
+                    extraction=[
+                        {"schema": "Person", "properties": {"name": [f"Kind Person {i}"]}},
+                        {"schema": "Organization", "properties": {"name": [f"Kind Org {i}"]}},
+                    ],
+                ),
+            )
+        auto_review(conn, dataset_name="kinds")
+        draw_sample(conn, 3, dataset_name="kinds")
+        rows = list_sample_awaiting_review(conn, dataset_name="kinds")
+        review_candidate(conn, rows[0]["id"], "approved", reviewer="warren")
+        review_candidate(conn, rows[1]["id"], "approved", reviewer="model:claude")
+        by_kind = sample_results(conn, dataset_name="kinds")["approved"]["by_kind"]
+    finally:
+        conn.close()
+
+    assert by_kind["human"]["decided"] == 1
+    assert by_kind["model"]["decided"] == 1
+    assert "automatic" not in by_kind

@@ -276,6 +276,19 @@ prints a line per reviewer. A model checking a model's output isn't an
 independent check, so a sample reviewed partly by a person and partly by a model
 should be read reviewer by reviewer. Record each reviewer under their own name.
 
+`ner-review` records the reviewer it's given with `--reviewer` (or
+`MUCKRAKE_REVIEWER`), and otherwise your login name; it refuses `root`, as in a
+container, so name yourself there. Reviewer names say what kind of decision it
+was, and `review_kind` in `muckrake.extract.ner.storage` reads them:
+
+| Kind | Reviewer | Example |
+|---|---|---|
+| automatic | `muckrake/auto`, set by `--auto` | `muckrake/auto` |
+| model | `model:<name>`, for a model reviewing the extractions | `model:claude` |
+| human | anything else: the person's own name | `jane` |
+
+`sample_results` also gives each pool a `by_kind` breakdown with the same counts.
+
 `ner-export` and `ner-import` carry `sampled_at`, `sampled_status`, `edited_at`
 and `original_extraction_json`, so a sample and its edits are kept with the
 decisions.

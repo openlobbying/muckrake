@@ -13,6 +13,7 @@ muckrake reads these from the environment, after loading the nearest `.env` file
 | `MUCKRAKE_DATASET_PATHS` | unset | Extra dataset roots, separated by the OS path separator (`:` on Unix). `./datasets/` in the current directory is always searched. |
 | `MUCKRAKE_FTM_SCHEMA_PATHS` | unset | FollowTheMoney schema extension directories, separated by the OS path separator. `./ftm_schema_ext/` in the current directory is always used if present. |
 | `MUCKRAKE_ENV_FILE` | nearest `.env` from the current directory upward | Explicit `.env` file to load. |
+| `MUCKRAKE_REVIEWER` | your login name | Who `ner-review` records as the reviewer of each decision. Name a model reviewer `model:<name>`, so its decisions are reported apart from people's. |
 | `MUCKRAKE_HTTP_MIN_INTERVAL` | `0` | Minimum seconds between HTTP requests to the same host (politeness rate limit). |
 | `MUCKRAKE_PROFILE_URL` | unset | Link template for entities in the `dedupe` review TUI, with `%s` for the entity ID, e.g. `https://example.org/entity/%s`. Unset shows no links. |
 | `FTM_MODEL_PATH` | set by muckrake | FollowTheMoney model directory. muckrake sets it to the upstream model merged with any schema extensions; set it only to override that. |
