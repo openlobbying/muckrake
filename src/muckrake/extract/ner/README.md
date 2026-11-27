@@ -293,28 +293,54 @@ was, and `review_kind` in `muckrake.extract.ner.storage` reads them:
 and `original_extraction_json`, so a sample and its edits are kept with the
 decisions.
 
-Review controls:
+### The review screen
 
-- `x` approve candidate
-- `n` reject candidate
-- `e` edit extracted JSON in your `$EDITOR`
-- `u` skip candidate
-- `q` quit review
+In a terminal, `ner-review` opens a review screen. The source text stays at the
+top, with the extracted names highlighted, and the extracted entities are listed
+beneath it. A reference to another entity shows as that entity, for example
+`→ Person: Heather Sandy`. The top line shows your place in the queue, what you
+have decided this session and, for a sample, the sample's running counts, one
+figure per reviewer once more than one reviewer has decided. The footer lists
+every key.
 
-When you press `e`, Muckrake opens a temporary JSON file in your terminal editor.
-How to exit depends on the editor:
+| Key | Does |
+|---|---|
+| `↑` `↓` | Select an entity |
+| `x` | Approve the candidate (saving any edits first) |
+| `n` | Reject the candidate |
+| `u` | Skip the candidate |
+| `z` | Undo your last decision in this session |
+| `Enter` | Edit the selected entity: its schema, name and other properties, with references picked from the other entities |
+| `a` | Add an entity |
+| `d` | Delete the selected entity, and the references to it (asks first) |
+| `s` | Split the selected entity into a Person, a body and the Employment linking them |
+| `e` | Edit the whole extraction as JSON, checked as you type |
+| `Ctrl+S` | Save your edits (in a form or the JSON editor: save it; `Esc` cancels) |
+| `h` | Show or hide the history |
+| `q` | Quit |
 
-- Vim/Vi: press `Esc`, type `:wq`, press `Enter` (save + exit)
-- Vim/Vi without saving: `Esc`, `:q!`, `Enter`
-- Nano: `Ctrl+X`, then `Y` + `Enter` to save (or `N` to discard)
+Edits stay on the current candidate until you save them with `Ctrl+S` or
+approve the candidate, which saves them first. Rejecting, skipping or quitting
+drops unsaved edits. Saved edits set `edited_at` and keep the original
+extraction, so an edit followed by an approval counts as an edited approval.
+Undo puts a decision back as it was; an edit saved before it stays.
 
-Tip: set an editor you are comfortable with before review:
+`s` is for the most common fix: a person and the body they work for read as
+one name, as in "Heather Sandy Lincolnshire". It asks for the person's name,
+the body's name and schema, and an optional role. The person's name starts as
+the whole name: put the cursor after "Sandy" and press `Ctrl+T` (or the "Move
+text after cursor to body" button) to move "Lincolnshire" into the body's name.
+Spaces and `, - – : ;` at the cut are dropped.
 
-```bash
-export EDITOR=nano
-# or
-export EDITOR=vim
-```
+In every dialog, `Tab` and `Shift+Tab` move between fields, `Ctrl+S` saves and
+`Esc` cancels. In a field or the JSON editor, `Shift` with the arrow keys
+selects text, `Ctrl+X` cuts, `Ctrl+C` copies and `Ctrl+V` pastes what was cut
+or copied in the review screen. Pasting from the system clipboard uses your
+terminal's paste (`Cmd+V` in macOS terminals). Copied text also goes to the
+system clipboard in terminals that allow it.
+
+Without a terminal, as when piped, `ner-review` asks for a decision on each
+candidate in turn instead, and `e` opens the extraction in your `$EDITOR`.
 
 ## Quick test
 
