@@ -223,6 +223,34 @@ answers how often an automatic decision was right as a whole.
   really composite. Split such a name with `e`, then approve it. Reject a name
   that is one entity, so the original entity is kept.
 
+#### Judging a split
+
+A split is right only if it has every entity the text names, no entity the text
+doesn't name, and the links between them. These are errors, so fix the split and
+approve it:
+
+- An entity the text names is missing.
+- An entity is made up: a role, title, description or event recorded as a person
+  or organisation, such as "Chief Constable", "former Prime Minister of …" or
+  "Breakfast Roundtable".
+- Two entities are merged into one, or one is split into two. That includes an
+  organisation recorded as another's alias.
+- An entity has the wrong kind of schema, such as a company recorded as a Person.
+- An abbreviation is expanded wrongly, or a generic term such as "ICB" is
+  recorded as one body's abbreviation.
+- A person is named with their organisation but not linked to it. When the text
+  pairs a person with an organisation, with or without a role, the split must
+  link them, for example with an `Employment`.
+
+These aren't errors, so approve the split as it is:
+
+- Spelling and typos copied from the source. Keep the source's spelling; linking
+  variants of a name is deduplication's job.
+- A close choice between organisation schemas, such as `Organization`, `Company`
+  or `PublicBody`.
+- An abbreviation expanded correctly.
+- A title kept in a name, such as "Dr" or "MP".
+
 Per entity, under `entities`, each extracted entity is one unit, relative to what
 the automatic decision produced: `checked`, `kept` unchanged, and `removed` and
 `added` by you. This answers how much of the extracted data was right, since a
