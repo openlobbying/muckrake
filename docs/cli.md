@@ -112,6 +112,9 @@ Options:
                           yet decided by a person (rerun to resume)  [x>=1]
   --rejected              With --sample, sample auto-rejected candidates instead of
                           auto-approved ones
+  --reviewer TEXT         Name recorded as the reviewer of each decision (default:
+                          MUCKRAKE_REVIEWER, then your login name). Name a model
+                          reviewer model:<name>
   --help                  Show this message and exit.
 ```
 

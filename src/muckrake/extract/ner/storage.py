@@ -183,7 +183,7 @@ def review_candidate(
     conn: Connection,
     candidate_id: int,
     status: str,
-    reviewer: str = "muckrake/ner-review",
+    reviewer: str,
     commit: bool = True,
 ) -> None:
     if status not in {"approved", "rejected", "pending"}:
@@ -241,6 +241,19 @@ def restore_review(
 
 
 AUTO_REVIEWER = "muckrake/auto"
+# A reviewer named "model:<name>" is a model, such as an LLM reviewing another's
+# output; any other reviewer except AUTO_REVIEWER is a person.
+MODEL_REVIEWER_PREFIX = "model:"
+REVIEW_KINDS = ("automatic", "model", "human")
+
+
+def review_kind(reviewer: str | None) -> str:
+    """How a decision was made: by ``--auto``, by a model, or by a person."""
+    if reviewer == AUTO_REVIEWER:
+        return "automatic"
+    if reviewer and reviewer.startswith(MODEL_REVIEWER_PREFIX):
+        return "model"
+    return "human"
 
 
 def is_noop_extraction(source_text: str, extraction: list[dict[str, Any]]) -> bool:
@@ -417,7 +430,8 @@ def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[st
         {"dataset_name": dataset_name},
     ).mappings()
     results: dict[str, dict[str, Any]] = {
-        pool: {"sampled": 0, **_decision_counts(), "by_reviewer": {}} for pool in SAMPLE_POOLS
+        pool: {"sampled": 0, **_decision_counts(), "by_reviewer": {}, "by_kind": {}}
+        for pool in SAMPLE_POOLS
     }
     for row in rows:
         pool = results[row["sampled_status"]]
@@ -425,7 +439,8 @@ def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[st
         if row["reviewer"] == AUTO_REVIEWER:
             continue
         reviewer = pool["by_reviewer"].setdefault(row["reviewer"] or "unknown", _decision_counts())
-        for counts in (pool, reviewer):
+        kind = pool["by_kind"].setdefault(review_kind(row["reviewer"]), _decision_counts())
+        for counts in (pool, reviewer, kind):
             _count_decision(counts, row)
     return results
 

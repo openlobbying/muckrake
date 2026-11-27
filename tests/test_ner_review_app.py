@@ -78,7 +78,7 @@ def _review(
     if pool is not None:
         draw_sample(conn, 100, pool=pool, dataset_name=dataset)
     rows = list_candidates(conn, dataset_name=dataset, status="approved")
-    session = ReviewSession(conn, rows, pool=pool, dataset_name=dataset)
+    session = ReviewSession(conn, rows, "tester", pool=pool, dataset_name=dataset)
 
     async def run() -> None:
         app = NERReviewApp(session)
@@ -312,7 +312,7 @@ def test_progress_line_splits_the_sample_by_reviewer() -> None:
     try:
         draw_sample(conn, 3, dataset_name=dataset)
         [first, *_] = list_candidates(conn, dataset_name=dataset, status="approved")
-        review_candidate(conn, first["id"], "rejected", reviewer="claude/ner-review")
+        review_candidate(conn, first["id"], "rejected", reviewer="model:claude")
     finally:
         conn.close()
 
@@ -323,7 +323,7 @@ def test_progress_line_splits_the_sample_by_reviewer() -> None:
         await pilot.pause()
         progress = app.session.progress()
         assert "2 of 3 decided" in progress
-        assert "claude/ner-review 0/1 (0%), muckrake/ner-review 1/1 (100%)" in progress
+        assert "model:claude 0/1 (0%), tester 1/1 (100%)" in progress
 
     _review(dataset, steps, pool="approved")
 

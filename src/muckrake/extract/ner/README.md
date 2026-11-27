@@ -223,6 +223,34 @@ answers how often an automatic decision was right as a whole.
   really composite. Split such a name with `e`, then approve it. Reject a name
   that is one entity, so the original entity is kept.
 
+#### Judging a split
+
+A split is right only if it has every entity the text names, no entity the text
+doesn't name, and the links between them. These are errors, so fix the split and
+approve it:
+
+- An entity the text names is missing.
+- An entity is made up: a role, title, description or event recorded as a person
+  or organisation, such as "Chief Constable", "former Prime Minister of …" or
+  "Breakfast Roundtable".
+- Two entities are merged into one, or one is split into two. That includes an
+  organisation recorded as another's alias.
+- An entity has the wrong kind of schema, such as a company recorded as a Person.
+- An abbreviation is expanded wrongly, or a generic term such as "ICB" is
+  recorded as one body's abbreviation.
+- A person is named with their organisation but not linked to it. When the text
+  pairs a person with an organisation, with or without a role, the split must
+  link them, for example with an `Employment`.
+
+These aren't errors, so approve the split as it is:
+
+- Spelling and typos copied from the source. Keep the source's spelling; linking
+  variants of a name is deduplication's job.
+- A close choice between organisation schemas, such as `Organization`, `Company`
+  or `PublicBody`.
+- An abbreviation expanded correctly.
+- A title kept in a name, such as "Dr" or "MP".
+
 Per entity, under `entities`, each extracted entity is one unit, relative to what
 the automatic decision produced: `checked`, `kept` unchanged, and `removed` and
 `added` by you. This answers how much of the extracted data was right, since a
@@ -247,6 +275,19 @@ totals: `sample_results` gives each pool a `by_reviewer` breakdown keyed by the
 prints a line per reviewer. A model checking a model's output isn't an
 independent check, so a sample reviewed partly by a person and partly by a model
 should be read reviewer by reviewer. Record each reviewer under their own name.
+
+`ner-review` records the reviewer it's given with `--reviewer` (or
+`MUCKRAKE_REVIEWER`), and otherwise your login name; it refuses `root`, as in a
+container, so name yourself there. Reviewer names say what kind of decision it
+was, and `review_kind` in `muckrake.extract.ner.storage` reads them:
+
+| Kind | Reviewer | Example |
+|---|---|---|
+| automatic | `muckrake/auto`, set by `--auto` | `muckrake/auto` |
+| model | `model:<name>`, for a model reviewing the extractions | `model:claude` |
+| human | anything else: the person's own name | `jane` |
+
+`sample_results` also gives each pool a `by_kind` breakdown with the same counts.
 
 `ner-export` and `ner-import` carry `sampled_at`, `sampled_status`, `edited_at`
 and `original_extraction_json`, so a sample and its edits are kept with the

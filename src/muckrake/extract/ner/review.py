@@ -247,7 +247,7 @@ def _print_candidate(row: RowMapping, index: int, total: int) -> None:
             click.echo(f"  {entity_idx}. {entity}")
 
 
-def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
+def _run_prompt_review(conn: Connection, rows: list[RowMapping], reviewer: str) -> dict[str, int]:
     approved = 0
     rejected = 0
     skipped = 0
@@ -287,10 +287,10 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, in
 
         status = ACTION_TO_STATUS[action]
         if status == "approved":
-            review_candidate(conn, row["id"], status=status)
+            review_candidate(conn, row["id"], status=status, reviewer=reviewer)
             approved += 1
         elif status == "rejected":
-            review_candidate(conn, row["id"], status=status)
+            review_candidate(conn, row["id"], status=status, reviewer=reviewer)
             rejected += 1
         else:
             skipped += 1
@@ -305,14 +305,19 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, in
 
 
 def _run_tui_review(
-    conn: Connection, rows: list[RowMapping], pool: str | None, dataset_name: str | None
+    conn: Connection,
+    rows: list[RowMapping],
+    reviewer: str,
+    pool: str | None,
+    dataset_name: str | None,
 ) -> dict[str, int]:
     from .review_app import run_review_app
 
-    return run_review_app(conn, rows, pool=pool, dataset_name=dataset_name)
+    return run_review_app(conn, rows, reviewer=reviewer, pool=pool, dataset_name=dataset_name)
 
 
 def run_ner_review(
+    reviewer: str,
     dataset_name: str | None = None,
     limit: int | None = None,
     sample: int | None = None,
@@ -345,9 +350,11 @@ def run_ner_review(
         return
 
     if sys.stdout.isatty() and sys.stdin.isatty():
-        summary = _run_tui_review(conn, rows, pool if sample is not None else None, dataset_name)
+        summary = _run_tui_review(
+            conn, rows, reviewer, pool if sample is not None else None, dataset_name
+        )
     else:
-        summary = _run_prompt_review(conn, rows)
+        summary = _run_prompt_review(conn, rows, reviewer)
 
     conn.close()
     click.echo(

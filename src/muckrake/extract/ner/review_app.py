@@ -86,11 +86,13 @@ class ReviewSession:
         self,
         conn: Connection,
         rows: list[RowMapping],
+        reviewer: str,
         pool: str | None = None,
         dataset_name: str | None = None,
     ):
         self.conn = conn
         self.rows = rows
+        self.reviewer = reviewer
         self.pool = pool
         self.dataset_name = dataset_name
         self.index = 0
@@ -166,7 +168,12 @@ class ReviewSession:
             )
         )
         if action in ("x", "n"):
-            review_candidate(self.conn, row["id"], "approved" if action == "x" else "rejected")
+            review_candidate(
+                self.conn,
+                row["id"],
+                "approved" if action == "x" else "rejected",
+                reviewer=self.reviewer,
+            )
         self._log(row, action)
         self.index += 1
 
@@ -725,9 +732,10 @@ class NERReviewApp(App[dict[str, int]]):
 def run_review_app(
     conn: Connection,
     rows: list[RowMapping],
+    reviewer: str,
     pool: str | None = None,
     dataset_name: str | None = None,
 ) -> dict[str, int]:
-    session = ReviewSession(conn, rows, pool=pool, dataset_name=dataset_name)
+    session = ReviewSession(conn, rows, reviewer, pool=pool, dataset_name=dataset_name)
     result = NERReviewApp(session).run()
     return result if result is not None else session.summary()

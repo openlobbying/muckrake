@@ -17,6 +17,11 @@ version can change behaviour.
   and, for a sample, its running counts, split by reviewer once more than one
   has decided. The prompt review used without a
   terminal still opens `$EDITOR` for `e`.
+- `ner-review` records who is reviewing: `--reviewer NAME`, or `MUCKRAKE_REVIEWER`, or the
+  login name (`root` is refused). It no longer records every person as `muckrake/ner-review`.
+  Reviewer names give the kind of decision: `muckrake/auto` is automatic, `model:<name>` is a
+  model, and any other name is a person. `review_kind()` reads them, and `sample_results()`
+  adds a `by_kind` breakdown. `review_candidate()` now needs a `reviewer`.
 
 ### Added
 
