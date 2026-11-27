@@ -198,11 +198,17 @@ class ReviewSession:
         ]
         if self.pool is not None:
             counts = sample_results(self.conn, dataset_name=self.dataset_name)[self.pool]
-            decided, right = counts["decided"], counts["approved_unedited"]
-            share = f" ({right / decided:.0%})" if decided else ""
+            reviewers = counts["by_reviewer"]
+            # Different reviewers, such as a person and a model, are shown apart.
+            shown = sorted(reviewers.items()) if len(reviewers) > 1 else [("", counts)]
+            figures = []
+            for name, by in shown:
+                decided, right = by["decided"], by["approved_unedited"]
+                share = f" ({right / decided:.0%})" if decided else ""
+                figures.append(f"{name + ' ' if name else ''}{right}/{decided}{share}")
             parts.append(
-                f"auto-{self.pool} sample: {decided} of {counts['sampled']} decided, "
-                f"approved unedited {right}/{decided}{share}"
+                f"auto-{self.pool} sample: {counts['decided']} of {counts['sampled']} decided, "
+                f"approved unedited {', '.join(figures)}"
             )
         if self.staged is not None:
             parts.append("unsaved edits (ctrl+s saves, x saves and approves)")

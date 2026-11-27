@@ -14,7 +14,8 @@ version can change behaviour.
   a form, `a` adds one, `d` deletes one and the references to it, `s` splits one
   into a Person, a body and an Employment (`Ctrl+T` moves the text after the
   cursor into the body's name), and `e` edits the JSON with checks as you type. `z` undoes the last decision, and a progress line shows your place
-  and, for a sample, its running counts. The prompt review used without a
+  and, for a sample, its running counts, split by reviewer once more than one
+  has decided. The prompt review used without a
   terminal still opens `$EDITOR` for `e`.
 
 ### Added

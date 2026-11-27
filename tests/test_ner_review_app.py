@@ -306,6 +306,28 @@ def test_progress_line_counts_the_sample() -> None:
     _review(dataset, steps, pool="approved")
 
 
+def test_progress_line_splits_the_sample_by_reviewer() -> None:
+    dataset = _auto_approved([EMPLOYMENT, EMPLOYMENT, EMPLOYMENT])
+    conn = get_connection()
+    try:
+        draw_sample(conn, 3, dataset_name=dataset)
+        [first, *_] = list_candidates(conn, dataset_name=dataset, status="approved")
+        review_candidate(conn, first["id"], "rejected", reviewer="claude/ner-review")
+    finally:
+        conn.close()
+
+    async def steps(app: NERReviewApp, pilot: Any) -> None:
+        # Only one reviewer has decided so far: one figure, as before.
+        assert "1 of 3 decided, approved unedited 0/1 (0%)" in app.session.progress()
+        await pilot.press("x")
+        await pilot.pause()
+        progress = app.session.progress()
+        assert "2 of 3 decided" in progress
+        assert "claude/ner-review 0/1 (0%), muckrake/ner-review 1/1 (100%)" in progress
+
+    _review(dataset, steps, pool="approved")
+
+
 WHOLE = [{"schema": "Person", "properties": {"name": ["Heather Sandy Lincolnshire"]}}]
 PERSON_WITH_FIELDS = [
     {

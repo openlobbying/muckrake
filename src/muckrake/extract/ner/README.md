@@ -258,8 +258,9 @@ In a terminal, `ner-review` opens a review screen. The source text stays at the
 top, with the extracted names highlighted, and the extracted entities are listed
 beneath it. A reference to another entity shows as that entity, for example
 `→ Person: Heather Sandy`. The top line shows your place in the queue, what you
-have decided this session and, for a sample, the sample's running counts. The
-footer lists every key.
+have decided this session and, for a sample, the sample's running counts, one
+figure per reviewer once more than one reviewer has decided. The footer lists
+every key.
 
 | Key | Does |
 |---|---|
