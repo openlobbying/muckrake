@@ -42,7 +42,7 @@ def _seed_candidate(dataset_name: str, first: str, second: str, *, approve: bool
         )
         if approve:
             candidate_id = list_candidates(conn, dataset_name=dataset_name)[0]["id"]
-            review_candidate(conn, candidate_id, "approved")
+            review_candidate(conn, candidate_id, "approved", reviewer="tester")
     finally:
         conn.close()
     return source_text

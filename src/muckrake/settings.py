@@ -62,6 +62,12 @@ ENV_VARS: list[EnvVar] = [
         "Explicit `.env` file to load.",
     ),
     EnvVar(
+        "MUCKRAKE_REVIEWER",
+        "your login name",
+        "Who `ner-review` records as the reviewer of each decision. Name a model reviewer "
+        "`model:<name>`, so its decisions are reported apart from people's.",
+    ),
+    EnvVar(
         "MUCKRAKE_HTTP_MIN_INTERVAL",
         "`0`",
         "Minimum seconds between HTTP requests to the same host (politeness rate limit).",

@@ -1,5 +1,6 @@
 import gzip
 import json
+from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -154,17 +155,24 @@ def get_candidate(conn: Connection, candidate_id: int) -> RowMapping | None:
 def update_candidate_extraction(
     conn: Connection, candidate_id: int, extraction: list[dict[str, Any]]
 ) -> None:
+    """Save a reviewer's edited extraction, and record when it was edited.
+
+    The first edit also keeps the extraction as it was in
+    ``original_extraction_json``; later edits never overwrite it.
+    """
+    now = datetime.now(UTC).isoformat()
     conn.execute(
         text(
             """
             UPDATE ner_candidates
-            SET extraction_json = :extraction_json, updated_at = :updated_at
+            SET original_extraction_json = COALESCE(original_extraction_json, extraction_json),
+                extraction_json = :extraction_json, edited_at = :now, updated_at = :now
             WHERE id = :candidate_id
             """
         ),
         {
             "extraction_json": json.dumps(extraction, sort_keys=True),
-            "updated_at": datetime.now(UTC).isoformat(),
+            "now": now,
             "candidate_id": candidate_id,
         },
     )
@@ -175,7 +183,7 @@ def review_candidate(
     conn: Connection,
     candidate_id: int,
     status: str,
-    reviewer: str = "muckrake/ner-review",
+    reviewer: str,
     commit: bool = True,
 ) -> None:
     if status not in {"approved", "rejected", "pending"}:
@@ -205,6 +213,19 @@ def review_candidate(
 
 
 AUTO_REVIEWER = "muckrake/auto"
+# A reviewer named "model:<name>" is a model, such as an LLM reviewing another's
+# output; any other reviewer except AUTO_REVIEWER is a person.
+MODEL_REVIEWER_PREFIX = "model:"
+REVIEW_KINDS = ("automatic", "model", "human")
+
+
+def review_kind(reviewer: str | None) -> str:
+    """How a decision was made: by ``--auto``, by a model, or by a person."""
+    if reviewer == AUTO_REVIEWER:
+        return "automatic"
+    if reviewer and reviewer.startswith(MODEL_REVIEWER_PREFIX):
+        return "model"
+    return "human"
 
 
 def is_noop_extraction(source_text: str, extraction: list[dict[str, Any]]) -> bool:
@@ -236,6 +257,201 @@ def auto_review(conn: Connection, dataset_name: str | None = None) -> tuple[int,
     return approved, rejected
 
 
+SAMPLE_POOLS = ("approved", "rejected")
+
+
+def draw_sample(
+    conn: Connection, target: int, pool: str = "approved", dataset_name: str | None = None
+) -> int:
+    """Bring one pool's review sample up to ``target`` candidates; returns how many were drawn.
+
+    The pool is the automatic decision being checked: ``approved`` measures how
+    many of ``AUTO_REVIEWER``'s splits are right, ``rejected`` how often it left
+    a composite name whole. Only enough random candidates to reach ``target`` are
+    drawn, from those decided by ``AUTO_REVIEWER`` and never sampled before, so
+    running it again with the same target draws nothing. Each drawn candidate
+    gets ``sampled_at`` and ``sampled_status`` (the pool), committed at once, so an
+    interrupted review keeps its sample.
+    """
+    if pool not in SAMPLE_POOLS:
+        raise ValueError(f"Invalid sample pool: {pool}")
+    scope = ""
+    params: dict[str, Any] = {"pool": pool, "reviewer": AUTO_REVIEWER}
+    if dataset_name is not None:
+        scope = " AND dataset = :dataset_name"
+        params["dataset_name"] = dataset_name
+    sampled = conn.execute(
+        text(f"SELECT COUNT(*) FROM ner_candidates WHERE sampled_status = :pool{scope}"),
+        params,
+    ).scalar_one()
+    params["size"] = max(0, target - sampled)
+    if params["size"] == 0:
+        return 0
+    ids = [
+        row[0]
+        for row in conn.execute(
+            text(
+                "SELECT id FROM ner_candidates WHERE status = :pool AND reviewer = :reviewer "
+                f"AND sampled_at IS NULL{scope} ORDER BY random() LIMIT :size"
+            ),
+            params,
+        )
+    ]
+    sampled_at = datetime.now(UTC).isoformat()
+    for candidate_id in ids:
+        conn.execute(
+            text(
+                "UPDATE ner_candidates SET sampled_at = :sampled_at, sampled_status = :pool "
+                "WHERE id = :candidate_id"
+            ),
+            {"sampled_at": sampled_at, "pool": pool, "candidate_id": candidate_id},
+        )
+    conn.commit()
+    return len(ids)
+
+
+def list_sample_awaiting_review(
+    conn: Connection, pool: str = "approved", dataset_name: str | None = None
+) -> list[RowMapping]:
+    """A pool's sampled candidates no person has decided yet (still ``AUTO_REVIEWER``'s)."""
+    clauses = ["sampled_status = :pool", "reviewer = :reviewer"]
+    params: dict[str, Any] = {"pool": pool, "reviewer": AUTO_REVIEWER}
+    if dataset_name is not None:
+        clauses.append("dataset = :dataset_name")
+        params["dataset_name"] = dataset_name
+    sql = f"SELECT * FROM ner_candidates WHERE {' AND '.join(clauses)} ORDER BY sampled_at, id"
+    return list(conn.execute(text(sql), params).mappings())
+
+
+def entity_forms(extraction: list[dict[str, Any]]) -> Counter[tuple[Any, ...]]:
+    """Each extracted entity as a comparable form: its schema and properties.
+
+    ``key`` and the order of entities and values are ignored. A ``$ref:<key>``
+    value is compared as the schema and first name of the entity it points to,
+    since keys are local to one extraction and a reviewer may rename them.
+    """
+    targets = {
+        entity.get("key"): (
+            entity.get("schema"),
+            (entity.get("properties", {}).get("name") or [""])[0],
+        )
+        for entity in extraction
+        if entity.get("key")
+    }
+
+    def value(raw: Any) -> Any:
+        if isinstance(raw, str) and raw.startswith("$ref:"):
+            return ("ref", *targets.get(raw[5:], ("?", "?")))
+        return raw
+
+    forms: Counter[tuple[Any, ...]] = Counter()
+    for entity in extraction:
+        props = entity.get("properties", {})
+        forms[
+            (
+                entity.get("schema"),
+                tuple(
+                    sorted((p, tuple(sorted(map(value, vs), key=str))) for p, vs in props.items())
+                ),
+            )
+        ] += 1
+    return forms
+
+
+def compare_extractions(
+    original: list[dict[str, Any]], final: list[dict[str, Any]]
+) -> tuple[int, int, int]:
+    """(kept, removed, added): original entities left unchanged, and the reviewer's changes."""
+    before, after = entity_forms(original), entity_forms(final)
+    kept = sum((before & after).values())
+    return kept, sum(before.values()) - kept, sum(after.values()) - kept
+
+
+def sample_results(conn: Connection, dataset_name: str | None = None) -> dict[str, dict[str, Any]]:
+    """Per pool: how the sampled candidates were decided, per split and per entity.
+
+    Per split: ``sampled``, ``decided`` by a person, ``approved_unedited`` and
+    ``approved_edited`` (edited after the candidate was sampled, then approved).
+    For the ``approved`` pool, approved_unedited / decided is the precision of the
+    automatic splits; for the ``rejected`` pool, approved_edited / decided is how
+    often a name left whole was really composite.
+
+    Per entity, under ``entities``, relative to what the automatic decision
+    produced: ``checked`` entities, ``kept`` unchanged, ``removed`` and ``added``
+    by the reviewer. An unedited approval keeps every entity; an edited one is
+    compared with the extraction before its first edit. A person's rejection
+    removes every entity of an auto-approved split, and keeps the single entity of
+    an auto-rejected one. Candidates edited before originals were kept are left
+    out of the entity counts and counted in ``edited_without_original``.
+
+    The pool's counts are totals over every person. ``by_reviewer`` repeats the
+    decision counts (everything but ``sampled``) for each reviewer name, so
+    decisions by different reviewers, such as a person and a model, can be told
+    apart.
+    """
+    clause = "AND dataset = :dataset_name" if dataset_name is not None else ""
+    rows = conn.execute(
+        text(
+            f"""
+            SELECT sampled_status, status, reviewer, sampled_at, edited_at,
+                   extraction_json, original_extraction_json
+            FROM ner_candidates
+            WHERE sampled_status IS NOT NULL {clause}
+            """
+        ),
+        {"dataset_name": dataset_name},
+    ).mappings()
+    results: dict[str, dict[str, Any]] = {
+        pool: {"sampled": 0, **_decision_counts(), "by_reviewer": {}, "by_kind": {}}
+        for pool in SAMPLE_POOLS
+    }
+    for row in rows:
+        pool = results[row["sampled_status"]]
+        pool["sampled"] += 1
+        if row["reviewer"] == AUTO_REVIEWER:
+            continue
+        reviewer = pool["by_reviewer"].setdefault(row["reviewer"] or "unknown", _decision_counts())
+        kind = pool["by_kind"].setdefault(review_kind(row["reviewer"]), _decision_counts())
+        for counts in (pool, reviewer, kind):
+            _count_decision(counts, row)
+    return results
+
+
+def _decision_counts() -> dict[str, Any]:
+    return {
+        "decided": 0,
+        "approved_unedited": 0,
+        "approved_edited": 0,
+        "edited_without_original": 0,
+        "entities": {"checked": 0, "kept": 0, "removed": 0, "added": 0},
+    }
+
+
+def _count_decision(counts: dict[str, Any], row: RowMapping) -> None:
+    """Add one sampled candidate a person decided to ``counts``."""
+    counts["decided"] += 1
+    edited = row["edited_at"] is not None and row["edited_at"] >= row["sampled_at"]
+    approved = row["status"] == "approved"
+    if approved:
+        counts["approved_edited" if edited else "approved_unedited"] += 1
+    if edited and row["original_extraction_json"] is None:
+        counts["edited_without_original"] += 1
+        return
+    final = json.loads(row["extraction_json"])
+    original = json.loads(row["original_extraction_json"]) if edited else final
+    entities = counts["entities"]
+    entities["checked"] += len(original)
+    if approved:
+        kept, removed, added = compare_extractions(original, final)
+    elif row["sampled_status"] == "approved":
+        kept, removed, added = 0, len(original), 0
+    else:
+        kept, removed, added = len(original), 0, 0
+    entities["kept"] += kept
+    entities["removed"] += removed
+    entities["added"] += added
+
+
 # Everything but the local row id, so an export can be imported into any database.
 EXPORT_COLUMNS = (
     "dataset",
@@ -249,6 +465,10 @@ EXPORT_COLUMNS = (
     "status",
     "reviewer",
     "reviewed_at",
+    "sampled_at",
+    "sampled_status",
+    "edited_at",
+    "original_extraction_json",
     "extraction_json",
     "created_at",
     "updated_at",
@@ -286,7 +506,8 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
     """Add candidates from an export; returns (imported, already_present).
 
     A candidate already in the database is left as it is, so local review
-    decisions are never overwritten.
+    decisions and samples are never overwritten. Exports made before
+    the sample and edit columns existed import with them unset.
     """
     exists = text(
         "SELECT 1 FROM ner_candidates WHERE " + " AND ".join(f"{c} = :{c}" for c in KEY_COLUMNS)
@@ -299,6 +520,10 @@ def import_candidates(conn: Connection, path: Path) -> tuple[int, int]:
     with _open(path, write=False) as fh:
         for line in fh:
             row = json.loads(line)
+            row.setdefault("sampled_at", None)
+            row.setdefault("sampled_status", None)
+            row.setdefault("edited_at", None)
+            row.setdefault("original_extraction_json", None)
             if conn.execute(exists, row).first() is not None:
                 present += 1
                 continue

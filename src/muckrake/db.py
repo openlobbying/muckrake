@@ -57,6 +57,14 @@ def get_ner_candidates_table(metadata: MetaData | None = None) -> Table:
         Column("status", String(), nullable=False),
         Column("reviewer", String(), nullable=True),
         Column("reviewed_at", String(), nullable=True),
+        # When the candidate was drawn into a review sample (ner-review --sample), and
+        # its automatic status then, which says which pool it was drawn from.
+        Column("sampled_at", String(), nullable=True),
+        Column("sampled_status", String(), nullable=True),
+        # When a reviewer last saved an edited extraction in the review UI, and the
+        # extraction as it was before the first edit.
+        Column("edited_at", String(), nullable=True),
+        Column("original_extraction_json", Text(), nullable=True),
         Column("extraction_json", Text(), nullable=False),
         Column("created_at", String(), nullable=False),
         Column("updated_at", String(), nullable=False),
@@ -255,6 +263,7 @@ def init_database(uri: str = SQL_URI) -> Engine:
             continue
         table.create(bind=engine, checkfirst=True)
     _ensure_artifact_sizes(engine, [dataset_run_artifacts, release_artifacts])
+    _ensure_ner_candidates_review_columns(engine)
     _ensure_ner_candidates_constraints(engine)
     _ensure_dataset_run_constraints(engine)
     _ensure_release_constraints(engine)
@@ -384,6 +393,21 @@ def create_search_view(
             f"CREATE INDEX {view}_names_text_trgm_idx ON {view} USING GIN (names_text gin_trgm_ops)"
         )
     )
+
+
+def _ensure_ner_candidates_review_columns(engine: Engine) -> None:
+    """Add the sample and edit columns to ``ner_candidates`` tables made before them."""
+    columns = {c["name"] for c in inspect(engine).get_columns("ner_candidates")}
+    added = {
+        "sampled_at": "VARCHAR",
+        "sampled_status": "VARCHAR",
+        "edited_at": "VARCHAR",
+        "original_extraction_json": "TEXT",
+    }
+    for name, sql_type in added.items():
+        if name not in columns:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE ner_candidates ADD COLUMN {name} {sql_type}"))
 
 
 def _ensure_ner_candidates_constraints(engine: Engine) -> None:

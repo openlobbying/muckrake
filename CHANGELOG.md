@@ -6,6 +6,37 @@ version can change behaviour.
 
 ## [Unreleased]
 
+- `ner-review` records who is reviewing: `--reviewer NAME`, or `MUCKRAKE_REVIEWER`, or the
+  login name (`root` is refused). It no longer records every person as `muckrake/ner-review`.
+  Reviewer names give the kind of decision: `muckrake/auto` is automatic, `model:<name>` is a
+  model, and any other name is a person. `review_kind()` reads them, and `sample_results()`
+  adds a `by_kind` breakdown. `review_candidate()` now needs a `reviewer`.
+
+### Added
+
+- `ner-review --sample N` reviews a sample of N random candidates that `--auto`
+  approved, so the precision of its splits can be measured. N is the sample's
+  size: only enough candidates to reach it are drawn, so running the same
+  command again resumes the review. With `--rejected` it samples the candidates `--auto` rejected
+  instead, to measure how often a composite name was left whole. After the
+  review it prints the pool's counts; `sample_results` returns them for both
+  pools, with approvals split into unedited and edited, so a corrected split
+  isn't counted as right. `ner_candidates` gains nullable `sampled_at` and
+  `sampled_status` columns.
+- The review UI records when a reviewer saves an edited extraction, in a new
+  nullable `ner_candidates.edited_at` column, and keeps the extraction from
+  before the first edit in `original_extraction_json`.
+- `sample_results` also breaks each pool's counts down by reviewer, under
+  `by_reviewer`, so decisions by a person and by a model are reported apart; the
+  pool's own counts stay the totals. The command prints a line per reviewer.
+- `sample_results` also counts per entity (checked, kept, removed, added),
+  comparing an edited extraction with its original, so the accuracy of the
+  extracted entities can be measured as well as that of whole splits.
+  Candidates edited before originals were kept count per split only, as
+  `edited_without_original`.
+- `init_database` adds the four new columns to existing tables, and
+  `ner-export` / `ner-import` carry them (older exports import with them unset).
+
 ## [0.5.1] - 2026-11-25
 
 A patch release: a release over 2 GiB can be built.

@@ -18,11 +18,14 @@ from textual.widgets import Footer, Static
 
 from .storage import (
     auto_review,
+    draw_sample,
     get_candidate,
     get_connection,
     init_db,
     list_candidates,
+    list_sample_awaiting_review,
     review_candidate,
+    sample_results,
     update_candidate_extraction,
 )
 
@@ -286,9 +289,10 @@ def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType
 
 
 class NERReviewState:
-    def __init__(self, conn: Connection, rows: list[RowMapping]):
+    def __init__(self, conn: Connection, rows: list[RowMapping], reviewer: str):
         self.conn = conn
         self.rows = rows
+        self.reviewer = reviewer
         self.index = 0
         self.approved = 0
         self.rejected = 0
@@ -316,10 +320,10 @@ class NERReviewState:
 
         status = ACTION_TO_STATUS.get(action)
         if status == "approved":
-            review_candidate(self.conn, row["id"], status=status)
+            review_candidate(self.conn, row["id"], status=status, reviewer=self.reviewer)
             self.approved += 1
         elif status == "rejected":
-            review_candidate(self.conn, row["id"], status=status)
+            review_candidate(self.conn, row["id"], status=status, reviewer=self.reviewer)
             self.rejected += 1
         else:
             self.skipped += 1
@@ -605,7 +609,7 @@ def _print_candidate(row: RowMapping, index: int, total: int) -> None:
             click.echo(f"  {entity_idx}. {entity}")
 
 
-def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
+def _run_prompt_review(conn: Connection, rows: list[RowMapping], reviewer: str) -> dict[str, int]:
     approved = 0
     rejected = 0
     skipped = 0
@@ -645,10 +649,10 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, in
 
         status = ACTION_TO_STATUS[action]
         if status == "approved":
-            review_candidate(conn, row["id"], status=status)
+            review_candidate(conn, row["id"], status=status, reviewer=reviewer)
             approved += 1
         elif status == "rejected":
-            review_candidate(conn, row["id"], status=status)
+            review_candidate(conn, row["id"], status=status, reviewer=reviewer)
             rejected += 1
         else:
             skipped += 1
@@ -662,8 +666,8 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping]) -> dict[str, in
     }
 
 
-def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
-    state = NERReviewState(conn, rows)
+def _run_tui_review(conn: Connection, rows: list[RowMapping], reviewer: str) -> dict[str, int]:
+    state = NERReviewState(conn, rows, reviewer)
     app = NERReviewApp(state)
     result = app.run()
     if result is None:
@@ -671,20 +675,43 @@ def _run_tui_review(conn: Connection, rows: list[RowMapping]) -> dict[str, int]:
     return result
 
 
-def run_ner_review(dataset_name: str | None = None, limit: int | None = None) -> None:
+def run_ner_review(
+    reviewer: str,
+    dataset_name: str | None = None,
+    limit: int | None = None,
+    sample: int | None = None,
+    pool: str = "approved",
+) -> None:
+    """Review pending candidates, or, with ``sample``, a sample of automatic decisions.
+
+    ``sample`` is the size of the sample for ``pool`` (``approved`` or ``rejected``
+    by ``muckrake/auto``): only enough candidates to reach it are drawn, then every
+    candidate sampled from that pool that no person has decided yet is reviewed.
+    Running the same command again resumes the sample.
+    """
     conn = get_connection()
     init_db(conn)
-    rows = list_candidates(conn, dataset_name=dataset_name, status="pending", limit=limit)
+    if sample is None:
+        rows = list_candidates(conn, dataset_name=dataset_name, status="pending", limit=limit)
+        empty = "No pending NER candidates to review."
+    else:
+        drawn = draw_sample(conn, sample, pool=pool, dataset_name=dataset_name)
+        rows = list_sample_awaiting_review(conn, pool=pool, dataset_name=dataset_name)
+        click.echo(
+            f"Auto-{pool} sample of {sample}: drew {drawn} new candidates; "
+            f"{len(rows)} sampled candidates to review."
+        )
+        empty = f"No sampled auto-{pool} NER candidates to review."
 
     if not rows:
-        click.echo("No pending NER candidates to review.")
+        click.echo(empty)
         conn.close()
         return
 
     if sys.stdout.isatty() and sys.stdin.isatty():
-        summary = _run_tui_review(conn, rows)
+        summary = _run_tui_review(conn, rows, reviewer)
     else:
-        summary = _run_prompt_review(conn, rows)
+        summary = _run_prompt_review(conn, rows, reviewer)
 
     conn.close()
     click.echo(
@@ -694,6 +721,29 @@ def run_ner_review(dataset_name: str | None = None, limit: int | None = None) ->
         f"skipped={summary['skipped']} "
         f"remaining={summary['remaining']}"
     )
+    if sample is not None:
+        conn = get_connection()
+        counts = sample_results(conn, dataset_name=dataset_name)[pool]
+        conn.close()
+        click.echo(
+            f"Auto-{pool} sample so far: sampled={counts['sampled']} "
+            f"decided={counts['decided']} approved_unedited={counts['approved_unedited']} "
+            f"approved_edited={counts['approved_edited']}"
+        )
+        entities = counts["entities"]
+        click.echo(
+            f"Entities: checked={entities['checked']} kept={entities['kept']} "
+            f"removed={entities['removed']} added={entities['added']}"
+            f" (edited without an original: {counts['edited_without_original']})"
+        )
+        for reviewer, by in sorted(counts["by_reviewer"].items()):
+            e = by["entities"]
+            click.echo(
+                f"  {reviewer}: decided={by['decided']} "
+                f"approved_unedited={by['approved_unedited']} "
+                f"approved_edited={by['approved_edited']}; entities checked={e['checked']} "
+                f"kept={e['kept']} removed={e['removed']} added={e['added']}"
+            )
 
 
 def run_ner_auto_review(dataset_name: str | None = None) -> None:
