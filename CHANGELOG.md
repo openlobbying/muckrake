@@ -48,6 +48,16 @@ version can change behaviour.
 - `init_database` adds the four new columns to existing tables, and
   `ner-export` / `ner-import` carry them (older exports import with them unset).
 
+### Fixed
+
+- Applying an approved NER split no longer merges relationships from different
+  splits. A fragment without a name, such as an `Employment`, was given an ID
+  hashed from its properties before its `$ref:` values were resolved, so every
+  split's "`$ref:p1` employed by `$ref:o1`" with the same role shared one ID.
+  The ID is now hashed after the refs are resolved. Nameless fragments get new
+  IDs at the next `load`
+  ([NER: relationship fragments from different splits share an ID, merging unrelated relationships](https://github.com/openlobbying/muckrake/issues/73)).
+
 ## [0.5.1] - 2026-11-25
 
 A patch release: a release over 2 GiB can be built.

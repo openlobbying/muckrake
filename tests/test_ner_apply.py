@@ -82,3 +82,84 @@ def test_pending_candidate_is_not_applied_at_load(make_dataset):
 
     # Only approved candidates are applied; the original composite name survives.
     assert _names(name) == {composite}
+
+
+def _seed_split(dataset_name: str, source_text: str, extraction: list[dict]) -> None:
+    """Insert an approved NER candidate that splits source_text into extraction."""
+    conn = get_connection()
+    try:
+        upsert_candidate(
+            conn,
+            Candidate(
+                dataset=dataset_name,
+                entity_id="seed",
+                schema="LegalEntity",
+                property_name="name",
+                source_text=source_text,
+                fingerprint=text_fingerprint(source_text),
+                extractor="test",
+                extractor_version="1",
+                extraction=extraction,
+            ),
+        )
+        row = next(r for r in list_candidates(conn) if r["source_text"] == source_text)
+        review_candidate(conn, row["id"], "approved", reviewer="tester")
+    finally:
+        conn.close()
+
+
+def _employment_split(person: str, employer: str, role: str) -> list[dict]:
+    # Every split uses the same local keys, as the LLM extractor does.
+    return [
+        {"key": "p1", "schema": "Person", "properties": {"name": [person]}},
+        {"key": "o1", "schema": "Organization", "properties": {"name": [employer]}},
+        {
+            "schema": "Employment",
+            "properties": {"employee": ["$ref:p1"], "employer": ["$ref:o1"], "role": [role]},
+        },
+    ]
+
+
+def _employments(dataset_name: str) -> list:
+    store = get_sql_store([dataset_name])
+    return [e for e in store.view(store.dataset).entities() if e.schema.name == "Employment"]
+
+
+def test_splits_with_the_same_keys_give_separate_relationships(make_dataset):
+    first = "Erin Kestrel, Senior Lecturer in History, Northgate University"
+    second = "Femi Larch, Senior Lecturer in History, Northgate University"
+    name, _ = make_dataset(
+        [
+            {"id": "src-first", "schema": "LegalEntity", "properties": {"name": [first]}},
+            {"id": "src-second", "schema": "LegalEntity", "properties": {"name": [second]}},
+        ]
+    )
+    for text, person in ((first, "Erin Kestrel"), (second, "Femi Larch")):
+        _seed_split(
+            name,
+            text,
+            _employment_split(person, "Northgate University", "Senior Lecturer in History"),
+        )
+
+    run_load(name)
+
+    employments = _employments(name)
+    assert len(employments) == 2
+    assert all(len(e.get("employee")) == 1 for e in employments)
+
+
+def test_the_same_relationship_from_two_entities_stays_one(make_dataset):
+    text = "Gina Moss, Director, Harbour Trust"
+    name, _ = make_dataset(
+        [
+            {"id": "src-a", "schema": "LegalEntity", "properties": {"name": [text]}},
+            {"id": "src-b", "schema": "LegalEntity", "properties": {"name": [text]}},
+        ]
+    )
+    _seed_split(name, text, _employment_split("Gina Moss", "Harbour Trust", "Director"))
+
+    run_load(name)
+
+    employments = _employments(name)
+    assert len(employments) == 1
+    assert len(employments[0].get("employee")) == 1

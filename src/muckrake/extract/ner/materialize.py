@@ -91,6 +91,23 @@ def load_approved_candidates() -> dict[tuple[str, str], dict]:
     return out
 
 
+def _resolve_refs(props: dict[str, list[str]], key_to_id: dict[str, str]) -> dict[str, list[str]]:
+    """Replace "$ref:<key>" values with the referenced fragment's ID; drop refs to unknown keys."""
+    resolved: dict[str, list[str]] = {}
+    for prop_name, values in props.items():
+        out_values = []
+        for value in values:
+            if value.startswith("$ref:"):
+                ref_id = key_to_id.get(value[5:])
+                if ref_id is not None:
+                    out_values.append(ref_id)
+            else:
+                out_values.append(value)
+        if out_values:
+            resolved[prop_name] = out_values
+    return resolved
+
+
 def build_replacement_plan(
     pack_path: Path, candidates: dict[tuple[str, str], dict]
 ) -> dict[str, list[tuple[str, str, dict[str, list[str]]]]]:
@@ -109,8 +126,7 @@ def build_replacement_plan(
             if not isinstance(entities, list) or not entities:
                 continue
 
-            prelim: list[tuple[str | None, str, str, dict[str, list[str]]]] = []
-            key_to_id: dict[str, str] = {}
+            prelim: list[tuple[str | None, str, dict[str, list[str]]]] = []
             for fragment in entities:
                 schema = fragment.get("schema")
                 props = fragment.get("properties")
@@ -156,38 +172,35 @@ def build_replacement_plan(
                     if out_values:
                         clean_props[prop_name] = out_values
 
-                prefix = stmt.entity_id.rsplit("-", 1)[0] if "-" in stmt.entity_id else "ner"
+                prelim.append((local_key, schema, clean_props))
+
+            prefix = stmt.entity_id.rsplit("-", 1)[0] if "-" in stmt.entity_id else "ner"
+            # Named fragments are hashed on their name, so the same name gets the
+            # same ID wherever it's split out.
+            ids: dict[int, str] = {}
+            key_to_id: dict[str, str] = {}
+            for index, (local_key, _, clean_props) in enumerate(prelim):
                 names = clean_props.get("name")
                 if names:
-                    new_id = make_hashed_id(prefix, names[0])
-                else:
-                    stable_props = json.dumps(clean_props, sort_keys=True)
-                    new_id = make_hashed_id(prefix, schema, stable_props)
-
-                if local_key:
-                    key_to_id[local_key] = new_id
-
-                prelim.append((local_key, new_id, schema, clean_props))
+                    ids[index] = make_hashed_id(prefix, names[0])
+                    if local_key:
+                        key_to_id[local_key] = ids[index]
+            # Nameless fragments (relationships such as Employment) are hashed on
+            # their properties with refs resolved, so "$ref:p1 employed by $ref:o1"
+            # from two splits about different people gets two IDs.
+            for index, (local_key, schema, clean_props) in enumerate(prelim):
+                if index not in ids:
+                    resolved = _resolve_refs(clean_props, key_to_id)
+                    new_id = make_hashed_id(prefix, schema, json.dumps(resolved, sort_keys=True))
+                    ids[index] = new_id
+                    if local_key:
+                        key_to_id[local_key] = new_id
 
             fragments: list[tuple[str, str, dict[str, list[str]]]] = []
-            for _, new_id, schema, clean_props in prelim:
-                resolved_props: dict[str, list[str]] = {}
-                for prop_name, values in clean_props.items():
-                    out_values = []
-                    for value in values:
-                        if value.startswith("$ref:"):
-                            ref_key = value[5:]
-                            ref_id = key_to_id.get(ref_key)
-                            if ref_id is None:
-                                continue
-                            out_values.append(ref_id)
-                        else:
-                            out_values.append(value)
-                    if out_values:
-                        resolved_props[prop_name] = out_values
-
+            for index, (_, schema, clean_props) in enumerate(prelim):
+                resolved_props = _resolve_refs(clean_props, key_to_id)
                 if resolved_props:
-                    fragments.append((new_id, schema, resolved_props))
+                    fragments.append((ids[index], schema, resolved_props))
 
             if fragments:
                 replacements[stmt.entity_id] = fragments
