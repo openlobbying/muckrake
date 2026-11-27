@@ -3,19 +3,13 @@ import logging
 import re
 import sys
 import textwrap
-from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import Any
 
 import click
-from rich.console import Group, RenderableType
-from rich.table import Table
 from rich.text import Text
 from sqlalchemy.engine import Connection, RowMapping
-from textual.app import App, ComposeResult
-from textual.containers import Horizontal, VerticalScroll
-from textual.widgets import Footer, Static
 
+from .editing import validate_extraction
 from .storage import (
     auto_review,
     draw_sample,
@@ -38,14 +32,6 @@ ACTION_TO_STATUS = {
     "u": None,
     "q": None,
 }
-
-
-@dataclass
-class ReviewEvent:
-    candidate_id: int
-    action: str
-    schema: str
-    when: str
 
 
 def _collect_highlight_terms(entity: dict[str, Any]) -> list[str]:
@@ -168,34 +154,6 @@ def _parse_entities(row: RowMapping) -> list[dict[str, Any]]:
     return entities
 
 
-def _validate_entities_payload(payload: Any) -> None:
-    if not isinstance(payload, list):
-        raise ValueError("Extraction must be a JSON array")
-
-    for index, entity in enumerate(payload, start=1):
-        if not isinstance(entity, dict):
-            raise ValueError(f"Entity #{index} must be an object")
-
-        schema = entity.get("schema")
-        if not isinstance(schema, str) or not schema.strip():
-            raise ValueError(f"Entity #{index} is missing a string 'schema'")
-
-        props = entity.get("properties")
-        if not isinstance(props, dict):
-            raise ValueError(f"Entity #{index} is missing an object 'properties'")
-
-        for prop_name, values in props.items():
-            if not isinstance(prop_name, str):
-                raise ValueError(f"Entity #{index} has non-string property name")
-            if not isinstance(values, list):
-                raise ValueError(f"Entity #{index} property '{prop_name}' must be an array")
-            for value in values:
-                if not isinstance(value, str):
-                    raise ValueError(
-                        f"Entity #{index} property '{prop_name}' values must be strings"
-                    )
-
-
 def _edit_entities_in_editor(entities: list[Any]) -> list[dict[str, Any]] | None:
     initial = json.dumps(entities, indent=2, sort_keys=True) + "\n"
     edited = click.edit(initial, extension=".json")
@@ -203,328 +161,8 @@ def _edit_entities_in_editor(entities: list[Any]) -> list[dict[str, Any]] | None
         return None
 
     payload = json.loads(edited)
-    _validate_entities_payload(payload)
+    validate_extraction(payload)
     return payload
-
-
-def _render_candidate(row: RowMapping, index: int, total: int) -> RenderableType:
-    entities = _parse_entities(row)
-    terms: list[str] = []
-    for entity in entities:
-        if isinstance(entity, dict):
-            terms.extend(_collect_highlight_terms(entity))
-
-    header = Text.assemble(
-        (f"Candidate #{row['id']}", "bold white"),
-        (f"   [{index}/{total}]", "bright_black"),
-    )
-
-    meta = Table.grid(expand=True)
-    meta.add_column(style="bright_black", width=12)
-    meta.add_column(style="white")
-    meta.add_row("dataset", str(row["dataset"]))
-    meta.add_row("entity", str(row["entity_id"]))
-    meta.add_row("field", str(row["property_name"]))
-
-    source = _highlight_text(str(row["source_text"]), terms)
-
-    entities_table = Table(expand=True, box=None)
-    entities_table.add_column("#", style="bright_black", width=3)
-    entities_table.add_column("Schema", style="green", width=14)
-    entities_table.add_column("Name", style="bold")
-    entities_table.add_column("Alias", style="cyan")
-    entities_table.add_column("Abbr", style="magenta", width=14)
-    entities_table.add_column("Refs", style="yellow", width=14)
-    entities_table.add_column("Other", style="white")
-
-    if not entities:
-        entities_table.add_row("-", "-", "(none)", "-", "-", "-", "-")
-    else:
-        for entity_idx, entity in enumerate(entities, start=1):
-            if not isinstance(entity, dict):
-                entities_table.add_row(str(entity_idx), "invalid", "-", "-", "-", "-", str(entity))
-                continue
-
-            props = entity.get("properties", {})
-            if not isinstance(props, dict):
-                props = {}
-
-            aliases = [v for v in props.get("alias", []) if isinstance(v, str)]
-            abbreviations = [v for v in props.get("abbreviation", []) if isinstance(v, str)]
-
-            refs: list[str] = []
-            other_parts: list[str] = []
-            for prop_name in sorted(props.keys()):
-                if prop_name in {"name", "alias", "abbreviation"}:
-                    continue
-                values = [v for v in props.get(prop_name, []) if isinstance(v, str)]
-                if not values:
-                    continue
-                prop_refs, prop_plain = _split_refs(values)
-                refs.extend(prop_refs)
-                if prop_plain:
-                    other_parts.append(f"{prop_name}={_join_values(prop_plain, max_items=2)}")
-
-            entities_table.add_row(
-                str(entity_idx),
-                str(entity.get("schema", "Unknown")),
-                _entity_name(entity),
-                _join_values(aliases),
-                _join_values(abbreviations),
-                _join_values(refs),
-                _join_values(other_parts, max_items=3),
-            )
-
-    return Group(
-        header,
-        "",
-        meta,
-        "",
-        Text("Source text", style="bold bright_black"),
-        source,
-        "",
-        Text(f"Extracted entities ({len(entities)})", style="bold bright_black"),
-        entities_table,
-    )
-
-
-class NERReviewState:
-    def __init__(self, conn: Connection, rows: list[RowMapping], reviewer: str):
-        self.conn = conn
-        self.rows = rows
-        self.reviewer = reviewer
-        self.index = 0
-        self.approved = 0
-        self.rejected = 0
-        self.skipped = 0
-        self.events: list[ReviewEvent] = []
-
-    @property
-    def total(self) -> int:
-        return len(self.rows)
-
-    @property
-    def current(self) -> RowMapping | None:
-        if self.index >= self.total:
-            return None
-        return self.rows[self.index]
-
-    @property
-    def done(self) -> bool:
-        return self.current is None
-
-    def decide(self, action: str) -> None:
-        row = self.current
-        if row is None:
-            return
-
-        status = ACTION_TO_STATUS.get(action)
-        if status == "approved":
-            review_candidate(self.conn, row["id"], status=status, reviewer=self.reviewer)
-            self.approved += 1
-        elif status == "rejected":
-            review_candidate(self.conn, row["id"], status=status, reviewer=self.reviewer)
-            self.rejected += 1
-        else:
-            self.skipped += 1
-
-        self.events.append(
-            ReviewEvent(
-                candidate_id=row["id"],
-                action=action,
-                schema=str(row["schema"]),
-                when=datetime.now(UTC).strftime("%H:%M:%S"),
-            )
-        )
-        self.index += 1
-
-    def summary(self) -> dict[str, int]:
-        return {
-            "approved": self.approved,
-            "rejected": self.rejected,
-            "skipped": self.skipped,
-            "remaining": max(0, self.total - self.index),
-        }
-
-    def edit_current(self, extraction: list[dict[str, Any]]) -> None:
-        row = self.current
-        if row is None:
-            return
-
-        update_candidate_extraction(self.conn, row["id"], extraction)
-        refreshed = get_candidate(self.conn, row["id"])
-        if refreshed is not None:
-            self.rows[self.index] = refreshed
-
-        self.events.append(
-            ReviewEvent(
-                candidate_id=row["id"],
-                action="e",
-                schema=str(row["schema"]),
-                when=datetime.now(UTC).strftime("%H:%M:%S"),
-            )
-        )
-
-
-class ReviewWidget(Static):
-    def on_mount(self) -> None:
-        self.reload()
-
-    def reload(self) -> None:
-        app = self.app
-        assert isinstance(app, NERReviewApp)
-        if app.state.done:
-            self.update(Text("No pending candidates.", justify="center"))
-            return
-        row = app.state.current
-        assert row is not None
-        self.update(_render_candidate(row, app.state.index + 1, app.state.total))
-
-
-class HistoryWidget(Static):
-    is_visible = False
-
-    def on_mount(self) -> None:
-        self.border_title = "History"
-        self._apply_visibility()
-        self.reload()
-
-    def toggle_visible(self) -> None:
-        self.is_visible = not self.is_visible
-        self._apply_visibility()
-
-    def _apply_visibility(self) -> None:
-        self.styles.display = "block" if self.is_visible else "none"
-
-    def reload(self) -> None:
-        app = self.app
-        assert isinstance(app, NERReviewApp)
-
-        table = Table(expand=True, box=None)
-        table.add_column("When", style="bright_black", width=9)
-        table.add_column("ID", style="white", width=7)
-        table.add_column("Action", width=8)
-        table.add_column("Schema", style="bright_black")
-
-        action_style = {"x": "green", "n": "red", "u": "yellow", "e": "cyan"}
-        action_label = {"x": "approve", "n": "reject", "u": "skip", "e": "edit"}
-
-        for event in app.state.events[-25:]:
-            table.add_row(
-                event.when,
-                str(event.candidate_id),
-                Text(
-                    action_label.get(event.action, event.action),
-                    style=action_style.get(event.action, "white"),
-                ),
-                event.schema,
-            )
-
-        if not app.state.events:
-            table.add_row("-", "-", "-", "No actions yet")
-        self.update(table)
-
-
-class NERReviewApp(App[dict[str, int]]):
-    CSS = """
-    Screen {
-        layout: vertical;
-    }
-
-    #main {
-        layout: horizontal;
-        height: 1fr;
-    }
-
-    VerticalScroll {
-        width: 1fr;
-        border: solid white;
-        padding: 1;
-    }
-
-    ReviewWidget {
-        width: 1fr;
-        height: auto;
-    }
-
-    HistoryWidget {
-        width: 52;
-        border: solid white;
-        padding: 1;
-    }
-    """
-
-    BINDINGS = [
-        ("x", "approve", "Approve"),
-        ("n", "reject", "Reject"),
-        ("e", "edit", "Edit JSON"),
-        ("u", "skip", "Skip"),
-        ("h", "history", "Toggle History"),
-        ("q", "quit_review", "Quit"),
-    ]
-
-    def __init__(self, state: NERReviewState):
-        super().__init__()
-        self.state = state
-
-    def compose(self) -> ComposeResult:
-        self.title = "NER Review"
-        yield Horizontal(
-            VerticalScroll(ReviewWidget(), id="review"),
-            HistoryWidget(),
-            id="main",
-        )
-        yield Footer()
-
-    def _refresh(self) -> None:
-        review = self.query_one(ReviewWidget)
-        review.reload()
-        self.query_one("#review", VerticalScroll).scroll_home(animate=False)
-        history = self.query_one(HistoryWidget)
-        history.reload()
-        history.refresh(layout=True)
-
-    def _advance(self, action: str) -> None:
-        self.state.decide(action)
-        if self.state.done:
-            self.exit(self.state.summary())
-            return
-        self._refresh()
-
-    async def action_approve(self) -> None:
-        self._advance("x")
-
-    async def action_reject(self) -> None:
-        self._advance("n")
-
-    async def action_skip(self) -> None:
-        self._advance("u")
-
-    async def action_edit(self) -> None:
-        row = self.state.current
-        if row is None:
-            return
-
-        with self.suspend():
-            try:
-                entities = _parse_entities(row)
-                edited = _edit_entities_in_editor(entities)
-            except Exception as exc:
-                click.echo(click.style(f"Edit failed: {exc}", fg="red"))
-                return
-
-        if edited is None:
-            return
-        self.state.edit_current(edited)
-        self._refresh()
-
-    async def action_history(self) -> None:
-        history = self.query_one(HistoryWidget)
-        history.toggle_visible()
-        self._refresh()
-
-    async def action_quit_review(self) -> None:
-        self.exit(self.state.summary())
 
 
 def _style_label(label: str) -> str:
@@ -666,13 +304,16 @@ def _run_prompt_review(conn: Connection, rows: list[RowMapping], reviewer: str) 
     }
 
 
-def _run_tui_review(conn: Connection, rows: list[RowMapping], reviewer: str) -> dict[str, int]:
-    state = NERReviewState(conn, rows, reviewer)
-    app = NERReviewApp(state)
-    result = app.run()
-    if result is None:
-        return state.summary()
-    return result
+def _run_tui_review(
+    conn: Connection,
+    rows: list[RowMapping],
+    reviewer: str,
+    pool: str | None,
+    dataset_name: str | None,
+) -> dict[str, int]:
+    from .review_app import run_review_app
+
+    return run_review_app(conn, rows, reviewer=reviewer, pool=pool, dataset_name=dataset_name)
 
 
 def run_ner_review(
@@ -709,7 +350,9 @@ def run_ner_review(
         return
 
     if sys.stdout.isatty() and sys.stdin.isatty():
-        summary = _run_tui_review(conn, rows, reviewer)
+        summary = _run_tui_review(
+            conn, rows, reviewer, pool if sample is not None else None, dataset_name
+        )
     else:
         summary = _run_prompt_review(conn, rows, reviewer)
 
