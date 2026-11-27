@@ -42,7 +42,7 @@ def _seed_candidate(dataset_name: str, first: str, second: str, *, approve: bool
         )
         if approve:
             candidate_id = list_candidates(conn, dataset_name=dataset_name)[0]["id"]
-            review_candidate(conn, candidate_id, "approved")
+            review_candidate(conn, candidate_id, "approved", reviewer="tester")
     finally:
         conn.close()
     return source_text
@@ -103,7 +103,7 @@ def _seed_split(dataset_name: str, source_text: str, extraction: list[dict]) -> 
             ),
         )
         row = next(r for r in list_candidates(conn) if r["source_text"] == source_text)
-        review_candidate(conn, row["id"], "approved")
+        review_candidate(conn, row["id"], "approved", reviewer="tester")
     finally:
         conn.close()
 

@@ -104,10 +104,18 @@ Usage: muckrake ner-review [OPTIONS] [DATASET_NAME]
   Review pending NER extraction candidates.
 
 Options:
-  --limit INTEGER  Max pending candidates
-  --auto           Approve every pending split without review; reject unsplit
-                   extractions
-  --help           Show this message and exit.
+  --limit INTEGER         Max pending candidates
+  --auto                  Approve every pending split without review; reject unsplit
+                          extractions
+  --sample INTEGER RANGE  Review a sample of N random auto-approved candidates: draw
+                          only enough to bring the sample up to N, then review those not
+                          yet decided by a person (rerun to resume)  [x>=1]
+  --rejected              With --sample, sample auto-rejected candidates instead of
+                          auto-approved ones
+  --reviewer TEXT         Name recorded as the reviewer of each decision (default:
+                          MUCKRAKE_REVIEWER, then your login name). Name a model
+                          reviewer model:<name>
+  --help                  Show this message and exit.
 ```
 
 ## `muckrake ner-export`

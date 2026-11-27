@@ -1,3 +1,4 @@
+import getpass
 import json
 import logging
 import sys
@@ -26,7 +27,7 @@ from muckrake.entity_write import build_entity_spec
 from muckrake.entity_write import update_entity as run_update_entity
 from muckrake.extract.ner import run_ner_auto_review, run_ner_extract, run_ner_review
 from muckrake.extract.ner.engines import list_extractors
-from muckrake.extract.ner.storage import export_candidates, import_candidates
+from muckrake.extract.ner.storage import AUTO_REVIEWER, export_candidates, import_candidates
 from muckrake.extract.ner.storage import get_connection as get_ner_connection
 from muckrake.load import run_load
 from muckrake.logging import configure_logging
@@ -495,13 +496,56 @@ def ner_extract(dataset_name, limit, entity_id, extractor_name, workers):
     default=False,
     help="Approve every pending split without review; reject unsplit extractions",
 )
-def ner_review(dataset_name, limit, auto):
+@click.option(
+    "--sample",
+    "sample",
+    type=click.IntRange(min=1),
+    default=None,
+    help=(
+        "Review a sample of N random auto-approved candidates: draw only enough to bring "
+        "the sample up to N, then review those not yet decided by a person (rerun to resume)"
+    ),
+)
+@click.option(
+    "--rejected",
+    is_flag=True,
+    default=False,
+    help="With --sample, sample auto-rejected candidates instead of auto-approved ones",
+)
+@click.option(
+    "--reviewer",
+    envvar="MUCKRAKE_REVIEWER",
+    default=None,
+    help=(
+        "Name recorded as the reviewer of each decision (default: MUCKRAKE_REVIEWER, then "
+        "your login name). Name a model reviewer model:<name>"
+    ),
+)
+def ner_review(dataset_name, limit, auto, sample, rejected, reviewer):
     """Review pending NER extraction candidates."""
+    if rejected and sample is None:
+        raise click.UsageError("--rejected needs --sample.")
+    if sample is not None and auto:
+        raise click.UsageError("--sample can't be combined with --auto.")
+    if sample is not None and limit is not None:
+        raise click.UsageError("--sample can't be combined with --limit.")
+    reviewer = reviewer or getpass.getuser()
+    if not auto and reviewer in {"root", AUTO_REVIEWER}:
+        raise click.UsageError(
+            f"Reviewer '{reviewer}' doesn't say who is reviewing: name yourself with "
+            "--reviewer or MUCKRAKE_REVIEWER."
+        )
     try:
         if auto:
             run_ner_auto_review(dataset_name=dataset_name)
         else:
-            run_ner_review(dataset_name=dataset_name, limit=limit)
+            run_ner_review(
+                reviewer=reviewer,
+                dataset_name=dataset_name,
+                limit=limit,
+                sample=sample,
+                pool="rejected" if rejected else "approved",
+            )
     except Exception as e:
         log.exception(e)
         sys.exit(1)
