@@ -25,6 +25,10 @@ version can change behaviour.
 
 ### Added
 
+- `resolver-export PATH` and `resolver-import PATH` save and restore the resolver's
+  judgements, as `ner-export` and `ner-import` do for NER decisions: a person's judgements
+  by default, every judgement with `--all`, never suggestions (`.gz` to compress). Import
+  never overrides a decision already in the database.
 - `ner-review --sample N` reviews a sample of N random candidates that `--auto`
   approved, so the precision of its splits can be measured. N is the sample's
   size: only enough candidates to reach it are drawn, so running the same

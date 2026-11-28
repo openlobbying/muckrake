@@ -9,6 +9,7 @@ from nomenklatura.matching import DefaultAlgorithm
 
 from muckrake.crawl import run_crawl
 from muckrake.dataset import clear_dataset, find_datasets, list_datasets, load_config
+from muckrake.db import open_resolver
 from muckrake.dedupe import (
     run_dedupe,
     run_dedupe_edges,
@@ -17,6 +18,7 @@ from muckrake.dedupe import (
     run_prune,
     run_xref,
 )
+from muckrake.dedupe.backup import export_judgements, import_judgements
 from muckrake.entity_query import (
     get_entity_payload,
     normalize_schema_filter,
@@ -59,6 +61,8 @@ class MuckrakeGroup(click.Group):
                 "dedupe-manual",
                 "dedupe-explode",
                 "dedupe-edges",
+                "resolver-export",
+                "resolver-import",
             ],
         ),
         ("Build releases", ["release-build", "release-list", "release-publish"]),
@@ -416,6 +420,35 @@ def xref_prune():
     except Exception as e:
         log.exception(e)
         sys.exit(1)
+
+
+@cli.command("resolver-export")
+@click.argument("path", type=click.Path(dir_okay=False, path_type=Path))
+@click.option(
+    "--all",
+    "include_automatic",
+    is_flag=True,
+    default=False,
+    help="Also export judgements made automatically (by xref and dedupe-edges)",
+)
+def resolver_export(path, include_automatic):
+    """Save the resolver's judgements to a JSON lines file (.gz to compress).
+
+    By default only judgements made by a person are saved; automatic ones can be
+    regenerated. Suggestions are never saved.
+    """
+    with open_resolver() as resolver:
+        count = export_judgements(resolver, path, include_automatic=include_automatic)
+    click.echo(f"Exported {count} judgements to {path}")
+
+
+@cli.command("resolver-import")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def resolver_import(path):
+    """Add judgements from an export; pairs already judged here are kept as they are."""
+    with open_resolver() as resolver:
+        imported, kept = import_judgements(resolver, path)
+    click.echo(f"Imported {imported} judgements; kept {kept} already judged here.")
 
 
 @cli.command("dedupe-edges")

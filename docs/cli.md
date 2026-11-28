@@ -28,12 +28,16 @@ Named-entity recognition:
                they are.
 
 Deduplicate:
-  xref            Generate deduplication candidates.
-  xref-prune      Remove dedupe candidates from the resolver.
-  dedupe          Interactively judge candidates.
-  dedupe-manual   Manually merge entities as duplicates.
-  dedupe-explode  Undo deduplication by exploding a merged cluster.
-  dedupe-edges    Deduplicate Representation edges across datasets in resolver.
+  xref             Generate deduplication candidates.
+  xref-prune       Remove dedupe candidates from the resolver.
+  dedupe           Interactively judge candidates.
+  dedupe-manual    Manually merge entities as duplicates.
+  dedupe-explode   Undo deduplication by exploding a merged cluster.
+  dedupe-edges     Deduplicate Representation edges across datasets in resolver.
+  resolver-export  Save the resolver's judgements to a JSON lines file (.gz to
+                   compress).
+  resolver-import  Add judgements from an export; pairs already judged here are kept as
+                   they are.
 
 Build releases:
   release-build    Build an immutable release artifact from dataset runs.
@@ -212,6 +216,32 @@ Options:
   --max-gap-days INTEGER  Maximum allowed gap days between adjacent edges  [default: 1]
   --dry-run               Show changes only
   --help                  Show this message and exit.
+```
+
+## `muckrake resolver-export`
+
+```text
+Usage: muckrake resolver-export [OPTIONS] PATH
+
+  Save the resolver's judgements to a JSON lines file (.gz to compress).
+
+  By default only judgements made by a person are saved; automatic ones can be
+  regenerated. Suggestions are never saved.
+
+Options:
+  --all   Also export judgements made automatically (by xref and dedupe-edges)
+  --help  Show this message and exit.
+```
+
+## `muckrake resolver-import`
+
+```text
+Usage: muckrake resolver-import [OPTIONS] PATH
+
+  Add judgements from an export; pairs already judged here are kept as they are.
+
+Options:
+  --help  Show this message and exit.
 ```
 
 ## `muckrake release-build`
