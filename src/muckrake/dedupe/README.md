@@ -7,7 +7,7 @@ that an application can show them together.
 muckrake uses the [`nomenklatura`](https://github.com/opensanctions/nomenklatura)
 resolver. `uv run muckrake xref` generates suggestions for pairs of records that
 may be the same entity and stores them in the `resolver` table in the working
-database. `uv run muckrake dedupe` opens nomenklatura's terminal UI for reviewing
+database. Before it writes new suggestions, `xref` removes open ones whose entities are no longer in the store, for example composites replaced by NER splits; judgements are never removed. `uv run muckrake dedupe` opens nomenklatura's terminal UI for reviewing
 them (match, no match, unsure or skip). `xref`, the `dedupe` TUI and
 `dedupe-edges` build a LevelDB store first, so they need `plyvel` (see the main
 README's installation notes). Set `MUCKRAKE_PROFILE_URL` to show a link to each

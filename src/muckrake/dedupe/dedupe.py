@@ -16,15 +16,38 @@ from muckrake.store import get_level_store
 log = logging.getLogger(__name__)
 
 
-def load_statements(store, dataset_names):
-    """Load statements from pack files into a store."""
+def load_statements(store, dataset_names) -> set[str]:
+    """Load statements from pack files into a store; returns the entity IDs loaded."""
     log.info("Loading statements into store...")
+    entity_ids: set[str] = set()
     with store.writer() as writer:
         for ds_name in dataset_names:
             pack_path = get_dataset_path(ds_name) / "statements.pack.csv"
             if pack_path.exists():
                 for stmt in iter_dataset_statements(ds_name, pack_path):
                     writer.add_statement(stmt)
+                    entity_ids.add(stmt.entity_id)
+    return entity_ids
+
+
+def prune_stale_suggestions(resolver: Resolver, entity_ids: set[str]) -> int:
+    """Soft-delete suggestions whose source or target is no longer in the store.
+
+    An ID is present if it's one of ``entity_ids`` or the canonical ID of a
+    cluster that contains one. Judged edges are never touched. Returns how many
+    suggestions were removed.
+    """
+    present = entity_ids | {resolver.get_canonical(entity_id) for entity_id in entity_ids}
+    stale = [
+        edge
+        for edge in resolver.all_edges(include_suggestions=True)
+        if edge.judgement == Judgement.NO_JUDGEMENT
+        and (edge.source.id not in present or edge.target.id not in present)
+    ]
+    for edge in stale:
+        # nomenklatura has no public way to soft-delete one edge.
+        resolver._remove_edge(edge)
+    return len(stale)
 
 
 def run_xref(
@@ -45,11 +68,17 @@ def run_xref(
     if algorithm_type is None:
         raise ValueError(f"Unknown algorithm: {algorithm}")
 
-    load_statements(store, dataset_names)
+    entity_ids = load_statements(store, dataset_names)
 
     # xref commits its suggestions in batches as it goes (session checkpoints).
     with make_session(SQL_URI) as session:
         resolver: Resolver = Resolver(session, create=True)
+        resolver.load_into_memory()
+        # Suggestions for entities that are gone (replaced by NER splits, or no
+        # longer crawled) would otherwise stay in the review queue, and an
+        # auto-merge threshold would turn them into judgements about nothing.
+        removed = prune_stale_suggestions(resolver, entity_ids)
+        log.info("Removed %s suggestions for entities no longer in the store.", removed)
         nk_xref(
             resolver,
             session,
